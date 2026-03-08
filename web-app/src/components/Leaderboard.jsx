@@ -28,7 +28,7 @@ export default function Leaderboard({
   onHoverEnd,
   onFeatureSelect,
 }) {
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(true)
   const [sortAsc, setSortAsc] = useState(false) // false = highest first
 
   const method = COLOR_METHODS.find(m => m.id === activeMethodId)

@@ -201,9 +201,23 @@ export default function Sidebar({
         </section>
       )}
 
-      {/* Display options */}
+      {/* Leaderboard */}
+      {activeLayer?.file && (
+        <Leaderboard
+          layerData={layerData}
+          activeMethodId={activeMethodId}
+          onHover={onHover}
+          onHoverEnd={onHoverEnd}
+          onFeatureSelect={onFeatureSelect}
+        />
+      )}
+
+      {/* Detailed Zoom Settings */}
       <section className="sidebar-section">
-        <div className="section-label">Display (zoom in to display)</div>
+        <div className="section-label">
+          <svg className="section-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492ZM5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0Z"/><path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a1.873 1.873 0 0 1-2.255 1.254l-.307-.1c-1.716-.56-3.137 1.467-2.014 2.875l.195.245a1.873 1.873 0 0 1-.39 2.564l-.26.19c-1.453 1.064-.636 3.338 1.16 3.226l.326-.02a1.873 1.873 0 0 1 1.945 1.554l.06.322c.33 1.775 2.893 1.967 3.486.262l.104-.3a1.873 1.873 0 0 1 2.378-1.108l.3.106c1.69.593 3.028-1.49 1.848-2.87l-.203-.238a1.873 1.873 0 0 1 .264-2.582l.252-.198c1.411-1.11.49-3.37-1.307-3.208l-.325.028a1.873 1.873 0 0 1-2.02-1.44l-.068-.323ZM8 10.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5Z"/></svg>
+          Detailed Zoom Settings
+        </div>
         <div className="display-group">
           <label className="toggle-row">
             <span>
@@ -245,7 +259,7 @@ export default function Sidebar({
             <span className="toggle-pill" />
           </label>
         </div>
-        <label className="toggle-row" style={{ marginTop: '8px' }}>
+        <label className="toggle-row" style={{ marginTop: '8px', paddingLeft: '10px', paddingRight: '10px' }}>
           <span>
             Show all canopy changes
             <span className="radio-description">Gain, loss, no change at zoom 12+</span>
@@ -259,17 +273,6 @@ export default function Sidebar({
           <span className="toggle-pill" />
         </label>
       </section>
-
-      {/* Leaderboard */}
-      {activeLayer?.file && (
-        <Leaderboard
-          layerData={layerData}
-          activeMethodId={activeMethodId}
-          onHover={onHover}
-          onHoverEnd={onHoverEnd}
-          onFeatureSelect={onFeatureSelect}
-        />
-      )}
 
       {/* Legend */}
       <section className="sidebar-section">

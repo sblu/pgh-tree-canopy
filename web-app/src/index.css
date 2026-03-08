@@ -15,13 +15,14 @@
   font-size: 13px;
 }
 
-body { height: 100vh; overflow: hidden; }
-#root { height: 100%; }
+body { margin: 0; overflow: hidden; }
+#root { position: fixed; inset: 0; }
 
 /* ─── Layout ─────────────────────────────────────────────────────────────── */
 .app-layout {
   display: flex;
   height: 100%;
+  overflow: hidden;
 }
 
 .map-container {
@@ -33,9 +34,13 @@ body { height: 100vh; overflow: hidden; }
 .sidebar-wrapper {
   width: var(--sidebar-width);
   min-width: var(--sidebar-width);
+  flex-shrink: 0;
+  height: 100%;
   transition: width 0.25s ease, min-width 0.25s ease;
   overflow-x: hidden;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .sidebar-wrapper.collapsed {
@@ -72,10 +77,6 @@ body { height: 100vh; overflow: hidden; }
   min-width: var(--sidebar-width);
   background: var(--sidebar-bg);
   color: var(--sidebar-text);
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
-  overflow-x: hidden;
   padding-right: 4px;
 }
 
@@ -113,12 +114,21 @@ body { height: 100vh; overflow: hidden; }
 }
 
 .section-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
   font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--sidebar-muted);
   margin-bottom: 8px;
+}
+
+.section-icon {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
 }
 
 /* ─── My Location row ───────────────────────────────────────────────────── */
@@ -432,7 +442,7 @@ body { height: 100vh; overflow: hidden; }
 
 /* ─── Sidebar footer ─────────────────────────────────────────────────────── */
 .sidebar-footer {
-  margin-top: auto;
+  margin-top: 20px;
   padding: 10px 14px;
   font-size: 10px;
   color: var(--sidebar-muted);
