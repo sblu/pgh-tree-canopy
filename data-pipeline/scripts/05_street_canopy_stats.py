@@ -316,6 +316,19 @@ def add_street_stats_to_boundary_layers(
         street_cols = [c for c in updated.columns if c.startswith("street_")]
         updated[street_cols] = updated[street_cols].fillna(0.0)
 
+        # Compute street net change metrics
+        updated["street_net_change_acres"] = (
+            updated["street_gain_acres"] - updated["street_loss_acres"]
+        ).round(4)
+        updated["street_net_pct_of_area"] = (
+            updated["street_net_change_acres"] / updated["land_area_acres"] * 100
+        ).round(4)
+        updated["street_net_pct_of_2015_canopy"] = updated.apply(
+            lambda r: round(r["street_net_change_acres"] / r["street_canopy_2015_acres"] * 100, 4)
+            if r["street_canopy_2015_acres"] > 0 else 0.0,
+            axis=1,
+        )
+
         updated.to_file(path, driver="GeoJSON")
         log(f"  ✓ updated ({elapsed(t)})", 2)
 

@@ -10,8 +10,11 @@ This script selects the relevant fields, derives the two loss metrics, and
 exports each layer as WGS84 GeoJSON for the web app.
 
 Output metrics (see PROJECT-OVERVIEW.md for definitions):
-  loss_pct_of_area         (Method 1) – Loss / land area × 100
-  loss_pct_of_2015_canopy  (Method 2) – Loss / 2015 canopy area × 100
+  loss_pct_of_area         – Gross loss / land area × 100
+  loss_pct_of_2015_canopy  – Gross loss / 2015 canopy area × 100
+  net_change_acres         – Gain - Loss (positive = net gain)
+  net_pct_of_area          – Net change / land area × 100
+  net_pct_of_2015_canopy   – Net change / 2015 canopy area × 100
 
 Usage:
   python3 scripts/01_extract_boundary_layers.py
@@ -63,6 +66,20 @@ def compute_canopy_metrics(gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
     # Guard against divide-by-zero on features with no 2015 canopy
     gdf["loss_pct_of_2015_canopy"] = gdf.apply(
         lambda r: round(r["loss_acres"] / r["canopy_2015_acres"] * 100, 4)
+        if r["canopy_2015_acres"] > 0
+        else 0.0,
+        axis=1,
+    )
+
+    # Net change metrics (positive = net gain, negative = net loss)
+    gdf["net_change_acres"] = (gdf["gain_acres"] - gdf["loss_acres"]).round(4)
+
+    gdf["net_pct_of_area"] = (
+        gdf["net_change_acres"] / gdf["land_area_acres"] * 100
+    ).round(4)
+
+    gdf["net_pct_of_2015_canopy"] = gdf.apply(
+        lambda r: round(r["net_change_acres"] / r["canopy_2015_acres"] * 100, 4)
         if r["canopy_2015_acres"] > 0
         else 0.0,
         axis=1,

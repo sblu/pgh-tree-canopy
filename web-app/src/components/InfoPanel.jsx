@@ -4,8 +4,14 @@
  */
 
 const fmt = {
-  acres: v => (v == null ? '—' : `${Number(v).toLocaleString(undefined, { maximumFractionDigits: 1 })} ac`),
+  acres: v => (v == null ? '—' : `${Math.abs(Number(v)).toLocaleString(undefined, { maximumFractionDigits: 1 })} ac`),
   pct:   v => (v == null ? '—' : `${Number(v).toFixed(1)}%`),
+  signedPct: v => {
+    if (v == null) return '—'
+    const n = Number(v)
+    const prefix = n >= 0 ? '+' : ''
+    return `${prefix}${n.toFixed(1)}%`
+  },
 }
 
 export default function InfoPanel({ feature, method }) {
@@ -18,8 +24,10 @@ export default function InfoPanel({ feature, method }) {
   const canopy2020Pct = p.land_area_acres > 0
     ? (p.canopy_2020_acres / p.land_area_acres * 100).toFixed(1)
     : '—'
-  const netChange = p.canopy_2020_acres - p.canopy_2015_acres
-  const netSign = netChange >= 0 ? '+' : ''
+
+  const netAcres = p.net_change_acres ?? (p.gain_acres - p.loss_acres)
+  const isGain = netAcres >= 0
+  const netSign = isGain ? '+' : ''
 
   return (
     <div className="info-panel">
@@ -28,7 +36,7 @@ export default function InfoPanel({ feature, method }) {
       <table className="info-table">
         <tbody>
           <tr>
-            <td>Land area</td>
+            <td>{p.buffer_area_acres != null ? 'Buffer area' : 'Land area'}</td>
             <td>{fmt.acres(p.land_area_acres)}</td>
           </tr>
           <tr className="section-header">
@@ -40,33 +48,46 @@ export default function InfoPanel({ feature, method }) {
           </tr>
           <tr>
             <td>2020</td>
-            <td>{fmt.acres(p.canopy_2020_acres)} <span className="muted">({canopy2020Pct}%)</span></td>
-          </tr>
-          <tr>
-            <td>Net change</td>
-            <td className={netChange >= 0 ? 'positive' : 'negative'}>
-              {netSign}{fmt.acres(netChange)}
+            <td className={method === 'canopy_2020_pct' ? 'highlight' : ''}>
+              {fmt.acres(p.canopy_2020_acres)} <span className={method === 'canopy_2020_pct' ? '' : 'muted'}>({canopy2020Pct}%)</span>
             </td>
           </tr>
           <tr className="section-header">
-            <td colSpan={2}>Canopy loss</td>
+            <td colSpan={2}>Net canopy change</td>
           </tr>
           <tr>
-            <td>Acres lost</td>
-            <td>{fmt.acres(p.loss_acres)}</td>
+            <td>{isGain ? 'Acres gained' : 'Acres lost'}</td>
+            <td className={isGain ? 'positive' : 'negative'}>
+              {netSign}{fmt.acres(netAcres)}
+            </td>
           </tr>
           <tr>
             <td>% of land area</td>
-            <td className={method === 'loss_pct_of_area' ? 'highlight' : ''}>
-              {fmt.pct(p.loss_pct_of_area)}
+            <td className={p.net_pct_of_area >= 0 ? 'positive' : 'negative'}>
+              {fmt.signedPct(p.net_pct_of_area)}
             </td>
           </tr>
           <tr>
             <td>% of 2015 canopy</td>
-            <td className={method === 'loss_pct_of_2015_canopy' ? 'highlight' : ''}>
-              {fmt.pct(p.loss_pct_of_2015_canopy)}
+            <td className={p.net_pct_of_2015_canopy >= 0 ? 'positive' : 'negative'}>
+              {fmt.signedPct(p.net_pct_of_2015_canopy)}
             </td>
           </tr>
+          {(p.mature_areas_lost > 0 || p.mature_areas_gained > 0) && (
+            <>
+              <tr className="section-header">
+                <td colSpan={2}>Gains &amp; losses (≥ 0.04 ac)</td>
+              </tr>
+              <tr>
+                <td>Gains</td>
+                <td className="positive">{p.mature_areas_gained?.toLocaleString()} <span className="muted">({p.mature_trees_gained?.toLocaleString()} medium, {p.groves_gained?.toLocaleString()} large)</span></td>
+              </tr>
+              <tr>
+                <td>Losses</td>
+                <td className="negative">{p.mature_areas_lost?.toLocaleString()} <span className="muted">({p.mature_trees_lost?.toLocaleString()} trees, {p.groves_lost?.toLocaleString()} groves)</span></td>
+              </tr>
+            </>
+          )}
         </tbody>
       </table>
     </div>

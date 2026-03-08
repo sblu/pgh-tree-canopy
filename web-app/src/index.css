@@ -149,6 +149,113 @@ body { height: 100vh; overflow: hidden; }
 .search-results li:last-child { border-bottom: none; }
 .search-results li:hover { background: var(--section-sep); color: var(--accent); }
 
+/* ─── Leaderboard ───────────────────────────────────────────────────────── */
+.leaderboard-section {
+  padding: 0 !important;
+}
+
+.leaderboard-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 10px 14px;
+  background: none;
+  border: none;
+  color: var(--sidebar-text);
+  cursor: pointer;
+}
+
+.leaderboard-toggle:hover {
+  background: rgba(255,255,255,0.04);
+}
+
+.leaderboard-chevron {
+  font-size: 10px;
+  transition: transform 0.2s;
+  color: var(--sidebar-muted);
+}
+
+.leaderboard-chevron.open {
+  transform: rotate(180deg);
+}
+
+.leaderboard-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 14px 6px;
+}
+
+.leaderboard-metric {
+  font-size: 10px;
+  color: var(--sidebar-muted);
+  font-style: italic;
+}
+
+.leaderboard-sort-btn {
+  background: var(--input-bg);
+  border: 1px solid var(--section-sep);
+  color: var(--sidebar-text);
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.leaderboard-sort-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.leaderboard-list {
+  max-height: 250px;
+  overflow-y: auto;
+  padding-bottom: 4px;
+}
+
+.leaderboard-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 14px;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+.leaderboard-row:nth-child(odd) {
+  background: rgba(255,255,255,0.02);
+}
+
+.leaderboard-row:hover {
+  background: rgba(74, 222, 128, 0.1);
+}
+
+.leaderboard-rank {
+  width: 22px;
+  flex-shrink: 0;
+  color: var(--sidebar-muted);
+  font-size: 10px;
+  text-align: right;
+}
+
+.leaderboard-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.leaderboard-value {
+  flex-shrink: 0;
+  font-weight: 600;
+  font-size: 11px;
+}
+
+.leaderboard-value.positive { color: #4ade80; }
+.leaderboard-value.negative { color: #f87171; }
+
 /* ─── Legend ─────────────────────────────────────────────────────────────── */
 .legend-row {
   display: flex;
@@ -211,6 +318,12 @@ body { height: 100vh; overflow: hidden; }
   overflow: hidden;
 }
 
+/* Remove the rounded corner where the tip connects so there's no gap */
+.maplibregl-popup-anchor-bottom-left .maplibregl-popup-content { border-bottom-left-radius: 0 !important; }
+.maplibregl-popup-anchor-bottom-right .maplibregl-popup-content { border-bottom-right-radius: 0 !important; }
+.maplibregl-popup-anchor-top-left .maplibregl-popup-content { border-top-left-radius: 0 !important; }
+.maplibregl-popup-anchor-top-right .maplibregl-popup-content { border-top-right-radius: 0 !important; }
+
 .info-panel {
   font-size: 12px;
   min-width: 220px;
@@ -251,7 +364,61 @@ body { height: 100vh; overflow: hidden; }
 .info-table .muted    { color: #94a3b8; font-weight: 400; }
 .info-table .positive { color: #16a34a; }
 .info-table .negative { color: #dc2626; }
-.info-table .highlight { color: var(--highlight); font-weight: 700; }
+.info-table .highlight { color: #1e40af; font-weight: 700; }
+
+/* ─── Tree popup (Street View link) ──────────────────────────────────────── */
+.tree-popup {
+  font-size: 12px;
+  min-width: 200px;
+}
+
+.tree-popup-header {
+  font-weight: 700;
+  font-size: 13px;
+  padding: 8px 12px;
+  color: #fff;
+}
+
+.tree-popup-header.loss { background: #dc2626; }
+.tree-popup-header.gain { background: #16a34a; }
+
+.tree-popup-body {
+  padding: 8px 12px 10px;
+}
+
+.tree-popup-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 2px 0;
+}
+
+.tree-popup-label {
+  color: #475569;
+}
+
+.tree-popup-streetview {
+  display: block;
+  margin-top: 8px;
+  padding: 6px 10px;
+  background: #1e40af;
+  color: #fff;
+  text-align: center;
+  border-radius: 4px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 11px;
+}
+
+.tree-popup-streetview:hover {
+  background: #1d4ed8;
+}
+
+.tree-popup-no-coords {
+  margin-top: 8px;
+  color: #94a3b8;
+  font-style: italic;
+  font-size: 11px;
+}
 
 /* ─── MapLibre control overrides ─────────────────────────────────────────── */
 .maplibregl-ctrl-group { border-radius: 6px !important; overflow: hidden; }

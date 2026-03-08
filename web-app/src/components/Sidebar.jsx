@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
-import { BOUNDARY_LAYERS, LOSS_METHODS, CHOROPLETH_COLORS, TREE_LOSS_COLORS, STREET_BUFFER_COLOR } from '../config/layers'
+import { BOUNDARY_LAYERS, COLOR_METHODS, CHOROPLETH_COLORS, COVERAGE_COLORS, TREE_LOSS_COLORS, TREE_GAIN_COLORS, STREET_BUFFER_COLOR } from '../config/layers'
+import Leaderboard from './Leaderboard'
 
 /**
  * Sidebar — all map controls and legend.
@@ -12,11 +13,15 @@ export default function Sidebar({
   onMethodChange,
   showTreeLosses,
   onShowTreeLossesChange,
+  showTreeGains,
+  onShowTreeGainsChange,
   showStreetBuffer,
   onShowStreetBufferChange,
   layerData,
   colorBreaks,
   onFeatureSelect,
+  onHover,
+  onHoverEnd,
 }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchFocused, setSearchFocused] = useState(false)
@@ -44,18 +49,26 @@ export default function Sidebar({
     onFeatureSelect(name)
   }
 
+  const activeMethod = COLOR_METHODS.find(m => m.id === activeMethodId)
+  const isCoverage = activeMethod?.group === 'coverage'
+  const paletteColors = isCoverage ? COVERAGE_COLORS : CHOROPLETH_COLORS
+
   // Legend: pair each colour with its break range
   const legendSteps = useMemo(() => {
     if (!colorBreaks.length) return []
+    const fmtVal = isCoverage
+      ? v => `${Number(v).toFixed(1)}`
+      : v => { const n = Number(v).toFixed(1); return v >= 0 ? `+${n}` : `${n}` }
+    const colors = isCoverage ? COVERAGE_COLORS : CHOROPLETH_COLORS
     const steps = []
-    steps.push({ color: CHOROPLETH_COLORS[0], label: `0 – ${colorBreaks[0]}%` })
+    steps.push({ color: colors[0], label: `< ${fmtVal(colorBreaks[0])}%` })
     colorBreaks.forEach((b, i) => {
       const next = colorBreaks[i + 1]
-      const color = CHOROPLETH_COLORS[i + 1] ?? CHOROPLETH_COLORS[CHOROPLETH_COLORS.length - 1]
-      steps.push({ color, label: next ? `${b} – ${next}%` : `> ${b}%` })
+      const color = colors[i + 1] ?? colors[colors.length - 1]
+      steps.push({ color, label: next ? `${fmtVal(b)} to ${fmtVal(next)}%` : `> ${fmtVal(b)}%` })
     })
     return steps
-  }, [colorBreaks])
+  }, [colorBreaks, isCoverage])
 
   return (
     <aside className="sidebar">
@@ -85,49 +98,69 @@ export default function Sidebar({
       </section>
 
       {/* Search */}
-      <section className="sidebar-section">
-        <div className="section-label">Search</div>
-        <div className="search-container">
-          <input
-            className="search-input"
-            type="text"
-            placeholder={activeLayer?.searchPlaceholder ?? 'Search…'}
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            onFocus={() => setSearchFocused(true)}
-            onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
-          />
-          {searchFocused && filteredNames.length > 0 && (
-            <ul className="search-results">
-              {filteredNames.map(name => (
-                <li key={name} onMouseDown={() => handleSelect(name)}>
-                  {name}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      </section>
-
-      {/* Loss metric toggle */}
-      <section className="sidebar-section">
-        <div className="section-label">Loss Metric</div>
-        {LOSS_METHODS.map(method => (
-          <label key={method.id} className="radio-row">
+      {activeLayer?.file && (
+        <section className="sidebar-section">
+          <div className="section-label">Search</div>
+          <div className="search-container">
             <input
-              type="radio"
-              name="method"
-              value={method.id}
-              checked={activeMethodId === method.id}
-              onChange={() => onMethodChange(method.id)}
+              className="search-input"
+              type="text"
+              placeholder={activeLayer?.searchPlaceholder ?? 'Search…'}
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              onFocus={() => setSearchFocused(true)}
+              onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
             />
-            <span>
-              {method.label}
-              <span className="radio-description">{method.description}</span>
-            </span>
-          </label>
-        ))}
-      </section>
+            {searchFocused && filteredNames.length > 0 && (
+              <ul className="search-results">
+                {filteredNames.map(name => (
+                  <li key={name} onMouseDown={() => handleSelect(name)}>
+                    {name}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* Color metric selector */}
+      {activeLayer?.file && (
+        <section className="sidebar-section">
+          <div className="section-label">Color By</div>
+          {COLOR_METHODS.filter(m => m.group === 'coverage').map(method => (
+            <label key={method.id} className="radio-row">
+              <input
+                type="radio"
+                name="method"
+                value={method.id}
+                checked={activeMethodId === method.id}
+                onChange={() => onMethodChange(method.id)}
+              />
+              <span>
+                {method.label}
+                <span className="radio-description">{method.description}</span>
+              </span>
+            </label>
+          ))}
+          <div className="section-label" style={{ marginTop: '10px' }}>Net Change Metric</div>
+          {COLOR_METHODS.filter(m => m.group === 'net_change').map(method => (
+            <label key={method.id} className="radio-row">
+              <input
+                type="radio"
+                name="method"
+                value={method.id}
+                checked={activeMethodId === method.id}
+                onChange={() => onMethodChange(method.id)}
+              />
+              <span>
+                {method.label}
+                <span className="radio-description">{method.description}</span>
+              </span>
+            </label>
+          ))}
+        </section>
+      )}
 
       {/* Display options */}
       <section className="sidebar-section">
@@ -140,7 +173,18 @@ export default function Sidebar({
           />
           <span>
             Show mature tree losses
-            <span className="radio-description">Zoom in past level 14 to see</span>
+            <span className="radio-description">Red polygons at zoom 14+</span>
+          </span>
+        </label>
+        <label className="radio-row">
+          <input
+            type="checkbox"
+            checked={showTreeGains}
+            onChange={e => onShowTreeGainsChange(e.target.checked)}
+          />
+          <span>
+            Show gains
+            <span className="radio-description">Green polygons at zoom 14+</span>
           </span>
         </label>
         <label className="radio-row">
@@ -150,21 +194,38 @@ export default function Sidebar({
             onChange={e => onShowStreetBufferChange(e.target.checked)}
           />
           <span>
-            Show street tree buffer area
-            <span className="radio-description">50 ft buffer around all streets</span>
+            Show only street tree areas
+            <span className="radio-description">Filter to 50 ft buffer around streets</span>
           </span>
         </label>
       </section>
 
+      {/* Leaderboard */}
+      {activeLayer?.file && (
+        <Leaderboard
+          layerData={layerData}
+          activeMethodId={activeMethodId}
+          onHover={onHover}
+          onHoverEnd={onHoverEnd}
+          onFeatureSelect={onFeatureSelect}
+        />
+      )}
+
       {/* Legend */}
       <section className="sidebar-section">
-        <div className="section-label">Legend — Canopy Loss</div>
-        {legendSteps.map(({ color, label }) => (
-          <div key={label} className="legend-row">
-            <span className="legend-swatch" style={{ background: color }} />
-            {label}
-          </div>
-        ))}
+        {activeLayer?.file && (
+          <>
+            <div className="section-label">
+              Legend — {isCoverage ? 'Canopy Coverage (2020)' : 'Net Canopy Change'}
+            </div>
+            {legendSteps.map(({ color, label }) => (
+              <div key={label} className="legend-row">
+                <span className="legend-swatch" style={{ background: color }} />
+                {label}
+              </div>
+            ))}
+          </>
+        )}
 
         {showTreeLosses && (
           <>
@@ -177,8 +238,25 @@ export default function Sidebar({
               <span className="legend-swatch" style={{ background: TREE_LOSS_COLORS.grove }} />
               Grove ≥ 0.07 ac
             </div>
-            <div className="legend-note">Visible at zoom level 14+</div>
           </>
+        )}
+
+        {showTreeGains && (
+          <>
+            <div className="section-label" style={{ marginTop: showTreeLosses ? '8px' : '12px' }}>Gains</div>
+            <div className="legend-row">
+              <span className="legend-swatch" style={{ background: TREE_GAIN_COLORS.tree }} />
+              Medium gain ≥ 0.04 ac
+            </div>
+            <div className="legend-row">
+              <span className="legend-swatch" style={{ background: TREE_GAIN_COLORS.grove }} />
+              Large gain ≥ 0.07 ac
+            </div>
+          </>
+        )}
+
+        {(showTreeLosses || showTreeGains) && (
+          <div className="legend-note">Visible at zoom level 14+</div>
         )}
 
         {showStreetBuffer && (

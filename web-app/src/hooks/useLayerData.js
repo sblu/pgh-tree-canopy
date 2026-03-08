@@ -11,7 +11,10 @@ export function useLayerData(layerId, fileUrl) {
   const [state, setState] = useState({ data: null, loading: false, error: null })
 
   useEffect(() => {
-    if (!fileUrl) return
+    if (!fileUrl) {
+      setState({ data: null, loading: false, error: null })
+      return
+    }
 
     // Return cached data immediately if already loaded
     if (cache.current[layerId]) {
@@ -42,14 +45,14 @@ export function useLayerData(layerId, fileUrl) {
 /**
  * Given a GeoJSON FeatureCollection and a numeric property name,
  * compute N quantile break values for use in a stepped colour scale.
- * Skips zero values so the "no loss" colour is always the first step.
+ * Handles diverging data (negative = loss, positive = gain).
  */
 export function computeQuantileBreaks(geojson, field, numBreaks = 5) {
   if (!geojson?.features?.length) return []
 
   const values = geojson.features
     .map(f => f.properties?.[field])
-    .filter(v => v != null && !isNaN(v) && v > 0)
+    .filter(v => v != null && !isNaN(v))
     .sort((a, b) => a - b)
 
   if (!values.length) return []
