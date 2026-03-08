@@ -12,20 +12,23 @@ tree committee.
 The map lets community members explore where Pittsburgh's tree canopy has
 grown or shrunk between 2015 and 2020. Key features:
 
-- **Boundary-level choropleth** — view canopy loss by Pittsburgh neighborhood,
-  city council district, county council district, municipal park, or county
-  park, colored by percentage lost
-- **Two loss metrics** — toggle between loss as a share of the zone's total
-  land area vs. loss as a share of its 2015 canopy baseline
-- **Street tree buffer overlay** — visualize the 50 ft buffer zone around
-  all Pittsburgh street centerlines, showing where street trees are tracked
+- **Boundary-level choropleth** — view canopy change by neighborhood,
+  city/county council district, municipal/county park, municipality
+  (county-wide), or street, colored by selected metric
+- **Three color metrics** — total 2020 canopy coverage, net change as % of
+  land area, or net change as % of 2015 canopy baseline
+- **Leaderboard** — collapsible ranked list of all zones by the active
+  metric, with hover-to-highlight and click-to-fly-to
+- **Full canopy change overlay** — toggle all 3.3M canopy polygons (gain,
+  loss, no change) visible at zoom 12+
+- **Significant gains and losses** — zoom in to see individual gain/loss
+  polygons ≥ 0.04 acres, with click-to-Street-View links
+- **Street tree filter** — filter gain/loss overlays to only show polygons
+  within the 50 ft street buffer zone
 - **Search** — search for any boundary zone by name and fly to it on the map
-- **Mature tree losses** — zoom in to see individual loss polygons ≥ 0.04
-  acres (approximately one mature tree), colored by size: single trees
-  (red) and groves of 2+ trees (dark red)
 - **Zone labels** — boundary names displayed directly on the map
-- **Hover details** — mouse over any zone to see a popup with full
-  canopy statistics
+- **Hover details** — mouse over any zone to see a popup with full canopy
+  statistics including gains/losses breakdown
 
 ---
 
@@ -39,7 +42,9 @@ pgh-tree-canopy/
 │   │   ├── 02_extract_mature_tree_losses.py
 │   │   ├── 03_generate_pmtiles.py
 │   │   ├── 04_street_buffer.py
-│   │   └── 05_street_canopy_stats.py
+│   │   ├── 05_street_canopy_stats.py
+│   │   ├── 06_tag_street_buffer.py
+│   │   └── 07_full_canopy_change.py
 │   ├── output/             # Generated data files (not committed to git)
 │   │   ├── boundary_layers/
 │   │   ├── canopy_change/
@@ -48,7 +53,7 @@ pgh-tree-canopy/
 │   └── README.md
 ├── web-app/                # React + MapLibre GL JS web map
 │   ├── src/
-│   │   ├── components/     # MapView, Sidebar, InfoPanel
+│   │   ├── components/     # MapView, Sidebar, InfoPanel, Leaderboard, TreePopup
 │   │   ├── config/         # Layer definitions and color scales
 │   │   ├── hooks/          # Data fetching and quantile break computation
 │   │   ├── App.jsx
@@ -99,6 +104,8 @@ python3 data-pipeline/scripts/02_extract_mature_tree_losses.py
 python3 data-pipeline/scripts/03_generate_pmtiles.py
 python3 data-pipeline/scripts/04_street_buffer.py
 python3 data-pipeline/scripts/05_street_canopy_stats.py   # ~10–30 min
+python3 data-pipeline/scripts/06_tag_street_buffer.py
+python3 data-pipeline/scripts/07_full_canopy_change.py    # ~15–30 min
 ```
 
 Each script writes intermediate GeoJSON files to `data-pipeline/output/`
@@ -164,17 +171,22 @@ Canopy change is measured using the Western Pennsylvania Conservancy's
 2015–2020 tree canopy change dataset for Allegheny County. Each polygon
 in the dataset is classified as canopy gain, canopy loss, or no change.
 
-**Loss metric definitions:**
+**Color metric definitions:**
 
-> **Method 1 — Loss as share of zone area:**
-> `loss_pct_of_area = (loss_acres / land_area_acres) × 100`
+> **Total canopy coverage (2020):**
+> `canopy_2020_pct = (canopy_2020_acres / land_area_acres) × 100`
 >
-> Example: 2 acres lost from a 10-acre neighborhood = **20% loss**
+> Example: 5 acres of canopy in a 10-acre neighborhood = **50% coverage**
 
-> **Method 2 — Loss as share of 2015 canopy:**
-> `loss_pct_of_2015_canopy = (loss_acres / canopy_2015_acres) × 100`
+> **Net change as % of land area:**
+> `net_pct_of_area = ((gain_acres − loss_acres) / land_area_acres) × 100`
 >
-> Example: 2 acres lost from a 3-acre 2015 canopy = **67% loss**
+> Example: 1 acre gained, 2 acres lost in a 10-acre neighborhood = **−10%**
+
+> **Net change as % of 2015 canopy:**
+> `net_pct_of_2015_canopy = ((gain_acres − loss_acres) / canopy_2015_acres) × 100`
+>
+> Example: 1 acre gained, 2 acres lost from 3-acre 2015 canopy = **−33%**
 
 **Mature tree threshold:**
 Individual tree polygons ≥ 0.04 acres (roughly one mature tree canopy);

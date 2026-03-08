@@ -58,22 +58,20 @@ export default function MapView({
   const mapRef = useRef(null)
   const [clickedTree, setClickedTree] = useState(null)
 
-  // Build pmtiles:// URL using the current page origin so it works in both
-  // dev (localhost:5173) and production (wordpress server)
-  const treeLossesUrl = useMemo(() => {
-    const origin = typeof window !== 'undefined' ? window.location.origin : ''
-    return `pmtiles://${origin}${TREE_LOSSES_PMTILES_PATH}`
+  // Build pmtiles:// URLs relative to the page's base URL.
+  // This works regardless of what subdirectory the app is deployed to.
+  const appBaseUrl = useMemo(() => {
+    const base = document.baseURI || window.location.href
+    // Remove filename/query/hash to get the directory
+    return base.replace(/\/[^/]*$/, '')
   }, [])
 
-  const treeGainsUrl = useMemo(() => {
-    const origin = typeof window !== 'undefined' ? window.location.origin : ''
-    return `pmtiles://${origin}${TREE_GAINS_PMTILES_PATH}`
-  }, [])
-
-  const canopyChangeUrl = useMemo(() => {
-    const origin = typeof window !== 'undefined' ? window.location.origin : ''
-    return `pmtiles://${origin}${CANOPY_CHANGE_PMTILES_PATH}`
-  }, [])
+  const treeLossesUrl = useMemo(
+    () => `pmtiles://${appBaseUrl}/${TREE_LOSSES_PMTILES_PATH}`, [appBaseUrl])
+  const treeGainsUrl = useMemo(
+    () => `pmtiles://${appBaseUrl}/${TREE_GAINS_PMTILES_PATH}`, [appBaseUrl])
+  const canopyChangeUrl = useMemo(
+    () => `pmtiles://${appBaseUrl}/${CANOPY_CHANGE_PMTILES_PATH}`, [appBaseUrl])
 
   const isLineLayer = activeLayerConfig?.geometryType === 'line'
   const hoveredName = hoveredFeature?.feature?.properties?.name ?? ''

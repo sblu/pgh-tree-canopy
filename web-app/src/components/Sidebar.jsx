@@ -75,7 +75,7 @@ export default function Sidebar({
   return (
     <aside className="sidebar">
       <header className="sidebar-header">
-        <img src="/images/shuc-logo.png" alt="SHUC logo" className="sidebar-logo" />
+        <img src="images/shuc-logo.png" alt="SHUC logo" className="sidebar-logo" />
         <div>
           <div className="sidebar-title">Pittsburgh Tree Canopy</div>
           <div className="sidebar-subtitle">2015–2020 Change</div>

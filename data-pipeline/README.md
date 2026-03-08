@@ -62,6 +62,7 @@ python3 scripts/01_extract_boundary_layers.py
 | `parks_county.geojson` | 9 | Allegheny County regional parks |
 | `city_council_districts.geojson` | 9 | Pittsburgh City Council districts |
 | `county_council_districts.geojson` | 13 | Allegheny County Council districts |
+| `municipalities.geojson` | 130 | Allegheny County municipalities |
 
 **Output schema per feature:**
 | Field | Type | Description |
@@ -73,8 +74,10 @@ python3 scripts/01_extract_boundary_layers.py
 | `gain_acres` | float | Canopy area gained 2015–2020 |
 | `loss_acres` | float | Canopy area lost 2015–2020 |
 | `no_change_acres` | float | Canopy area unchanged 2015–2020 |
-| `loss_pct_of_area` | float | **Method 1**: Loss ÷ land area × 100 |
-| `loss_pct_of_2015_canopy` | float | **Method 2**: Loss ÷ 2015 canopy × 100 |
+| `net_pct_of_area` | float | Net change (gain − loss) ÷ land area × 100 |
+| `net_pct_of_2015_canopy` | float | Net change ÷ 2015 canopy × 100 |
+| `loss_pct_of_area` | float | Loss ÷ land area × 100 |
+| `loss_pct_of_2015_canopy` | float | Loss ÷ 2015 canopy × 100 |
 
 After script 05 runs, boundary files are updated with additional
 `street_*` columns (see script 05 below).
@@ -84,8 +87,8 @@ After script 05 runs, boundary files are updated with additional
 ### `02_extract_mature_tree_losses.py`
 
 Filters the 3.3M canopy change polygons to individual tree-scale losses
-(≥ 0.04 acres), classified by size. These are displayed as red polygons
-on the web map at high zoom levels.
+and gains (≥ 0.04 acres), classified by size. These are displayed as
+red/green polygons on the web map at high zoom levels.
 
 ```bash
 python3 scripts/02_extract_mature_tree_losses.py
@@ -95,8 +98,9 @@ python3 scripts/02_extract_mature_tree_losses.py
 | File | Features | Description |
 |------|----------|-------------|
 | `mature_tree_losses.geojson` | ~99,159 | Loss polygons ≥ 0.04 acres (~174 MB) |
+| `mature_tree_gains.geojson` | ~127,000 | Gain polygons ≥ 0.04 acres |
 
-**Output schema per feature:**
+**Output schema per feature (losses):**
 | Field | Type | Description |
 |-------|------|-------------|
 | `loss_acres` | float | Size of the lost canopy area |
@@ -104,8 +108,16 @@ python3 scripts/02_extract_mature_tree_losses.py
 | `centroid_lon` | float | WGS84 longitude of polygon centroid |
 | `centroid_lat` | float | WGS84 latitude of polygon centroid |
 
-> **Note:** `centroid_lon`/`centroid_lat` are pre-computed for future
-> Google Street View historical imagery integration.
+**Output schema per feature (gains):**
+| Field | Type | Description |
+|-------|------|-------------|
+| `gain_acres` | float | Size of the gained canopy area |
+| `size_category` | string | `"tree"` (0.04–0.069 ac) or `"grove"` (≥ 0.07 ac) |
+| `centroid_lon` | float | WGS84 longitude of polygon centroid |
+| `centroid_lat` | float | WGS84 latitude of polygon centroid |
+
+> **Note:** `centroid_lon`/`centroid_lat` are used for Google Street View
+> links in the web app popup.
 
 ---
 
@@ -128,7 +140,9 @@ python3 scripts/03_generate_pmtiles.py
 | File | Size | Used by |
 |------|------|---------|
 | `mature_tree_losses.pmtiles` | ~92 MB | Web map (MapLibre) |
+| `mature_tree_gains.pmtiles` | ~105 MB | Web map (MapLibre) |
 | `mature_tree_losses.geojson` | ~174 MB | QGIS / desktop GIS |
+| `mature_tree_gains.geojson` | ~200 MB | QGIS / desktop GIS |
 
 Tile zoom range: **12–18**. At lower zoom levels tippecanoe progressively
 drops the smallest polygons first (individual trees before groves), keeping
@@ -192,6 +206,47 @@ statistics per zone:
 | `street_canopy_2020_acres` | 2020 canopy within street buffer |
 | `street_loss_pct_of_area` | Method 1 loss metric (street buffer only) |
 | `street_loss_pct_of_2015_canopy` | Method 2 loss metric (street buffer only) |
+
+---
+
+### `06_tag_street_buffer.py`
+
+Adds an `in_street_buffer` boolean property (0 or 1) to each mature tree
+loss and gain polygon indicating whether it intersects the dissolved street
+buffer area. After tagging, regenerates the PMTiles files so the new
+property is available for filtering in the web app.
+
+```bash
+python3 scripts/06_tag_street_buffer.py
+```
+
+**Updates** → `output/canopy_change/`
+
+Modifies `mature_tree_losses.geojson` and `mature_tree_gains.geojson`
+in-place, adding the `in_street_buffer` field, then regenerates
+`mature_tree_losses.pmtiles` and `mature_tree_gains.pmtiles`.
+
+---
+
+### `07_full_canopy_change.py`
+
+Extracts the complete TreeCanopyChange layer (3.3M polygons) from the GDB
+and converts it to PMTiles for a toggleable canopy change overlay on the
+web map. Reports progress at each major step.
+
+```bash
+python3 scripts/07_full_canopy_change.py    # ~15–30 min
+```
+
+**Output** → `output/canopy_change/`
+| File | Size | Description |
+|------|------|-------------|
+| `canopy_change_all.pmtiles` | ~714 MB | All canopy change polygons (zoom 10–18) |
+
+Each polygon has a `change_class` property: `no_change`, `gain`, or `loss`.
+
+> **Note:** The intermediate GeoJSON (~2.6 GB) is automatically deleted
+> after PMTiles generation to save disk space.
 
 ---
 
