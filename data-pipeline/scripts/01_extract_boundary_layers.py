@@ -25,6 +25,7 @@ Outputs written to: output/boundary_layers/
   parks_county.geojson
   city_council_districts.geojson
   county_council_districts.geojson
+  municipalities.geojson
 """
 
 import geopandas as gpd
@@ -258,6 +259,36 @@ def process_county_council() -> None:
     )
 
 
+def process_municipalities() -> None:
+    """
+    Municipal_Boundaries_2020 (130 features – all Allegheny County municipalities).
+    Has full pre-computed canopy stats including explicit 2015/2020 fields.
+    LABEL field has proper-cased name with type (e.g. "Sewickley Borough").
+    """
+    print("Processing Municipal_Boundaries_2020 …")
+    gdf = gpd.read_file(SOURCE_GDB, layer="Municipal_Boundaries_2020")
+
+    out = gdf[["LABEL", "NAME", "TYPE", "Land_Acres",
+               "No_Change_Acres", "Gain_Acres", "Loss_Acres",
+               "TreeCanopy_2015_Acres", "TreeCanopy_2020_Acres",
+               "geometry"]].copy()
+
+    out = out.rename(columns={
+        "LABEL":                 "name",
+        "NAME":                  "municipality_name",
+        "TYPE":                  "municipality_type",
+        "Land_Acres":            "land_area_acres",
+        "No_Change_Acres":       "no_change_acres",
+        "Gain_Acres":            "gain_acres",
+        "Loss_Acres":            "loss_acres",
+        "TreeCanopy_2015_Acres": "canopy_2015_acres",
+        "TreeCanopy_2020_Acres": "canopy_2020_acres",
+    })
+
+    out = compute_canopy_metrics(out)
+    export_geojson(out, OUTPUT_DIR / "municipalities.geojson", "Municipalities")
+
+
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
@@ -277,6 +308,7 @@ def main() -> None:
     process_parks_county()
     process_city_council()
     process_county_council()
+    process_municipalities()
 
     print("\nDone. All boundary GeoJSON files written to output/boundary_layers/")
     print("Open in QGIS: Layer > Add Layer > Add Vector Layer, then select any .geojson file.")

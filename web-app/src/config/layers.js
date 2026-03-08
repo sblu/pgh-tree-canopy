@@ -58,6 +58,14 @@ export const BOUNDARY_LAYERS = [
     geometryType: 'polygon',
   },
   {
+    id: 'municipalities',
+    label: 'Municipalities (County-wide)',
+    file: '/data/boundary_layers/municipalities.geojson',
+    nameField: 'name',
+    searchPlaceholder: 'Search municipalities…',
+    geometryType: 'polygon',
+  },
+  {
     id: 'streets',
     label: 'Streets',
     file: '/data/streets/street_stats.geojson',
@@ -144,3 +152,13 @@ export const TREE_LOSSES_SOURCE_LAYER = 'mature_tree_losses'
 
 // Zoom level at which mature tree loss polygons become visible
 export const TREE_LOSSES_MIN_ZOOM = 14
+
+// Full canopy change layer (3.3M polygons, all change classes)
+export const CANOPY_CHANGE_PMTILES_PATH = '/data/canopy_change/canopy_change_all.pmtiles'
+export const CANOPY_CHANGE_SOURCE_LAYER = 'canopy_change_all'
+export const CANOPY_CHANGE_MIN_ZOOM = 12
+export const CANOPY_CHANGE_COLORS = {
+  no_change: '#a8d5a2', // existing canopy (muted green)
+  gain:      '#2563eb', // canopy gain (blue to distinguish from choropleth greens)
+  loss:      '#dc2626', // canopy loss (red)
+}

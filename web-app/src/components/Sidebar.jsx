@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { BOUNDARY_LAYERS, COLOR_METHODS, CHOROPLETH_COLORS, COVERAGE_COLORS, TREE_LOSS_COLORS, TREE_GAIN_COLORS, STREET_BUFFER_COLOR } from '../config/layers'
+import { BOUNDARY_LAYERS, COLOR_METHODS, CHOROPLETH_COLORS, COVERAGE_COLORS, TREE_LOSS_COLORS, TREE_GAIN_COLORS, STREET_BUFFER_COLOR, CANOPY_CHANGE_COLORS } from '../config/layers'
 import Leaderboard from './Leaderboard'
 
 /**
@@ -17,6 +17,8 @@ export default function Sidebar({
   onShowTreeGainsChange,
   showStreetBuffer,
   onShowStreetBufferChange,
+  showCanopyChange,
+  onShowCanopyChangeChange,
   layerData,
   colorBreaks,
   onFeatureSelect,
@@ -183,7 +185,7 @@ export default function Sidebar({
             onChange={e => onShowTreeGainsChange(e.target.checked)}
           />
           <span>
-            Show gains
+            Show significant gains
             <span className="radio-description">Green polygons at zoom 14+</span>
           </span>
         </label>
@@ -196,6 +198,17 @@ export default function Sidebar({
           <span>
             Show only street tree areas
             <span className="radio-description">Filter to 50 ft buffer around streets</span>
+          </span>
+        </label>
+        <label className="radio-row">
+          <input
+            type="checkbox"
+            checked={showCanopyChange}
+            onChange={e => onShowCanopyChangeChange(e.target.checked)}
+          />
+          <span>
+            Show all canopy change
+            <span className="radio-description">Gain, loss, no change at zoom 12+</span>
           </span>
         </label>
       </section>
@@ -266,6 +279,25 @@ export default function Sidebar({
               <span className="legend-swatch" style={{ background: STREET_BUFFER_COLOR, opacity: 0.3 }} />
               50 ft road buffer
             </div>
+          </>
+        )}
+
+        {showCanopyChange && (
+          <>
+            <div className="section-label" style={{ marginTop: '12px' }}>All Canopy Change</div>
+            <div className="legend-row">
+              <span className="legend-swatch" style={{ background: CANOPY_CHANGE_COLORS.no_change }} />
+              No change (2015–2020)
+            </div>
+            <div className="legend-row">
+              <span className="legend-swatch" style={{ background: CANOPY_CHANGE_COLORS.gain }} />
+              Canopy gain
+            </div>
+            <div className="legend-row">
+              <span className="legend-swatch" style={{ background: CANOPY_CHANGE_COLORS.loss }} />
+              Canopy loss
+            </div>
+            <div className="legend-note">Visible at zoom level 12+</div>
           </>
         )}
       </section>

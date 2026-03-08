@@ -137,9 +137,9 @@ for build and deployment instructions.
 | 3 | Web visualization — React + MapLibre map prototype | ✅ Complete |
 | 4 | Web visualization — street layer + search | ✅ Complete |
 | 5 | Publish to GitHub | ✅ Complete |
-| 6 | Google Street View historical imagery integration | ⬜ Roadmap |
-| 7 | Full 3.3M canopy polygon PMTiles layer | ⬜ Roadmap |
-| 8 | County-wide municipal boundary layer | ⬜ Roadmap |
+| 6 | Street View links, leaderboard, coverage metric, street buffer filter | ✅ Complete |
+| 7 | Full 3.3M canopy polygon PMTiles layer | ✅ Complete |
+| 8 | County-wide municipal boundary layer | ✅ Complete |
 
 ---
 

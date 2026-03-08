@@ -11,6 +11,7 @@ export default function App() {
   const [showTreeLosses, setShowTreeLosses]               = useState(true)
   const [showTreeGains, setShowTreeGains]                 = useState(true)
   const [showStreetBuffer, setShowStreetBuffer]           = useState(false)
+  const [showCanopyChange, setShowCanopyChange]           = useState(false)
   const [hoveredFeature, setHoveredFeature]               = useState(null)
   const [selectedFeatureName, setSelectedFeatureName]     = useState(null)
 
@@ -76,6 +77,8 @@ export default function App() {
         onShowTreeGainsChange={setShowTreeGains}
         showStreetBuffer={showStreetBuffer}
         onShowStreetBufferChange={setShowStreetBuffer}
+        showCanopyChange={showCanopyChange}
+        onShowCanopyChangeChange={setShowCanopyChange}
         layerData={enrichedLayerData}
         colorBreaks={colorBreaks}
         onFeatureSelect={handleFeatureSelect}
@@ -97,6 +100,7 @@ export default function App() {
           showTreeGains={showTreeGains}
           showStreetBuffer={showStreetBuffer}
           streetBufferData={streetBufferData}
+          showCanopyChange={showCanopyChange}
           selectedFeatureName={selectedFeatureName}
           hoveredFeature={hoveredFeature}
           onHover={setHoveredFeature}

@@ -15,6 +15,10 @@ import {
   TREE_GAINS_PMTILES_PATH,
   TREE_GAINS_SOURCE_LAYER,
   STREET_BUFFER_COLOR,
+  CANOPY_CHANGE_PMTILES_PATH,
+  CANOPY_CHANGE_SOURCE_LAYER,
+  CANOPY_CHANGE_MIN_ZOOM,
+  CANOPY_CHANGE_COLORS,
 } from '../config/layers'
 import { buildColorExpression } from '../hooks/useLayerData'
 import InfoPanel from './InfoPanel'
@@ -44,6 +48,7 @@ export default function MapView({
   showTreeGains,
   showStreetBuffer,
   streetBufferData,
+  showCanopyChange,
   selectedFeatureName,
   hoveredFeature,
   onHover,
@@ -63,6 +68,11 @@ export default function MapView({
   const treeGainsUrl = useMemo(() => {
     const origin = typeof window !== 'undefined' ? window.location.origin : ''
     return `pmtiles://${origin}${TREE_GAINS_PMTILES_PATH}`
+  }, [])
+
+  const canopyChangeUrl = useMemo(() => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : ''
+    return `pmtiles://${origin}${CANOPY_CHANGE_PMTILES_PATH}`
   }, [])
 
   const isLineLayer = activeLayerConfig?.geometryType === 'line'
@@ -172,6 +182,51 @@ export default function MapView({
               'line-color': STREET_BUFFER_COLOR,
               'line-width': 0.5,
               'line-opacity': 0.4,
+            }}
+          />
+        </Source>
+      )}
+
+      {/* ── Full canopy change layer (3.3M polygons, PMTiles) ──────── */}
+      {showCanopyChange && (
+        <Source id="canopy-change" type="vector" url={canopyChangeUrl}>
+          <Layer
+            {...{
+              id: 'canopy-no-change',
+              type: 'fill',
+              'source-layer': CANOPY_CHANGE_SOURCE_LAYER,
+              minzoom: CANOPY_CHANGE_MIN_ZOOM,
+              filter: ['==', ['get', 'change_class'], 'no_change'],
+              paint: {
+                'fill-color': CANOPY_CHANGE_COLORS.no_change,
+                'fill-opacity': 0.5,
+              },
+            }}
+          />
+          <Layer
+            {...{
+              id: 'canopy-gain',
+              type: 'fill',
+              'source-layer': CANOPY_CHANGE_SOURCE_LAYER,
+              minzoom: CANOPY_CHANGE_MIN_ZOOM,
+              filter: ['==', ['get', 'change_class'], 'gain'],
+              paint: {
+                'fill-color': CANOPY_CHANGE_COLORS.gain,
+                'fill-opacity': 0.7,
+              },
+            }}
+          />
+          <Layer
+            {...{
+              id: 'canopy-loss',
+              type: 'fill',
+              'source-layer': CANOPY_CHANGE_SOURCE_LAYER,
+              minzoom: CANOPY_CHANGE_MIN_ZOOM,
+              filter: ['==', ['get', 'change_class'], 'loss'],
+              paint: {
+                'fill-color': CANOPY_CHANGE_COLORS.loss,
+                'fill-opacity': 0.7,
+              },
             }}
           />
         </Source>
