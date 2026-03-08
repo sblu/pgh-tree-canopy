@@ -76,6 +76,7 @@ body { height: 100vh; overflow: hidden; }
   flex-direction: column;
   overflow-y: auto;
   overflow-x: hidden;
+  padding-right: 4px;
 }
 
 .sidebar-header {
@@ -118,6 +119,112 @@ body { height: 100vh; overflow: hidden; }
   letter-spacing: 0.08em;
   color: var(--sidebar-muted);
   margin-bottom: 8px;
+}
+
+/* ─── My Location row ───────────────────────────────────────────────────── */
+.locate-row .toggle-row { flex: 1; }
+
+.locate-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.locate-label .radio-description {
+  width: 100%;
+}
+
+.locate-dot {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid #64748b;
+  background: #475569;
+  cursor: default;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.locate-dot.active {
+  background: #4285f4;
+  border-color: #93bbfd;
+  box-shadow: 0 0 6px rgba(66, 133, 244, 0.5);
+  cursor: pointer;
+}
+
+.locate-dot.active:hover {
+  box-shadow: 0 0 10px rgba(66, 133, 244, 0.8);
+}
+
+/* ─── Pill toggle switch ────────────────────────────────────────────────── */
+.toggle-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 5px 0;
+  cursor: pointer;
+  line-height: 1.35;
+}
+
+.toggle-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-pill {
+  position: relative;
+  flex-shrink: 0;
+  width: 36px;
+  height: 20px;
+  background: #475569;
+  border-radius: 10px;
+  transition: background 0.2s;
+  margin-top: 1px;
+}
+
+.toggle-pill::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.2s;
+}
+
+.toggle-input:checked + .toggle-pill {
+  background: var(--accent);
+}
+
+.toggle-input:checked + .toggle-pill::after {
+  transform: translateX(16px);
+}
+
+.toggle-row.disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.toggle-input:disabled + .toggle-pill {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* ─── User location blue dot on map ─────────────────────────────────────── */
+.user-location-dot {
+  width: 14px;
+  height: 14px;
+  background: #4285f4;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 6px rgba(66, 133, 244, 0.6);
 }
 
 /* ─── Radio / checkbox rows ──────────────────────────────────────────────── */

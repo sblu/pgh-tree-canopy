@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { BOUNDARY_LAYERS, STREET_BUFFER_PATH, COLOR_METHODS, CHOROPLETH_COLORS, COVERAGE_COLORS } from './config/layers'
 import { useLayerData, computeQuantileBreaks } from './hooks/useLayerData'
 import Sidebar from './components/Sidebar'
@@ -15,6 +15,64 @@ export default function App() {
   const [hoveredFeature, setHoveredFeature]               = useState(null)
   const [selectedFeatureName, setSelectedFeatureName]     = useState(null)
   const [sidebarOpen, setSidebarOpen]                     = useState(true)
+  const [showLocation, setShowLocation]                   = useState(false)
+  const [userLocation, setUserLocation]                   = useState(null)
+  const [locationError, setLocationError]                 = useState(null)
+  const [flyToLocation, setFlyToLocation]                 = useState(null)
+  const watchIdRef                                        = useRef(null)
+
+  const locationAvailable = navigator.geolocation && window.isSecureContext
+
+  // Start/stop watching geolocation when toggle changes
+  useEffect(() => {
+    if (!showLocation) {
+      if (watchIdRef.current != null) {
+        navigator.geolocation.clearWatch(watchIdRef.current)
+        watchIdRef.current = null
+      }
+      setUserLocation(null)
+      // Don't clear locationError here — let it persist so user sees why it failed
+      return
+    }
+    if (!locationAvailable) {
+      setLocationError('Location requires HTTPS')
+      setShowLocation(false)
+      return
+    }
+    // Clear any previous error when user tries again
+    setLocationError(null)
+    console.log('[Location] Starting watchPosition, isSecureContext:', window.isSecureContext)
+    watchIdRef.current = navigator.geolocation.watchPosition(
+      pos => {
+        const loc = { longitude: pos.coords.longitude, latitude: pos.coords.latitude }
+        setLocationError(null)
+        setUserLocation(prev => {
+          if (!prev) setFlyToLocation(loc)
+          return loc
+        })
+      },
+      err => {
+        console.warn('[Location] Error:', err.code, err.message)
+        setLocationError(
+          err.code === 1 ? 'Location permission denied'
+          : err.code === 3 ? 'Location timed out'
+          : 'Location unavailable'
+        )
+        setShowLocation(false)
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 5000 }
+    )
+    return () => {
+      if (watchIdRef.current != null) {
+        navigator.geolocation.clearWatch(watchIdRef.current)
+        watchIdRef.current = null
+      }
+    }
+  }, [showLocation, locationAvailable])
+
+  const handlePanToLocation = useCallback(() => {
+    if (userLocation) setFlyToLocation(userLocation)
+  }, [userLocation])
 
   const activeLayerConfig = BOUNDARY_LAYERS.find(l => l.id === activeBoundaryLayerId)
 
@@ -86,6 +144,12 @@ export default function App() {
         onFeatureSelect={handleFeatureSelect}
         onHover={setHoveredFeature}
         onHoverEnd={() => setHoveredFeature(null)}
+        showLocation={showLocation}
+        onShowLocationChange={setShowLocation}
+        userLocation={userLocation}
+        locationError={locationError}
+        locationAvailable={locationAvailable}
+        onPanToLocation={handlePanToLocation}
       />
       </div>
 
@@ -116,6 +180,9 @@ export default function App() {
           onHover={setHoveredFeature}
           onHoverEnd={() => setHoveredFeature(null)}
           onFeatureClick={handleFeatureSelect}
+          userLocation={userLocation}
+          flyToLocation={flyToLocation}
+          onFlyToComplete={() => setFlyToLocation(null)}
         />
       </main>
     </div>

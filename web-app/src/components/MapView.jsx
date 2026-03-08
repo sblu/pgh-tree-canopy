@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useMemo, useEffect } from 'react'
-import Map, { Source, Layer, Popup, NavigationControl, ScaleControl } from 'react-map-gl/maplibre'
+import Map, { Source, Layer, Popup, Marker, NavigationControl, ScaleControl } from 'react-map-gl/maplibre'
 import maplibregl from 'maplibre-gl'
 import { Protocol } from 'pmtiles'
 import 'maplibre-gl/dist/maplibre-gl.css'
@@ -60,6 +60,9 @@ export default function MapView({
   onHover,
   onHoverEnd,
   onFeatureClick,
+  userLocation,
+  flyToLocation,
+  onFlyToComplete,
 }) {
   const mapRef = useRef(null)
   const [clickedTree, setClickedTree] = useState(null)
@@ -132,6 +135,18 @@ export default function MapView({
     addCoords(feature.geometry.coordinates)
     map.fitBounds(bounds, { padding: 60, maxZoom: 15, duration: 800 })
   }, [selectedFeatureName, layerData])
+
+  // Fly to user's location when requested
+  useEffect(() => {
+    if (!flyToLocation || !mapRef.current) return
+    const map = mapRef.current.getMap()
+    map.flyTo({
+      center: [flyToLocation.longitude, flyToLocation.latitude],
+      zoom: 15,
+      duration: 1200,
+    })
+    onFlyToComplete()
+  }, [flyToLocation, onFlyToComplete])
 
   const [hoveredTree, setHoveredTree] = useState(null)
 
@@ -493,6 +508,17 @@ export default function MapView({
             }}
           />
         </Source>
+      )}
+
+      {/* ── User location blue dot ───────────────────────────────── */}
+      {userLocation && (
+        <Marker
+          longitude={userLocation.longitude}
+          latitude={userLocation.latitude}
+          anchor="center"
+        >
+          <div className="user-location-dot" />
+        </Marker>
       )}
 
       {/* ── Hover popup (boundary zones) — close button visible on mobile only */}

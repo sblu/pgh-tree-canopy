@@ -24,6 +24,12 @@ export default function Sidebar({
   onFeatureSelect,
   onHover,
   onHoverEnd,
+  showLocation,
+  onShowLocationChange,
+  userLocation,
+  locationError,
+  locationAvailable,
+  onPanToLocation,
 }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchFocused, setSearchFocused] = useState(false)
@@ -81,6 +87,34 @@ export default function Sidebar({
           <div className="sidebar-subtitle">2015–2020 Change</div>
         </div>
       </header>
+
+      {/* My Location */}
+      <section className="sidebar-section">
+        <div className="locate-row">
+          <label className={`toggle-row${!locationAvailable ? ' disabled' : ''}`}>
+            <span className="locate-label">
+              My Location
+              <span
+                className={`locate-dot${userLocation ? ' active' : ''}`}
+                role="button"
+                tabIndex={userLocation ? 0 : -1}
+                onClick={e => { e.preventDefault(); e.stopPropagation(); if (userLocation) onPanToLocation() }}
+                title={userLocation ? 'Pan to my location' : 'Enable location first'}
+              />
+              {locationError && <span className="radio-description" style={{ color: '#f87171' }}>{locationError}</span>}
+              {!locationAvailable && !locationError && <span className="radio-description">Requires HTTPS</span>}
+            </span>
+            <input
+              type="checkbox"
+              className="toggle-input"
+              checked={showLocation}
+              onChange={e => onShowLocationChange(e.target.checked)}
+              disabled={!locationAvailable}
+            />
+            <span className="toggle-pill" />
+          </label>
+        </div>
+      </section>
 
       {/* Boundary layer switcher */}
       <section className="sidebar-section">
@@ -171,50 +205,58 @@ export default function Sidebar({
       <section className="sidebar-section">
         <div className="section-label">Display (zoom in to display)</div>
         <div className="display-group">
-          <label className="radio-row">
-            <input
-              type="checkbox"
-              checked={showTreeLosses}
-              onChange={e => onShowTreeLossesChange(e.target.checked)}
-            />
+          <label className="toggle-row">
             <span>
               Show mature tree losses
               <span className="radio-description">Red polygons at zoom 12+</span>
             </span>
-          </label>
-          <label className="radio-row">
             <input
               type="checkbox"
-              checked={showTreeGains}
-              onChange={e => onShowTreeGainsChange(e.target.checked)}
+              className="toggle-input"
+              checked={showTreeLosses}
+              onChange={e => onShowTreeLossesChange(e.target.checked)}
             />
+            <span className="toggle-pill" />
+          </label>
+          <label className="toggle-row">
             <span>
               Show significant gains
               <span className="radio-description">Green polygons at zoom 12+</span>
             </span>
-          </label>
-          <label className="radio-row">
             <input
               type="checkbox"
-              checked={showStreetBuffer}
-              onChange={e => onShowStreetBufferChange(e.target.checked)}
+              className="toggle-input"
+              checked={showTreeGains}
+              onChange={e => onShowTreeGainsChange(e.target.checked)}
             />
+            <span className="toggle-pill" />
+          </label>
+          <label className="toggle-row">
             <span>
               Show only street tree areas
               <span className="radio-description">Filter to 50 ft buffer around City of Pittsburgh streets</span>
             </span>
+            <input
+              type="checkbox"
+              className="toggle-input"
+              checked={showStreetBuffer}
+              onChange={e => onShowStreetBufferChange(e.target.checked)}
+            />
+            <span className="toggle-pill" />
           </label>
         </div>
-        <label className="radio-row" style={{ marginTop: '8px' }}>
-          <input
-            type="checkbox"
-            checked={showCanopyChange}
-            onChange={e => onShowCanopyChangeChange(e.target.checked)}
-          />
+        <label className="toggle-row" style={{ marginTop: '8px' }}>
           <span>
             Show all canopy changes
             <span className="radio-description">Gain, loss, no change at zoom 12+</span>
           </span>
+          <input
+            type="checkbox"
+            className="toggle-input"
+            checked={showCanopyChange}
+            onChange={e => onShowCanopyChangeChange(e.target.checked)}
+          />
+          <span className="toggle-pill" />
         </label>
       </section>
 
