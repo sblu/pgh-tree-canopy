@@ -94,7 +94,10 @@ export default function Sidebar({
               checked={activeBoundaryLayerId === layer.id}
               onChange={() => onBoundaryLayerChange(layer.id)}
             />
-            {layer.label}
+            <span>
+              {layer.label}
+              {layer.description && <span className="radio-description">{layer.description}</span>}
+            </span>
           </label>
         ))}
       </section>
@@ -166,48 +169,50 @@ export default function Sidebar({
 
       {/* Display options */}
       <section className="sidebar-section">
-        <div className="section-label">Display</div>
-        <label className="radio-row">
-          <input
-            type="checkbox"
-            checked={showTreeLosses}
-            onChange={e => onShowTreeLossesChange(e.target.checked)}
-          />
-          <span>
-            Show mature tree losses
-            <span className="radio-description">Red polygons at zoom 14+</span>
-          </span>
-        </label>
-        <label className="radio-row">
-          <input
-            type="checkbox"
-            checked={showTreeGains}
-            onChange={e => onShowTreeGainsChange(e.target.checked)}
-          />
-          <span>
-            Show significant gains
-            <span className="radio-description">Green polygons at zoom 14+</span>
-          </span>
-        </label>
-        <label className="radio-row">
-          <input
-            type="checkbox"
-            checked={showStreetBuffer}
-            onChange={e => onShowStreetBufferChange(e.target.checked)}
-          />
-          <span>
-            Show only street tree areas
-            <span className="radio-description">Filter to 50 ft buffer around streets</span>
-          </span>
-        </label>
-        <label className="radio-row">
+        <div className="section-label">Display (zoom in to display)</div>
+        <div className="display-group">
+          <label className="radio-row">
+            <input
+              type="checkbox"
+              checked={showTreeLosses}
+              onChange={e => onShowTreeLossesChange(e.target.checked)}
+            />
+            <span>
+              Show mature tree losses
+              <span className="radio-description">Red polygons at zoom 12+</span>
+            </span>
+          </label>
+          <label className="radio-row">
+            <input
+              type="checkbox"
+              checked={showTreeGains}
+              onChange={e => onShowTreeGainsChange(e.target.checked)}
+            />
+            <span>
+              Show significant gains
+              <span className="radio-description">Green polygons at zoom 12+</span>
+            </span>
+          </label>
+          <label className="radio-row">
+            <input
+              type="checkbox"
+              checked={showStreetBuffer}
+              onChange={e => onShowStreetBufferChange(e.target.checked)}
+            />
+            <span>
+              Show only street tree areas
+              <span className="radio-description">Filter to 50 ft buffer around City of Pittsburgh streets</span>
+            </span>
+          </label>
+        </div>
+        <label className="radio-row" style={{ marginTop: '8px' }}>
           <input
             type="checkbox"
             checked={showCanopyChange}
             onChange={e => onShowCanopyChangeChange(e.target.checked)}
           />
           <span>
-            Show all canopy change
+            Show all canopy changes
             <span className="radio-description">Gain, loss, no change at zoom 12+</span>
           </span>
         </label>
@@ -269,7 +274,7 @@ export default function Sidebar({
         )}
 
         {(showTreeLosses || showTreeGains) && (
-          <div className="legend-note">Visible at zoom level 14+</div>
+          <div className="legend-note">Visible at zoom level 12+</div>
         )}
 
         {showStreetBuffer && (

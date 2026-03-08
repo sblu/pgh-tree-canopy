@@ -68,6 +68,7 @@ export const BOUNDARY_LAYERS = [
   {
     id: 'streets',
     label: 'Streets',
+    description: 'City of Pittsburgh only',
     file: 'data/streets/street_stats.geojson',
     nameField: 'name',
     searchPlaceholder: 'Search streets…',
@@ -151,7 +152,7 @@ export const TREE_LOSSES_PMTILES_PATH = 'data/canopy_change/mature_tree_losses.p
 export const TREE_LOSSES_SOURCE_LAYER = 'mature_tree_losses'
 
 // Zoom level at which mature tree loss polygons become visible
-export const TREE_LOSSES_MIN_ZOOM = 14
+export const TREE_LOSSES_MIN_ZOOM = 12
 
 // Full canopy change layer (3.3M polygons, all change classes)
 export const CANOPY_CHANGE_PMTILES_PATH = 'data/canopy_change/canopy_change_all.pmtiles'

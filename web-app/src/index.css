@@ -34,7 +34,8 @@ body { height: 100vh; overflow: hidden; }
   width: var(--sidebar-width);
   min-width: var(--sidebar-width);
   transition: width 0.25s ease, min-width 0.25s ease;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .sidebar-wrapper.collapsed {
@@ -137,6 +138,12 @@ body { height: 100vh; overflow: hidden; }
 }
 
 .radio-row:hover { color: var(--accent-hover); }
+
+.display-group {
+  border: 1px solid var(--section-sep);
+  border-radius: 6px;
+  padding: 6px 10px;
+}
 
 .radio-description {
   display: block;
@@ -328,6 +335,11 @@ body { height: 100vh; overflow: hidden; }
 
 .sidebar-footer a { color: var(--accent); text-decoration: none; }
 .sidebar-footer a:hover { text-decoration: underline; }
+.sidebar-footer::after {
+  content: '';
+  display: block;
+  height: 120px;
+}
 
 /* ─── Map status overlay ─────────────────────────────────────────────────── */
 .map-status {
