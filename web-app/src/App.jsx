@@ -14,6 +14,7 @@ export default function App() {
   const [showCanopyChange, setShowCanopyChange]           = useState(false)
   const [hoveredFeature, setHoveredFeature]               = useState(null)
   const [selectedFeatureName, setSelectedFeatureName]     = useState(null)
+  const [sidebarOpen, setSidebarOpen]                     = useState(true)
 
   const activeLayerConfig = BOUNDARY_LAYERS.find(l => l.id === activeBoundaryLayerId)
 
@@ -66,6 +67,7 @@ export default function App() {
 
   return (
     <div className="app-layout">
+      <div className={`sidebar-wrapper${sidebarOpen ? '' : ' collapsed'}`}>
       <Sidebar
         activeBoundaryLayerId={activeBoundaryLayerId}
         onBoundaryLayerChange={handleBoundaryLayerChange}
@@ -85,8 +87,16 @@ export default function App() {
         onHover={setHoveredFeature}
         onHoverEnd={() => setHoveredFeature(null)}
       />
+      </div>
 
       <main className="map-container">
+        <button
+          className="sidebar-toggle"
+          onClick={() => setSidebarOpen(o => !o)}
+          title={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
+        >
+          {sidebarOpen ? '\u25C0' : '\u25B6'}
+        </button>
         {loading && <div className="map-status">Loading layer data…</div>}
         {error   && <div className="map-status error">Error: {error}</div>}
 

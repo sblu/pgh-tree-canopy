@@ -4,7 +4,7 @@
  */
 
 const fmt = {
-  acres: v => (v == null ? '—' : `${Math.abs(Number(v)).toLocaleString(undefined, { maximumFractionDigits: 1 })} ac`),
+  acres: v => (v == null ? '—' : `${Math.abs(Number(v)).toLocaleString(undefined, { maximumFractionDigits: 1 })} acres`),
   pct:   v => (v == null ? '—' : `${Number(v).toFixed(1)}%`),
   signedPct: v => {
     if (v == null) return '—'
@@ -76,7 +76,7 @@ export default function InfoPanel({ feature, method }) {
           {(p.mature_areas_lost > 0 || p.mature_areas_gained > 0) && (
             <>
               <tr className="section-header">
-                <td colSpan={2}>Gains &amp; losses (≥ 0.04 ac)</td>
+                <td colSpan={2}>Gains &amp; losses (≥ 0.04 acres)</td>
               </tr>
               <tr>
                 <td>Gains</td>

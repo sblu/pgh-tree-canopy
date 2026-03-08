@@ -1,8 +1,9 @@
 /**
- * TreePopup — shown when a user clicks on a loss/gain polygon.
+ * TreePopup — shown when a user hovers or clicks on a loss/gain polygon.
  * Displays size info and a Google Street View link to see the location.
+ * In hoverMode, shows data with a "click for Street View" hint.
  */
-export default function TreePopup({ feature, isGain }) {
+export default function TreePopup({ feature, isGain, hoverMode }) {
   if (!feature) return null
   const p = feature.properties
 
@@ -36,10 +37,14 @@ export default function TreePopup({ feature, isGain }) {
         {acres != null && (
           <div className="tree-popup-row">
             <span className="tree-popup-label">Area</span>
-            <span>{acres} ac</span>
+            <span>{acres} acres</span>
           </div>
         )}
-        {streetViewUrl ? (
+        {hoverMode ? (
+          <div className="tree-popup-hint">
+            Click for Google Street View
+          </div>
+        ) : streetViewUrl ? (
           <a
             className="tree-popup-streetview"
             href={streetViewUrl}

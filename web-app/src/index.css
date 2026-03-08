@@ -29,6 +29,42 @@ body { height: 100vh; overflow: hidden; }
   position: relative;
 }
 
+/* ─── Sidebar wrapper (collapse/expand) ──────────────────────────────────── */
+.sidebar-wrapper {
+  width: var(--sidebar-width);
+  min-width: var(--sidebar-width);
+  transition: width 0.25s ease, min-width 0.25s ease;
+  overflow: hidden;
+}
+
+.sidebar-wrapper.collapsed {
+  width: 0;
+  min-width: 0;
+}
+
+.sidebar-toggle {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 10;
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  border: none;
+  background: var(--sidebar-bg);
+  color: var(--sidebar-text);
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
+
+.sidebar-toggle:hover {
+  background: #334155;
+}
+
 /* ─── Sidebar ────────────────────────────────────────────────────────────── */
 .sidebar {
   width: var(--sidebar-width);
@@ -315,7 +351,7 @@ body { height: 100vh; overflow: hidden; }
   padding: 0 !important;
   border-radius: 8px !important;
   box-shadow: 0 4px 20px rgba(0,0,0,0.25) !important;
-  overflow: hidden;
+  overflow: visible;
 }
 
 /* Remove the rounded corner where the tip connects so there's no gap */
@@ -413,11 +449,71 @@ body { height: 100vh; overflow: hidden; }
   background: #1d4ed8;
 }
 
+.tree-popup-hint {
+  margin-top: 8px;
+  color: #1e40af;
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+}
+
 .tree-popup-no-coords {
   margin-top: 8px;
   color: #94a3b8;
   font-style: italic;
   font-size: 11px;
+}
+
+/* ─── Popup close button (white circle, black X, big touch target) ───── */
+/* Hover popup close button: same style, hidden on desktop (mouse devices) */
+.popup-hover .maplibregl-popup-close-button {
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  width: 28px !important;
+  height: 28px !important;
+  line-height: 28px !important;
+  text-align: center !important;
+  padding: 0 !important;
+  color: #1e293b !important;
+  background: #fff !important;
+  border: 2px solid #cbd5e1 !important;
+  border-radius: 50% !important;
+  cursor: pointer !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.25) !important;
+  top: -12px !important;
+  right: -12px !important;
+  z-index: 1 !important;
+}
+
+@media (hover: hover) {
+  .popup-hover .maplibregl-popup-close-button {
+    display: none !important;
+  }
+}
+
+.popup-with-close .maplibregl-popup-close-button {
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  width: 28px !important;
+  height: 28px !important;
+  line-height: 28px !important;
+  text-align: center !important;
+  padding: 0 !important;
+  color: #1e293b !important;
+  background: #fff !important;
+  border: 2px solid #cbd5e1 !important;
+  border-radius: 50% !important;
+  cursor: pointer !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.25) !important;
+  top: -12px !important;
+  right: -12px !important;
+  z-index: 1 !important;
+}
+
+.popup-with-close .maplibregl-popup-close-button:hover {
+  color: #000 !important;
+  background: #f1f5f9 !important;
+  border-color: #94a3b8 !important;
 }
 
 /* ─── MapLibre control overrides ─────────────────────────────────────────── */

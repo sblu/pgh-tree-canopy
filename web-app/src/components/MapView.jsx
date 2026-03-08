@@ -110,11 +110,24 @@ export default function MapView({
     map.fitBounds(bounds, { padding: 60, maxZoom: 15, duration: 800 })
   }, [selectedFeatureName, layerData])
 
+  const [hoveredTree, setHoveredTree] = useState(null)
+
   const handleMouseMove = useCallback(e => {
     const feature = e.features?.[0]
     if (feature) {
-      onHover({ feature, lngLat: e.lngLat })
+      if (TREE_LAYER_IDS.includes(feature.layer?.id)) {
+        setHoveredTree({
+          feature,
+          lngLat: e.lngLat,
+          isGain: feature.layer.id.startsWith('tree-gains'),
+        })
+        onHoverEnd()
+      } else {
+        setHoveredTree(null)
+        onHover({ feature, lngLat: e.lngLat })
+      }
     } else {
+      setHoveredTree(null)
       onHoverEnd()
     }
   }, [onHover, onHoverEnd])
@@ -125,11 +138,13 @@ export default function MapView({
     const feature = e.features?.[0]
     if (!feature) {
       setClickedTree(null)
+      setHoveredTree(null)
       return
     }
     // If the click hit a tree polygon layer, show Street View popup
     if (TREE_LAYER_IDS.includes(feature.layer?.id)) {
       const isGain = feature.layer.id.startsWith('tree-gains')
+      setHoveredTree(null)
       setClickedTree({
         feature,
         lngLat: e.lngLat,
@@ -137,6 +152,7 @@ export default function MapView({
       })
     } else {
       setClickedTree(null)
+      setHoveredTree(null)
       onFeatureClick(feature.properties?.name)
     }
   }, [onFeatureClick])
@@ -157,7 +173,7 @@ export default function MapView({
       onMouseLeave={handleMouseLeave}
       onClick={handleClick}
       onError={handleMapError}
-      cursor={hoveredFeature ? 'pointer' : 'grab'}
+      cursor={hoveredFeature || hoveredTree ? 'pointer' : 'grab'}
     >
       <NavigationControl position="top-right" />
       <ScaleControl position="bottom-right" unit="imperial" />
@@ -453,20 +469,41 @@ export default function MapView({
         </Source>
       )}
 
-      {/* ── Hover popup ─────────────────────────────────────────────── */}
-      {hoveredFeature && !clickedTree && (
+      {/* ── Hover popup (boundary zones) — close button visible on mobile only */}
+      {hoveredFeature && !clickedTree && !hoveredTree && (
         <Popup
           longitude={hoveredFeature.lngLat.lng}
           latitude={hoveredFeature.lngLat.lat}
-          closeButton={false}
+          closeButton={true}
           closeOnClick={false}
           anchor="bottom-left"
           maxWidth="300px"
+          className="popup-hover"
+          onClose={onHoverEnd}
         >
           <InfoPanel feature={hoveredFeature.feature} method={activeMethodId} />
         </Popup>
       )}
 
+      {/* ── Hover popup (tree gain/loss) — no close button ──────────── */}
+      {hoveredTree && !clickedTree && (
+        <Popup
+          longitude={hoveredTree.lngLat.lng}
+          latitude={hoveredTree.lngLat.lat}
+          closeButton={false}
+          closeOnClick={false}
+          anchor="bottom"
+          maxWidth="300px"
+        >
+          <TreePopup
+            feature={hoveredTree.feature}
+            isGain={hoveredTree.isGain}
+            hoverMode
+          />
+        </Popup>
+      )}
+
+      {/* ── Click popup (tree gain/loss — Street View + close button) ── */}
       {clickedTree && (
         <Popup
           longitude={clickedTree.lngLat.lng}
@@ -475,6 +512,7 @@ export default function MapView({
           closeOnClick={false}
           anchor="bottom"
           maxWidth="300px"
+          className="popup-with-close"
           onClose={() => setClickedTree(null)}
         >
           <TreePopup

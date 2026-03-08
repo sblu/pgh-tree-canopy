@@ -245,11 +245,11 @@ export default function Sidebar({
             <div className="section-label" style={{ marginTop: '12px' }}>Mature Tree Losses</div>
             <div className="legend-row">
               <span className="legend-swatch" style={{ background: TREE_LOSS_COLORS.tree }} />
-              Single tree ≥ 0.04 ac
+              Single tree ≥ 0.04 acres
             </div>
             <div className="legend-row">
               <span className="legend-swatch" style={{ background: TREE_LOSS_COLORS.grove }} />
-              Grove ≥ 0.07 ac
+              Grove ≥ 0.07 acres
             </div>
           </>
         )}
@@ -259,11 +259,11 @@ export default function Sidebar({
             <div className="section-label" style={{ marginTop: showTreeLosses ? '8px' : '12px' }}>Gains</div>
             <div className="legend-row">
               <span className="legend-swatch" style={{ background: TREE_GAIN_COLORS.tree }} />
-              Medium gain ≥ 0.04 ac
+              Medium gain ≥ 0.04 acres
             </div>
             <div className="legend-row">
               <span className="legend-swatch" style={{ background: TREE_GAIN_COLORS.grove }} />
-              Large gain ≥ 0.07 ac
+              Large gain ≥ 0.07 acres
             </div>
           </>
         )}
