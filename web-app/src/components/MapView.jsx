@@ -38,6 +38,12 @@ const PITTSBURGH_CENTER = { longitude: -79.9959, latitude: 40.4406, zoom: 11 }
 
 const TREE_LAYER_IDS = ['tree-losses-grove', 'tree-losses-tree', 'tree-gains-grove', 'tree-gains-tree']
 
+// Layers that must always render on top of boundary layers, in stacking order
+const LAYERS_ON_TOP = [
+  'tree-losses-grove', 'tree-losses-tree', 'tree-losses-outline',
+  'tree-gains-grove', 'tree-gains-tree', 'tree-gains-outline',
+]
+
 export default function MapView({
   layerData,
   activeLayerConfig,
@@ -92,6 +98,23 @@ export default function MapView({
     [activeMethodId, colorBreaks, colors]
   )
 
+  // Enforce layer stacking: tree gain/loss layers must always render
+  // above boundary layers. When sources load at different times,
+  // react-map-gl may add layers in the wrong order.
+  useEffect(() => {
+    const map = mapRef.current?.getMap()
+    if (!map) return
+    const reorder = () => {
+      for (const id of LAYERS_ON_TOP) {
+        if (map.getLayer(id)) map.moveLayer(id)
+      }
+    }
+    // Reorder now and also whenever new source data finishes loading
+    reorder()
+    map.on('sourcedata', reorder)
+    return () => map.off('sourcedata', reorder)
+  }, [layerData, showTreeLosses, showTreeGains])
+
   // Fly to / fit selected feature when search result is chosen
   useEffect(() => {
     if (!selectedFeatureName || !layerData || !mapRef.current) return
@@ -112,20 +135,23 @@ export default function MapView({
 
   const [hoveredTree, setHoveredTree] = useState(null)
 
+  // When multiple interactive layers overlap, prefer tree polygons over boundary fill
+  const pickTreeFeature = (features) =>
+    features?.find(f => TREE_LAYER_IDS.includes(f.layer?.id))
+
   const handleMouseMove = useCallback(e => {
-    const feature = e.features?.[0]
-    if (feature) {
-      if (TREE_LAYER_IDS.includes(feature.layer?.id)) {
-        setHoveredTree({
-          feature,
-          lngLat: e.lngLat,
-          isGain: feature.layer.id.startsWith('tree-gains'),
-        })
-        onHoverEnd()
-      } else {
-        setHoveredTree(null)
-        onHover({ feature, lngLat: e.lngLat })
-      }
+    const treeFeature = pickTreeFeature(e.features)
+    const feature = treeFeature || e.features?.[0]
+    if (treeFeature) {
+      setHoveredTree({
+        feature: treeFeature,
+        lngLat: e.lngLat,
+        isGain: treeFeature.layer.id.startsWith('tree-gains'),
+      })
+      onHoverEnd()
+    } else if (feature) {
+      setHoveredTree(null)
+      onHover({ feature, lngLat: e.lngLat })
     } else {
       setHoveredTree(null)
       onHoverEnd()
@@ -135,18 +161,18 @@ export default function MapView({
   const handleMouseLeave = useCallback(() => onHoverEnd(), [onHoverEnd])
 
   const handleClick = useCallback(e => {
-    const feature = e.features?.[0]
+    const treeFeature = pickTreeFeature(e.features)
+    const feature = treeFeature || e.features?.[0]
     if (!feature) {
       setClickedTree(null)
       setHoveredTree(null)
       return
     }
-    // If the click hit a tree polygon layer, show Street View popup
-    if (TREE_LAYER_IDS.includes(feature.layer?.id)) {
-      const isGain = feature.layer.id.startsWith('tree-gains')
+    if (treeFeature) {
+      const isGain = treeFeature.layer.id.startsWith('tree-gains')
       setHoveredTree(null)
       setClickedTree({
-        feature,
+        feature: treeFeature,
         lngLat: e.lngLat,
         isGain,
       })
