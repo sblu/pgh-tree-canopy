@@ -1,0 +1,27 @@
+# Claude Code local settings
+.claude/
+
+# Source GIS data (too large for git)
+source-gis-data/
+
+# Pipeline output (regenerated from source data)
+data-pipeline/output/
+
+# Data symlink (created by user, points to pipeline output)
+web-app/public/data
+
+# Node
+web-app/node_modules/
+web-app/dist/
+
+# Vite cache
+web-app/.vite/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+*.swp
+*.swo
