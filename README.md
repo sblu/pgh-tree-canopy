@@ -5,6 +5,8 @@ from 2015 to 2020, built for the
 [Squirrel Hill Urban Coalition](https://shuc.org/about-us/committees/parks-and-open-space-committee/)
 tree committee.
 
+![Pittsburgh Tree Canopy Map](TreeMapScreenshot.png)
+
 ---
 
 ## What It Shows
