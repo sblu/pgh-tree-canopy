@@ -180,6 +180,9 @@ per-boundary statistics.
 
 Uses `gpd.clip` with a simplified dissolved buffer union (5 ft tolerance)
 and processes canopy polygons in 50K-feature chunks with progress reporting.
+Per-street and per-boundary attribution uses `gpd.overlay(how="intersection")`
+to properly clip canopy pieces at individual street/zone boundaries and
+recompute areas from the clipped geometry.
 
 ```bash
 python3 scripts/05_street_canopy_stats.py

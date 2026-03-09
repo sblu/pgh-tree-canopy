@@ -53,6 +53,7 @@ providers do this by default).
 | `src/components/InfoPanel.jsx` | Hover popup content (zone statistics table) |
 | `src/components/Leaderboard.jsx` | Collapsible ranked list of zones by active metric |
 | `src/components/TreePopup.jsx` | Click popup for gain/loss polygons with Street View link |
+| `src/utils/streetView.js` | Nearest-street + heading calculation for Street View URLs |
 | `src/config/layers.js` | Layer definitions, color scales, PMTiles paths |
 | `src/hooks/useLayerData.js` | GeoJSON fetching, quantile breaks, color expressions |
 
@@ -64,6 +65,10 @@ providers do this by default).
 | react-map-gl | 8.1 | React wrapper for MapLibre GL JS |
 | maplibre-gl | 5.x | Map rendering engine |
 | pmtiles | 4.x | Protocol handler for PMTiles vector tiles |
+| @turf/nearest-point-on-line | 7.x | Find closest point on a street centerline |
+| @turf/along | 7.x | Offset camera position along street centerline |
+| @turf/bearing | 7.x | Compute heading from street point to polygon centroid |
+| @turf/distance | 7.x | Pick offset direction (away from target) |
 | vite | 5.x | Build tool and dev server |
 
 ## Data Files
@@ -85,6 +90,7 @@ data/
 │   └── canopy_change_all.pmtiles
 └── streets/
     ├── street_stats.geojson
+    ├── street_centerlines.geojson
     └── street_buffer_area.geojson
 ```
 

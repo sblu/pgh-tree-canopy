@@ -3,7 +3,10 @@
  * Displays size info and a Google Street View link to see the location.
  * In hoverMode, shows data with a "click for Street View" hint.
  */
-export default function TreePopup({ feature, isGain, hoverMode }) {
+import { useMemo } from 'react'
+import { getStreetViewUrl } from '../utils/streetView'
+
+export default function TreePopup({ feature, isGain, streetCenterlines, hoverMode }) {
   if (!feature) return null
   const p = feature.properties
 
@@ -15,14 +18,11 @@ export default function TreePopup({ feature, isGain, hoverMode }) {
     ? Number(rawAcres).toFixed(3)
     : null
 
-  // Use pre-computed centroid from the data pipeline
-  const lat = p.centroid_lat
-  const lng = p.centroid_lon
-
-  // Google Maps Street View URL (no API key needed)
-  const streetViewUrl = lat != null && lng != null
-    ? `https://www.google.com/maps/@${lat},${lng},3a,75y,0h,90t/data=!3m1!1e1`
-    : null
+  // Compute Street View URL: position on nearest street, aimed at polygon centroid
+  const streetViewUrl = useMemo(
+    () => getStreetViewUrl(p.centroid_lat, p.centroid_lon, streetCenterlines),
+    [p.centroid_lat, p.centroid_lon, streetCenterlines]
+  )
 
   return (
     <div className="tree-popup">

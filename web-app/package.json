@@ -10,6 +10,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@turf/along": "^7.3.4",
+    "@turf/bearing": "^7.3.4",
+    "@turf/helpers": "^7.3.4",
+    "@turf/nearest-point-on-line": "^7.3.4",
     "maplibre-gl": "^5.19.0",
     "pmtiles": "^4.4.0",
     "react": "^19.2.0",

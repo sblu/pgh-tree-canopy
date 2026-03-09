@@ -21,8 +21,9 @@ Intermediate outputs for QGIS inspection:
   street_stats.geojson             – per-street centerlines + canopy stats
 
 Methodology note on street intersections:
-  Where two named streets meet, a small canopy polygon at the intersection
-  may be attributed to both streets in the per-street statistics. This minor
+  Canopy polygons are clipped (gpd.overlay) to each individual named street
+  buffer to compute accurate areas.  Where two named streets meet, canopy
+  at the intersection is split and attributed to both streets. This minor
   double-counting is acceptable for visualisation purposes.
 
 Performance:
@@ -268,18 +269,17 @@ def add_street_stats_to_boundary_layers(
         # Load boundary layer and reproject to EPSG:2272 for the spatial join
         boundary = gpd.read_file(path).to_crs(BUFFER_CRS)
 
-        # Spatial join: map each canopy piece to the boundary zone it falls in.
-        # predicate='within' avoids double-counting polygons that straddle
-        # two zones at their shared edge.
-        joined = gpd.sjoin(
+        # Overlay intersection: clip each canopy piece to the boundary zone
+        # it falls in, then recompute area from the clipped geometry.
+        # This avoids the data-loss bug where polygons straddling two zone
+        # boundaries were dropped entirely by the old predicate='within'
+        # spatial join approach.
+        joined = gpd.overlay(
             canopy_in_streets,
             boundary[[name_field, "land_area_acres", "geometry"]],
-            how="left",
-            predicate="within",
+            how="intersection",
         )
-
-        # Drop canopy pieces that didn't land inside any zone
-        joined = joined.dropna(subset=[name_field])
+        joined["area_acres"] = acres_from_geometry(joined)
 
         # Aggregate to per-zone stats
         stats = aggregate_canopy_stats(joined, name_field)
@@ -308,8 +308,13 @@ def add_street_stats_to_boundary_layers(
             "canopy_2020_acres":  "street_canopy_2020_acres",
         })
 
-        # Merge street stats back into the boundary GeoJSON and re-save
+        # Merge street stats back into the boundary GeoJSON and re-save.
+        # Drop any existing street_* columns from a previous run to avoid
+        # duplicate-column suffixes (_x, _y) after the merge.
         boundary_wgs = gpd.read_file(path)  # reload in original WGS84
+        old_street_cols = [c for c in boundary_wgs.columns if c.startswith("street_")]
+        if old_street_cols:
+            boundary_wgs = boundary_wgs.drop(columns=old_street_cols)
         updated = boundary_wgs.merge(stats, left_on=name_field, right_index=True, how="left")
 
         # Fill zones with no nearby canopy change (e.g. fully paved areas)
@@ -360,18 +365,22 @@ def compute_per_street_stats(
     # Buffer area per street name (used for Method 1 denominator)
     named_buffers["buffer_area_acres"] = acres_from_geometry(named_buffers)
 
-    # Spatial join: map each clipped canopy piece to intersecting streets.
-    # A canopy polygon at a 4-way intersection may match multiple street names
-    # (minor double-counting; acceptable for visualisation).
-    log("Spatial joining canopy to named street buffers …", 2)
+    # Overlay intersection: clip each canopy piece to the individual named
+    # street buffer and recompute area from the clipped geometry.  This
+    # replaces the old sjoin(predicate='within') which silently dropped
+    # canopy polygons that straddled two streets' buffers, causing severe
+    # under-counting (e.g. Beechwood Blvd showed 7 acres instead of 24).
+    # A canopy polygon at a cross-street intersection may be split and
+    # attributed to both streets (minor double-counting; acceptable for
+    # visualisation).
+    log("Overlay-intersecting canopy with named street buffers …", 2)
     t = time.time()
-    joined = gpd.sjoin(
+    joined = gpd.overlay(
         canopy_in_streets,
         named_buffers[["FULLNAME", "buffer_area_acres", "geometry"]],
-        how="left",
-        predicate="within",
+        how="intersection",
     )
-    joined = joined.dropna(subset=["FULLNAME"])
+    joined["area_acres"] = acres_from_geometry(joined)
     log(f"{len(joined):,} canopy-street associations ({elapsed(t)})", 2)
 
     # Aggregate canopy stats by street name
@@ -469,6 +478,27 @@ def main() -> None:
     # Streets with no canopy change data (e.g. fully underground tunnels)
     stat_cols = [c for c in street_stats.columns if c != "FULLNAME"]
     street_output[stat_cols] = street_output[stat_cols].fillna(0.0)
+
+    # Rename FULLNAME → name to match the web app's nameField convention
+    street_output = street_output.rename(columns={"FULLNAME": "name"})
+
+    # Add land_area_acres (= buffer_area_acres) so the web InfoPanel can
+    # compute canopy-coverage percentages with the same field name used by
+    # boundary layers.
+    street_output["land_area_acres"] = street_output["buffer_area_acres"]
+
+    # Compute net-change metrics (matches boundary layer schema)
+    street_output["net_change_acres"] = (
+        street_output["gain_acres"] - street_output["loss_acres"]
+    )
+    street_output["net_pct_of_area"] = (
+        street_output["net_change_acres"] / street_output["land_area_acres"] * 100
+    )
+    street_output["net_pct_of_2015_canopy"] = street_output.apply(
+        lambda r: r["net_change_acres"] / r["canopy_2015_acres"] * 100
+        if r["canopy_2015_acres"] > 0 else 0.0,
+        axis=1,
+    )
 
     # Round float columns for clean output
     float_cols = street_output.select_dtypes("float64").columns

@@ -85,6 +85,11 @@ export default function App() {
   // Fetch street buffer (cached after first load)
   const { data: streetBufferData } = useLayerData('street_buffer', STREET_BUFFER_PATH)
 
+  // Fetch street centerlines for Street View nearest-street calculation
+  const { data: streetCenterlines } = useLayerData(
+    'street_centerlines', 'data/streets/street_centerlines.geojson'
+  )
+
   // Enrich features with canopy_2020_pct (derived from existing fields)
   const enrichedLayerData = useMemo(() => {
     if (!layerData?.features) return layerData
@@ -175,6 +180,7 @@ export default function App() {
           showStreetBuffer={showStreetBuffer}
           streetBufferData={streetBufferData}
           showCanopyChange={showCanopyChange}
+          streetCenterlines={streetCenterlines}
           selectedFeatureName={selectedFeatureName}
           hoveredFeature={hoveredFeature}
           onHover={setHoveredFeature}

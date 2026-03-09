@@ -55,6 +55,7 @@ export default function MapView({
   showStreetBuffer,
   streetBufferData,
   showCanopyChange,
+  streetCenterlines,
   selectedFeatureName,
   hoveredFeature,
   onHover,
@@ -550,6 +551,7 @@ export default function MapView({
           <TreePopup
             feature={hoveredTree.feature}
             isGain={hoveredTree.isGain}
+            streetCenterlines={streetCenterlines}
             hoverMode
           />
         </Popup>
@@ -570,6 +572,7 @@ export default function MapView({
           <TreePopup
             feature={clickedTree.feature}
             isGain={clickedTree.isGain}
+            streetCenterlines={streetCenterlines}
           />
         </Popup>
       )}
