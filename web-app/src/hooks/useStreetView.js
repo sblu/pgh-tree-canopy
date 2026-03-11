@@ -4,6 +4,7 @@
  * and returns Static API image URLs for a before/after comparison.
  */
 import { useState, useEffect, useRef } from 'react'
+import { Loader } from '@googlemaps/js-api-loader'
 import bearing from '@turf/bearing'
 import { point } from '@turf/helpers'
 import { getStreetViewPosition } from '../utils/streetView'
@@ -12,26 +13,16 @@ const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ''
 
 // ── SDK lazy-loader (singleton) ─────────────────────────────────────────
 
-let sdkPromise = null
 let sdkFailed = false
+const loader = API_KEY ? new Loader({ apiKey: API_KEY, version: 'weekly' }) : null
 
 function loadGoogleMapsSDK() {
   if (sdkFailed) return Promise.reject(new Error('SDK previously failed to load'))
-  if (sdkPromise) return sdkPromise
-  if (window.google?.maps?.StreetViewService) return Promise.resolve()
-
-  sdkPromise = new Promise((resolve, reject) => {
-    const script = document.createElement('script')
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${API_KEY}`
-    script.async = true
-    script.onload = () => resolve()
-    script.onerror = () => {
-      sdkFailed = true
-      reject(new Error('Failed to load Google Maps SDK'))
-    }
-    document.head.appendChild(script)
+  if (!loader) return Promise.reject(new Error('No API key'))
+  return loader.importLibrary('streetView').catch(err => {
+    sdkFailed = true
+    throw err
   })
-  return sdkPromise
 }
 
 // ── Helpers ─────────────────────────────────────────────────────────────
@@ -128,14 +119,14 @@ export default function useStreetView(clickedTree, streetCenterlines) {
 
     ;(async () => {
       try {
-        await loadGoogleMapsSDK()
+        const { StreetViewService, StreetViewSource } = await loadGoogleMapsSDK()
         if (currentRequestId !== requestIdRef.current) return
 
-        const service = new google.maps.StreetViewService()
+        const service = new StreetViewService()
         const response = await service.getPanorama({
           location: { lat: pos.lat, lng: pos.lng },
           radius: 50,
-          source: google.maps.StreetViewSource.OUTDOOR,
+          source: StreetViewSource.OUTDOOR,
         })
         if (currentRequestId !== requestIdRef.current) return
 
