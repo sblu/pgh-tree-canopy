@@ -7,6 +7,8 @@ tree committee.
 
 ![Pittsburgh Tree Canopy Map](TreeMapScreenshot.png)
 
+![Street View comparison showing canopy loss](TreeStreetViewScreenshot.png)
+
 ---
 
 ## What It Shows
