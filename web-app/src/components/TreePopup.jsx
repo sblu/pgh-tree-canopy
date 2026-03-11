@@ -6,7 +6,14 @@
 import { useMemo } from 'react'
 import { getStreetViewUrl } from '../utils/streetView'
 
-export default function TreePopup({ feature, isGain, streetCenterlines, hoverMode, streetViewLoading, streetViewDisabled }) {
+const DISABLE_REASONS = {
+  'no-api-key': 'Street View imagery not configured',
+  'api-restricted': 'Street View API access denied',
+  'quota-exceeded': 'Street View API quota exceeded',
+  'sdk-load-failed': 'Street View failed to load',
+}
+
+export default function TreePopup({ feature, isGain, streetCenterlines, hoverMode, streetViewLoading, streetViewDisabled, disableReason }) {
   const p = feature?.properties
 
   // Compute Street View URL: position on nearest street, aimed at polygon centroid
@@ -50,14 +57,21 @@ export default function TreePopup({ feature, isGain, streetCenterlines, hoverMod
             Loading Street View...
           </div>
         ) : streetViewUrl ? (
-          <a
-            className="tree-popup-streetview"
-            href={streetViewUrl}
-            target="_blank"
-            rel="noreferrer"
-          >
-            Open in Google Street View
-          </a>
+          <>
+            <a
+              className="tree-popup-streetview"
+              href={streetViewUrl}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Open in Google Street View
+            </a>
+            {streetViewDisabled && disableReason && (
+              <div className="tree-popup-disable-reason">
+                {DISABLE_REASONS[disableReason] || disableReason}
+              </div>
+            )}
+          </>
         ) : (
           <div className="tree-popup-no-coords">
             Coordinates not available

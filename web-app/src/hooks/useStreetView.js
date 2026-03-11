@@ -101,6 +101,9 @@ export default function useStreetView(clickedTree, streetCenterlines) {
   const [loading, setLoading] = useState(false)
   const [panoData, setPanoData] = useState(null)
   const [disabled, setDisabled] = useState(!API_KEY)
+  const [disableReason, setDisableReason] = useState(
+    !API_KEY ? 'no-api-key' : null
+  )
   const requestIdRef = useRef(0)
   const disabledRef = useRef(!API_KEY)
 
@@ -167,11 +170,14 @@ export default function useStreetView(clickedTree, streetCenterlines) {
           `https://www.google.com/maps/@${actualLat},${actualLng},3a,75y,` +
           `${headingToCentroid.toFixed(1)}h,90t/data=!3m1!1e1`
 
+        const currentImageUrl = buildStaticUrl(currentEntry.pano, headingToCentroid)
+        const historicalImageUrl = historicalEntry
+          ? buildStaticUrl(historicalEntry.pano, headingToCentroid)
+          : null
+
         setPanoData({
-          currentImageUrl: buildStaticUrl(currentEntry.pano, headingToCentroid),
-          historicalImageUrl: historicalEntry
-            ? buildStaticUrl(historicalEntry.pano, headingToCentroid)
-            : null,
+          currentImageUrl,
+          historicalImageUrl,
           currentDate: formatDate(currentEntry.date),
           historicalDate: historicalEntry ? formatDate(historicalEntry.date) : null,
           streetViewUrl,
@@ -186,6 +192,10 @@ export default function useStreetView(clickedTree, streetCenterlines) {
           console.warn('[useStreetView] Permanent error — disabling Street View imagery')
           disabledRef.current = true
           setDisabled(true)
+          const reason = code === 'OVER_QUERY_LIMIT' ? 'quota-exceeded'
+            : (code === 'REQUEST_DENIED' || msg.includes('request_denied') || msg.includes('403')) ? 'api-restricted'
+            : 'sdk-load-failed'
+          setDisableReason(reason)
         }
         setPanoData(null)
       } finally {
@@ -196,5 +206,5 @@ export default function useStreetView(clickedTree, streetCenterlines) {
     })()
   }, [clickedTree, streetCenterlines])
 
-  return { loading, panoData, disabled }
+  return { loading, panoData, disabled, disableReason }
 }

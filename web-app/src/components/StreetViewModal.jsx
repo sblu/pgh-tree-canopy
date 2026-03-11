@@ -8,12 +8,6 @@ export default function StreetViewModal({ panoData, isGain, feature, onClose }) 
   const [currentImgError, setCurrentImgError] = useState(false)
   const [historicalImgError, setHistoricalImgError] = useState(false)
 
-  // Reset image error state when panoData changes (new polygon)
-  useEffect(() => {
-    setCurrentImgError(false)
-    setHistoricalImgError(false)
-  }, [panoData])
-
   // Close on Escape key
   useEffect(() => {
     const handleKey = e => { if (e.key === 'Escape') onClose() }
@@ -59,7 +53,7 @@ export default function StreetViewModal({ panoData, isGain, feature, onClose }) 
                 />
               )}
               <div className="sv-modal-date">
-                Before &mdash; {panoData.historicalDate}
+                Historical &mdash; {panoData.historicalDate}
               </div>
             </div>
           ) : (
@@ -83,7 +77,7 @@ export default function StreetViewModal({ panoData, isGain, feature, onClose }) 
               />
             )}
             <div className="sv-modal-date">
-              After &mdash; {panoData.currentDate}
+              Today &mdash; {panoData.currentDate}
             </div>
           </div>
         </div>

@@ -69,7 +69,7 @@ export default function MapView({
 }) {
   const mapRef = useRef(null)
   const [clickedTree, setClickedTree] = useState(null)
-  const { loading: svLoading, panoData: svPanoData, disabled: svDisabled } = useStreetView(clickedTree, streetCenterlines)
+  const { loading: svLoading, panoData: svPanoData, disabled: svDisabled, disableReason: svDisableReason } = useStreetView(clickedTree, streetCenterlines)
 
   // Build pmtiles:// URLs relative to the page's base URL.
   // This works regardless of what subdirectory the app is deployed to.
@@ -579,6 +579,7 @@ export default function MapView({
             streetCenterlines={streetCenterlines}
             streetViewLoading={svLoading}
             streetViewDisabled={svDisabled}
+            disableReason={svDisableReason}
           />
         </Popup>
       )}
@@ -586,6 +587,7 @@ export default function MapView({
 
       {svPanoData && clickedTree && (
         <StreetViewModal
+          key={svPanoData?.currentImageUrl}
           panoData={svPanoData}
           isGain={clickedTree.isGain}
           feature={clickedTree.feature}
