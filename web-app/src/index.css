@@ -647,3 +647,117 @@ body { margin: 0; overflow: hidden; }
 
 /* ─── MapLibre control overrides ─────────────────────────────────────────── */
 .maplibregl-ctrl-group { border-radius: 6px !important; overflow: hidden; }
+
+/* ─── Street View Modal ────────────────────────────────────────────────── */
+.sv-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.sv-modal {
+  background: #fff;
+  border-radius: 10px;
+  max-width: 900px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4);
+}
+
+.sv-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.sv-modal-title {
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.sv-modal-title.loss { color: #dc2626; }
+.sv-modal-title.gain { color: #16a34a; }
+
+.sv-modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #64748b;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+}
+
+.sv-modal-close:hover { color: #1e293b; }
+
+.sv-modal-images {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  flex-wrap: wrap;
+}
+
+.sv-modal-image-wrapper {
+  flex: 1;
+  min-width: 200px;
+}
+
+.sv-modal-img {
+  width: 100%;
+  height: auto;
+  border-radius: 6px;
+  display: block;
+}
+
+.sv-modal-img-fallback {
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  background: #f1f5f9;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.sv-modal-no-historical {
+  border: 2px dashed #cbd5e1;
+}
+
+.sv-modal-date {
+  text-align: center;
+  font-size: 12px;
+  color: #475569;
+  margin-top: 6px;
+  font-weight: 500;
+}
+
+.sv-modal-footer {
+  padding: 12px 16px;
+  border-top: 1px solid #e2e8f0;
+  text-align: center;
+}
+
+.sv-modal-link {
+  display: inline-block;
+  padding: 8px 20px;
+  background: #1e40af;
+  color: #fff;
+  border-radius: 5px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.sv-modal-link:hover {
+  background: #1d4ed8;
+}
