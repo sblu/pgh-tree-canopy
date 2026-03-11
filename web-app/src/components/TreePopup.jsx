@@ -6,9 +6,16 @@
 import { useMemo } from 'react'
 import { getStreetViewUrl } from '../utils/streetView'
 
-export default function TreePopup({ feature, isGain, streetCenterlines, hoverMode }) {
+export default function TreePopup({ feature, isGain, streetCenterlines, hoverMode, streetViewLoading, streetViewDisabled }) {
+  const p = feature?.properties
+
+  // Compute Street View URL: position on nearest street, aimed at polygon centroid
+  const streetViewUrl = useMemo(
+    () => p ? getStreetViewUrl(p.centroid_lat, p.centroid_lon, streetCenterlines) : null,
+    [p, streetCenterlines]
+  )
+
   if (!feature) return null
-  const p = feature.properties
 
   const sizeCategory = isGain
     ? (p.size_category === 'grove' ? 'Large gain' : 'Medium gain')
@@ -17,12 +24,6 @@ export default function TreePopup({ feature, isGain, streetCenterlines, hoverMod
   const acres = rawAcres != null
     ? Number(rawAcres).toFixed(3)
     : null
-
-  // Compute Street View URL: position on nearest street, aimed at polygon centroid
-  const streetViewUrl = useMemo(
-    () => getStreetViewUrl(p.centroid_lat, p.centroid_lon, streetCenterlines),
-    [p.centroid_lat, p.centroid_lon, streetCenterlines]
-  )
 
   return (
     <div className="tree-popup">
@@ -43,6 +44,10 @@ export default function TreePopup({ feature, isGain, streetCenterlines, hoverMod
         {hoverMode ? (
           <div className="tree-popup-hint">
             Click for Google Street View
+          </div>
+        ) : (streetViewLoading && !streetViewDisabled) ? (
+          <div className="tree-popup-hint">
+            Loading Street View...
           </div>
         ) : streetViewUrl ? (
           <a

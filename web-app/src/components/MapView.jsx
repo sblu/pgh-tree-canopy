@@ -5,6 +5,8 @@ import { Protocol } from 'pmtiles'
 import 'maplibre-gl/dist/maplibre-gl.css'
 
 import TreePopup from './TreePopup'
+import StreetViewModal from './StreetViewModal'
+import useStreetView from '../hooks/useStreetView'
 import {
   CHOROPLETH_COLORS,
   TREE_LOSS_COLORS,
@@ -67,6 +69,7 @@ export default function MapView({
 }) {
   const mapRef = useRef(null)
   const [clickedTree, setClickedTree] = useState(null)
+  const { loading: svLoading, panoData: svPanoData, disabled: svDisabled } = useStreetView(clickedTree, streetCenterlines)
 
   // Build pmtiles:// URLs relative to the page's base URL.
   // This works regardless of what subdirectory the app is deployed to.
@@ -204,6 +207,7 @@ export default function MapView({
   }, [])
 
   return (
+    <>
     <Map
       ref={mapRef}
       mapLib={maplibregl}
@@ -558,7 +562,7 @@ export default function MapView({
       )}
 
       {/* ── Click popup (tree gain/loss — Street View + close button) ── */}
-      {clickedTree && (
+      {clickedTree && !svPanoData && (
         <Popup
           longitude={clickedTree.lngLat.lng}
           latitude={clickedTree.lngLat.lat}
@@ -573,9 +577,21 @@ export default function MapView({
             feature={clickedTree.feature}
             isGain={clickedTree.isGain}
             streetCenterlines={streetCenterlines}
+            streetViewLoading={svLoading}
+            streetViewDisabled={svDisabled}
           />
         </Popup>
       )}
     </Map>
+
+      {svPanoData && clickedTree && (
+        <StreetViewModal
+          panoData={svPanoData}
+          isGain={clickedTree.isGain}
+          feature={clickedTree.feature}
+          onClose={() => setClickedTree(null)}
+        />
+      )}
+    </>
   )
 }
