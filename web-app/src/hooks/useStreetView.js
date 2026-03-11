@@ -18,18 +18,29 @@ let sdkFailed = false
 function loadGoogleMapsSDK() {
   if (sdkFailed) return Promise.reject(new Error('SDK previously failed to load'))
   if (sdkPromise) return sdkPromise
-  if (window.google?.maps?.StreetViewService) return Promise.resolve()
 
-  sdkPromise = new Promise((resolve, reject) => {
-    const script = document.createElement('script')
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${API_KEY}&loading=async`
-    script.async = true
-    script.onload = () => resolve()
-    script.onerror = () => {
-      sdkFailed = true
-      reject(new Error('Failed to load Google Maps SDK'))
+  sdkPromise = (async () => {
+    // Load the bootstrap script if not already present
+    if (!window.google?.maps?.importLibrary) {
+      await new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${API_KEY}&loading=async`
+        script.async = true
+        script.onload = () => resolve()
+        script.onerror = () => {
+          sdkFailed = true
+          reject(new Error('Failed to load Google Maps SDK'))
+        }
+        document.head.appendChild(script)
+      })
     }
-    document.head.appendChild(script)
+    // With loading=async, classes must be loaded via importLibrary
+    const lib = await window.google.maps.importLibrary('streetView')
+    return lib
+  })().catch(err => {
+    sdkFailed = true
+    sdkPromise = null
+    throw err
   })
   return sdkPromise
 }
@@ -128,14 +139,14 @@ export default function useStreetView(clickedTree, streetCenterlines) {
 
     ;(async () => {
       try {
-        await loadGoogleMapsSDK()
+        const { StreetViewService, StreetViewSource } = await loadGoogleMapsSDK()
         if (currentRequestId !== requestIdRef.current) return
 
-        const service = new window.google.maps.StreetViewService()
+        const service = new StreetViewService()
         const response = await service.getPanorama({
           location: { lat: pos.lat, lng: pos.lng },
           radius: 50,
-          source: window.google.maps.StreetViewSource.OUTDOOR,
+          source: StreetViewSource.OUTDOOR,
         })
         if (currentRequestId !== requestIdRef.current) return
 
@@ -177,10 +188,13 @@ export default function useStreetView(clickedTree, streetCenterlines) {
           streetViewUrl,
         })
       } catch (err) {
-        console.warn('[useStreetView]', err?.message || err)
+        const code = err?.code || ''
+        const msg = err?.message || String(err)
+        console.warn('[useStreetView]', msg, code ? `(code: ${code})` : '', err)
         if (currentRequestId !== requestIdRef.current) return
 
         if (isPermanentError(err)) {
+          console.warn('[useStreetView] Permanent error — disabling Street View imagery')
           disabledRef.current = true
           setDisabled(true)
         }
