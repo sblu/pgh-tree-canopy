@@ -29,12 +29,12 @@ function toLineStrings(feature) {
 /**
  * Given a polygon centroid and a GeoJSON FeatureCollection of street
  * centerlines, find the nearest point on the nearest street, back up
- * ~50 ft along the street for a better perspective, compute the bearing
- * toward the centroid, and return a Street View URL.
+ * ~50 ft along the street for a better perspective, and compute the
+ * bearing toward the centroid.
  *
- * Returns null if inputs are missing or no street is close enough.
+ * Returns { lat, lng, heading } or null if inputs are missing / no street nearby.
  */
-export function getStreetViewUrl(centroidLat, centroidLon, streetCenterlines) {
+export function getStreetViewPosition(centroidLat, centroidLon, streetCenterlines) {
   if (centroidLat == null || centroidLon == null || !streetCenterlines?.features?.length) {
     return null
   }
@@ -91,9 +91,6 @@ export function getStreetViewUrl(centroidLat, centroidLon, streetCenterlines) {
   if (!bestPoint || !bestLine) return null
 
   // Back up ~50 ft along the street for a better viewing angle.
-  // nearestPointOnLine returns `location` = distance (km) from the
-  // start of the line to the snapped point.  Try both directions and
-  // pick the one that moves further from the centroid.
   const loc = bestPoint.properties.location // km along line
   const candidateA = along(bestLine, Math.max(0, loc - OFFSET_KM))
   const candidateB = along(bestLine, loc + OFFSET_KM)
@@ -109,5 +106,15 @@ export function getStreetViewUrl(centroidLat, centroidLon, streetCenterlines) {
   // Bearing from the offset street point toward the polygon centroid
   const heading = (bearing(camera, centroid) + 360) % 360
 
-  return `https://www.google.com/maps/@${streetLat},${streetLng},3a,75y,${heading.toFixed(1)}h,90t/data=!3m1!1e1`
+  return { lat: streetLat, lng: streetLng, heading }
+}
+
+/**
+ * Convenience wrapper: returns a Google Street View URL string, or null.
+ * Public API is unchanged from the original.
+ */
+export function getStreetViewUrl(centroidLat, centroidLon, streetCenterlines) {
+  const pos = getStreetViewPosition(centroidLat, centroidLon, streetCenterlines)
+  if (!pos) return null
+  return `https://www.google.com/maps/@${pos.lat},${pos.lng},3a,75y,${pos.heading.toFixed(1)}h,90t/data=!3m1!1e1`
 }
