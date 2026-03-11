@@ -682,7 +682,14 @@ body { margin: 0; overflow: hidden; }
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
+}
+
+.sv-modal-address {
+  padding: 0 16px 8px;
+  font-size: 12px;
+  color: #475569;
   border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 12px;
 }
 
 .sv-modal-title {
@@ -752,6 +759,10 @@ body { margin: 0; overflow: hidden; }
   padding: 12px 16px;
   border-top: 1px solid #e2e8f0;
   text-align: center;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
 }
 
 .sv-modal-link {
@@ -767,4 +778,14 @@ body { margin: 0; overflow: hidden; }
 
 .sv-modal-link:hover {
   background: #1d4ed8;
+}
+
+.sv-modal-screenshot-btn {
+  border: none;
+  cursor: pointer;
+}
+
+.sv-modal-screenshot-btn:disabled {
+  opacity: 0.6;
+  cursor: wait;
 }

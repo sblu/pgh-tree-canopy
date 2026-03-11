@@ -175,12 +175,27 @@ export default function useStreetView(clickedTree, streetCenterlines) {
           ? buildStaticUrl(historicalEntry.pano, headingToCentroid)
           : null
 
+        // Reverse geocode the pano location for an address label
+        let address = null
+        try {
+          const geocoder = new window.google.maps.Geocoder()
+          const geoResponse = await geocoder.geocode({
+            location: { lat: actualLat, lng: actualLng },
+          })
+          if (geoResponse.results?.[0]) {
+            address = geoResponse.results[0].formatted_address
+          }
+        } catch {
+          // Geocoding is optional — silently skip if it fails
+        }
+
         setPanoData({
           currentImageUrl,
           historicalImageUrl,
           currentDate: formatDate(currentEntry.date),
           historicalDate: historicalEntry ? formatDate(historicalEntry.date) : null,
           streetViewUrl,
+          address,
         })
       } catch (err) {
         const code = err?.code || ''
