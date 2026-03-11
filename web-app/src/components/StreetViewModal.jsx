@@ -4,6 +4,7 @@
  */
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { toPng } from 'html-to-image'
+import { QRCodeSVG } from 'qrcode.react'
 
 export default function StreetViewModal({ panoData, isGain, feature, onClose }) {
   const [currentImgError, setCurrentImgError] = useState(false)
@@ -110,6 +111,11 @@ export default function StreetViewModal({ panoData, isGain, feature, onClose }) 
                 </div>
               </div>
             )}
+          </div>
+
+          <div className="sv-modal-qr">
+            <QRCodeSVG value={panoData.streetViewUrl} size={64} />
+            <span className="sv-modal-qr-label">Scan to open in Google Street View</span>
           </div>
         </div>
 
