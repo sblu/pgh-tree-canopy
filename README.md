@@ -27,6 +27,8 @@ grown or shrunk between 2015 and 2020. Key features:
   loss, no change) visible at zoom 12+
 - **Significant gains and losses** — zoom in to see individual gain/loss
   polygons ≥ 0.04 acres, with click-to-Street-View links
+- **Street View before/after** — click any loss polygon to see a side-by-side
+  comparison of Google Street View imagery from before and after the canopy change
 - **Street tree filter** — filter gain/loss overlays to only show polygons
   within the 50 ft street buffer zone
 - **Search** — search for any boundary zone by name and fly to it on the map
