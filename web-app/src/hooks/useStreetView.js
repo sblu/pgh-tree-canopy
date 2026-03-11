@@ -4,7 +4,7 @@
  * and returns Static API image URLs for a before/after comparison.
  */
 import { useState, useEffect, useRef } from 'react'
-import { Loader } from '@googlemaps/js-api-loader'
+import { setOptions, importLibrary } from '@googlemaps/js-api-loader'
 import bearing from '@turf/bearing'
 import { point } from '@turf/helpers'
 import { getStreetViewPosition } from '../utils/streetView'
@@ -14,12 +14,16 @@ const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ''
 // ── SDK lazy-loader (singleton) ─────────────────────────────────────────
 
 let sdkFailed = false
-const loader = API_KEY ? new Loader({ apiKey: API_KEY, version: 'weekly' }) : null
+let sdkConfigured = false
 
 function loadGoogleMapsSDK() {
   if (sdkFailed) return Promise.reject(new Error('SDK previously failed to load'))
-  if (!loader) return Promise.reject(new Error('No API key'))
-  return loader.importLibrary('streetView').catch(err => {
+  if (!API_KEY) return Promise.reject(new Error('No API key'))
+  if (!sdkConfigured) {
+    setOptions({ apiKey: API_KEY, version: 'weekly' })
+    sdkConfigured = true
+  }
+  return importLibrary('streetView').catch(err => {
     sdkFailed = true
     throw err
   })
