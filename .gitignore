@@ -1,6 +1,9 @@
 # Claude Code local settings
 .claude/
 
+# Superpowers brainstorm mockups
+.superpowers/
+
 # Source GIS data (too large for git)
 source-gis-data/
 
