@@ -14,10 +14,69 @@ npm install
 # Create symlink so the dev server can access pipeline output
 ln -s ../../data-pipeline/output public/data
 
+# Set up Google Maps API key (see below)
+cp .env.example .env
+# Edit .env and add your API key
+
 npm run dev
 ```
 
 Opens at http://localhost:5173
+
+## Google Maps API Key
+
+The Street View feature uses the Google Maps JavaScript API to show
+before/after Street View imagery for tree canopy loss polygons. The app
+works without an API key, but the Street View feature will be disabled.
+
+### Google Cloud Console Setup
+
+1. Go to the [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project (or select an existing one)
+3. Navigate to **APIs & Services > Library** and enable these three APIs:
+   - **Maps JavaScript API** — loads the Google Maps SDK in the browser
+   - **Street View Static API** — fetches Street View panorama images
+   - **Geocoding API** — reverse-geocodes panorama locations to street addresses
+4. Navigate to **APIs & Services > Credentials**
+5. Click **Create Credentials > API key**
+6. (Recommended) Click the new key to add restrictions:
+   - **Application restrictions:** HTTP referrers — add your domain(s)
+     (e.g. `https://yourdomain.com/*`, `http://localhost:5173/*` for dev)
+   - **API restrictions:** Restrict to the three APIs listed above
+
+### Adding the Key to the Project
+
+Copy `.env.example` to `.env` and replace the placeholder:
+
+```bash
+cp .env.example .env
+```
+
+```env
+VITE_GOOGLE_MAPS_API_KEY=AIzaSy...your-actual-key...
+```
+
+The key is loaded via `import.meta.env.VITE_GOOGLE_MAPS_API_KEY` in
+`src/hooks/useStreetView.js`. The `VITE_` prefix is required by Vite to
+expose the variable to client-side code.
+
+**Important:** `.env` is gitignored. Never commit your API key. For
+production builds, set the environment variable before running
+`npm run build`, or add it to your CI/CD environment.
+
+### Error States
+
+If the API key is missing or misconfigured, the app gracefully degrades:
+
+| Issue | Behavior |
+|-------|----------|
+| No API key | Street View button shows "API key not configured" |
+| API restricted / 403 | Street View button shows "API access denied" |
+| Quota exceeded | Street View button shows "Quota exceeded" |
+| SDK fails to load | Street View button shows "Street View unavailable" |
+
+The rest of the map (canopy layers, boundaries, search) works fully
+without the Google Maps API.
 
 ## Production Build
 

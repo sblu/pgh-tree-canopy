@@ -129,11 +129,16 @@ npm install
 # Create symlink so the dev server can access pipeline output
 ln -s ../../data-pipeline/output public/data
 
+# Set up Google Maps API key for Street View feature (optional)
+cp .env.example .env
+# Edit .env and add your key — see web-app/README.md for details
+
 npm run dev
 ```
 
 Opens at http://localhost:5173. See [`web-app/README.md`](web-app/README.md)
-for build and deployment instructions.
+for build and deployment instructions, including
+[Google Maps API setup](web-app/README.md#google-maps-api-key).
 
 ---
 
@@ -160,6 +165,7 @@ for build and deployment instructions.
 | Tile generation | tippecanoe 2.49+ (PMTiles format) |
 | Web map | React 19, Vite 5, MapLibre GL JS 5, react-map-gl 8 |
 | Vector tiles | pmtiles 4 (browser protocol handler) |
+| Street View | Google Maps JavaScript API (optional, requires API key) |
 | Basemap | CartoDB Positron (free, no API key) |
 | Hosting | Static files (any web server) |
 | Source GIS data | ESRI File Geodatabase (.gdb), EPSG:2272 |
