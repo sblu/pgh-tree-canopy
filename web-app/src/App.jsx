@@ -9,7 +9,7 @@ export default function App() {
   const [activeBoundaryLayerId, setActiveBoundaryLayerId] = useState('neighborhoods')
   const [activeMethodId, setActiveMethodId]               = useState('canopy_2020_pct')
   const [showTreeLosses, setShowTreeLosses]               = useState(true)
-  const [showTreeGains, setShowTreeGains]                 = useState(true)
+  const [showTreeGains, setShowTreeGains]                 = useState(false)
   const [showStreetBuffer, setShowStreetBuffer]           = useState(false)
   const [showCanopyChange, setShowCanopyChange]           = useState(false)
   const [hoveredFeature, setHoveredFeature]               = useState(null)
