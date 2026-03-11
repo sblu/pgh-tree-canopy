@@ -372,7 +372,11 @@ body { margin: 0; overflow: hidden; }
   max-height: 250px;
   overflow-y: auto;
   padding-bottom: 4px;
+  scrollbar-color: var(--section-sep) var(--sidebar-bg);
 }
+.leaderboard-list::-webkit-scrollbar { width: 8px; }
+.leaderboard-list::-webkit-scrollbar-track { background: var(--sidebar-bg); }
+.leaderboard-list::-webkit-scrollbar-thumb { background: var(--section-sep); border-radius: 4px; }
 
 .leaderboard-row {
   display: flex;

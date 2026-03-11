@@ -230,6 +230,7 @@ export default function MapView({
           <Layer
             id="street-buffer-fill"
             type="fill"
+            minzoom={TREE_LOSSES_MIN_ZOOM}
             paint={{
               'fill-color': STREET_BUFFER_COLOR,
               'fill-opacity': 0.15,
@@ -238,6 +239,7 @@ export default function MapView({
           <Layer
             id="street-buffer-outline"
             type="line"
+            minzoom={TREE_LOSSES_MIN_ZOOM}
             paint={{
               'line-color': STREET_BUFFER_COLOR,
               'line-width': 0.5,

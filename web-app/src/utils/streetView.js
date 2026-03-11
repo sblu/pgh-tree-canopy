@@ -32,11 +32,15 @@ function toLineStrings(feature) {
  * ~50 ft along the street for a better perspective, and compute the
  * bearing toward the centroid.
  *
- * Returns { lat, lng, heading } or null if inputs are missing / no street nearby.
+ * Returns { lat, lng, heading } or null if centroid coordinates are missing.
+ * Falls back to the centroid itself when no nearby street is found.
  */
 export function getStreetViewPosition(centroidLat, centroidLon, streetCenterlines) {
-  if (centroidLat == null || centroidLon == null || !streetCenterlines?.features?.length) {
-    return null
+  if (centroidLat == null || centroidLon == null) return null
+
+  // No street data available — fall back to the polygon centroid
+  if (!streetCenterlines?.features?.length) {
+    return { lat: centroidLat, lng: centroidLon, heading: 0 }
   }
 
   const centroid = point([centroidLon, centroidLat])
@@ -88,7 +92,11 @@ export function getStreetViewPosition(centroidLat, centroidLon, streetCenterline
     }
   }
 
-  if (!bestPoint || !bestLine) return null
+  // No nearby street found — fall back to the polygon centroid itself.
+  // Google Street View will snap to the nearest available panorama.
+  if (!bestPoint || !bestLine) {
+    return { lat: centroidLat, lng: centroidLon, heading: 0 }
+  }
 
   // Back up ~50 ft along the street for a better viewing angle.
   const loc = bestPoint.properties.location // km along line
