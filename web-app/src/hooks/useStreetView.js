@@ -4,7 +4,6 @@
  * and returns Static API image URLs for a before/after comparison.
  */
 import { useState, useEffect, useRef } from 'react'
-import { setOptions, importLibrary } from '@googlemaps/js-api-loader'
 import bearing from '@turf/bearing'
 import { point } from '@turf/helpers'
 import { getStreetViewPosition } from '../utils/streetView'
@@ -13,20 +12,26 @@ const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ''
 
 // ── SDK lazy-loader (singleton) ─────────────────────────────────────────
 
+let sdkPromise = null
 let sdkFailed = false
-let sdkConfigured = false
 
 function loadGoogleMapsSDK() {
   if (sdkFailed) return Promise.reject(new Error('SDK previously failed to load'))
-  if (!API_KEY) return Promise.reject(new Error('No API key'))
-  if (!sdkConfigured) {
-    setOptions({ apiKey: API_KEY, version: 'weekly' })
-    sdkConfigured = true
-  }
-  return importLibrary('streetView').catch(err => {
-    sdkFailed = true
-    throw err
+  if (sdkPromise) return sdkPromise
+  if (window.google?.maps?.StreetViewService) return Promise.resolve()
+
+  sdkPromise = new Promise((resolve, reject) => {
+    const script = document.createElement('script')
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${API_KEY}&loading=async`
+    script.async = true
+    script.onload = () => resolve()
+    script.onerror = () => {
+      sdkFailed = true
+      reject(new Error('Failed to load Google Maps SDK'))
+    }
+    document.head.appendChild(script)
   })
+  return sdkPromise
 }
 
 // ── Helpers ─────────────────────────────────────────────────────────────
@@ -123,14 +128,14 @@ export default function useStreetView(clickedTree, streetCenterlines) {
 
     ;(async () => {
       try {
-        const { StreetViewService, StreetViewSource } = await loadGoogleMapsSDK()
+        await loadGoogleMapsSDK()
         if (currentRequestId !== requestIdRef.current) return
 
-        const service = new StreetViewService()
+        const service = new window.google.maps.StreetViewService()
         const response = await service.getPanorama({
           location: { lat: pos.lat, lng: pos.lng },
           radius: 50,
-          source: StreetViewSource.OUTDOOR,
+          source: window.google.maps.StreetViewSource.OUTDOOR,
         })
         if (currentRequestId !== requestIdRef.current) return
 
