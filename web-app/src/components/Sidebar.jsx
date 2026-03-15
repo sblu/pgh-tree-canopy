@@ -40,6 +40,8 @@ export default function Sidebar({
   onReset,
   selectedFeatureName,
   onMobileSearchFocus,
+  streetPath,
+  onStreetPathStart,
 }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchFocused, setSearchFocused] = useState(false)
@@ -141,7 +143,7 @@ export default function Sidebar({
       {/* ── Search ── */}
       <section className="sidebar-section">
         <div className="section-label">
-          {selectedFeatureName ? (activeLayer?.label || 'Selected') : 'Find Your Neighborhood'}
+          {selectedFeatureName ? (activeLayer?.label || 'Selected') : (streetPath ? 'Find Your Street' : 'Find Your Neighborhood')}
         </div>
         <div className="search-container">
           {selectedFeatureName ? (
@@ -179,6 +181,18 @@ export default function Sidebar({
         <div className="prompt-card" style={{ borderLeftColor: PROMPT_CARDS.landing.borderColor }}>
           <div className="prompt-headline">{PROMPT_CARDS.landing.headline}</div>
           <div className="prompt-body">{PROMPT_CARDS.landing.body}</div>
+          <div className="prompt-action" style={{ marginTop: '8px' }}>
+            Find your neighborhood or{' '}
+            <span
+              role="button"
+              tabIndex={0}
+              onClick={onStreetPathStart}
+              onKeyDown={e => e.key === 'Enter' && onStreetPathStart()}
+              style={{ cursor: 'pointer', textDecoration: 'underline' }}
+            >
+              find your street
+            </span>
+          </div>
         </div>
       )}
 
@@ -210,7 +224,7 @@ export default function Sidebar({
         </div>
       )}
 
-      {explorationStage === 'street-level' && (
+      {explorationStage === 'street-level' && !streetPath && (
         <div className="prompt-card" style={{ borderLeftColor: PROMPT_CARDS['street-level'].borderColor }}>
           <div className="prompt-headline">{PROMPT_CARDS['street-level'].headline}</div>
           <div className="prompt-body">
@@ -259,7 +273,7 @@ export default function Sidebar({
           <span className="cta-subtle-emoji">🌱</span>
           <span className="cta-subtle-text">
             Want to help?{' '}
-            <a href="https://shuc.org" target="_blank" rel="noreferrer">
+            <a href="https://shuc.org/about-us/committees/parks-and-open-space-committee/" target="_blank" rel="noreferrer">
               Learn how you can take action
             </a>
           </span>
