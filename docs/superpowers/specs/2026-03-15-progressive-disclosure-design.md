@@ -150,10 +150,14 @@ All other defaults (tree losses on, gains off, street buffer on, neighborhoods l
 - "More options" collapsible section styles
 - Reset button styles
 - Adjust leaderboard to support appearing/collapsing at different stages
+- `@media (max-width: 767px)` breakpoint: sidebar → bottom sheet layout (peek bar, expanded, full-expanded states via CSS transforms)
+- Bottom sheet drag handle, touch interaction styles
+- Street View modal: stack before/after images vertically on narrow viewports
+- `@media (hover: none)` or `(pointer: coarse)`: adjust touch-specific styles
 
 ### New Components
 
-None anticipated — this is a restructure of Sidebar.jsx, not new components. If Sidebar.jsx grows too large, prompt cards and the CTA section could be extracted, but start with everything inline.
+None anticipated beyond what's needed for mobile. The bottom sheet behavior can be handled via CSS + a small `useMediaQuery` hook (or inline `window.matchMedia`) and touch event handling within Sidebar.jsx. If the bottom sheet logic grows complex, it could be extracted into a `BottomSheet` wrapper component, but start inline.
 
 ### Config Changes
 
@@ -166,13 +170,51 @@ None anticipated — this is a restructure of Sidebar.jsx, not new components. I
 - Tree captain overview: `https://shuc.org/wp-content/uploads/2025/02/Squirrel-Hill-Tree-Captain-Overview.pdf`
 - Volunteer with SHUC: `https://shuc.org` (link to main SHUC site; update to specific volunteer page if one exists)
 
+## Mobile Layout
+
+The app currently has no responsive breakpoints. This spec adds mobile support as a first-class concern.
+
+**Breakpoint:** `768px` (standard tablet/phone threshold). Below this width, the sidebar switches to a bottom sheet pattern.
+
+### Mobile Sidebar: Bottom Sheet
+
+On viewports below 768px:
+
+- **The sidebar becomes a bottom sheet** that slides up from the bottom of the screen, overlaying the map
+- **Default state:** Collapsed to a **peek bar** (~60px) showing the app title and a drag handle / tap-to-expand affordance. The map fills the full screen behind it.
+- **Expanded state:** Sheet slides up to cover ~60% of the viewport height. Contents are the same Primary + Advanced zones as desktop, scrollable within the sheet.
+- **Full-expanded state:** User can drag or tap to expand the sheet to ~90% of viewport height for comfortable reading of the leaderboard or advanced controls.
+
+### Mobile-Specific Adjustments
+
+- **Search bar in peek bar:** At the `landing` stage, the peek bar shows "Find your neighborhood..." as a tappable input that expands the sheet when focused. This keeps the core action accessible without expanding the sheet.
+- **Prompt cards:** Same content as desktop but rendered within the sheet. When a new prompt card appears (e.g., transitioning to `neighborhood` stage), the sheet auto-expands to ~60% briefly to show the insight, then the user can collapse it to keep exploring the map.
+- **Leaderboard:** Scrollable within the sheet, same as desktop.
+- **Legend:** Compact horizontal gradient bar at all stages on mobile (no expanded legend rows in the primary zone — full legend available in Advanced).
+- **CTA:** The subtle CTA bar appears in the peek bar area. The prominent post-Street-View CTA renders as a brief toast/banner at the top of the screen (not in the sheet) so it's visible even when the sheet is collapsed.
+- **Street View modal:** Already renders as a full-screen overlay, which works on mobile. Side-by-side before/after images should stack vertically (top/bottom) on narrow viewports.
+- **Reset button:** Moves into the sheet header (same position as desktop, just within the sheet).
+- **"More options":** Same collapsible behavior as desktop, within the sheet.
+
+### Touch Considerations
+
+- **No hover states for core functionality.** The existing `@media (hover: hover)` pattern for popup close buttons is already correct. Prompt card hints should say "Tap" instead of "Click" on touch devices (detect via `@media (hover: none)` or `pointer: coarse`).
+- **Drag handle on sheet:** Standard bottom-sheet drag interaction. CSS `touch-action: none` on the drag handle, prevent scroll interference.
+- **Map interaction:** The map must remain fully interactive (pan, zoom, tap polygons) when the sheet is in peek/collapsed state. Sheet expansion should not interfere with map gestures.
+
+### Implementation Approach
+
+Use CSS media queries and minimal JS for the bottom sheet:
+- `@media (max-width: 767px)` for layout switch (sidebar → bottom sheet)
+- The bottom sheet can be implemented with CSS transforms (`translateY`) and a small amount of touch event handling for drag, or a lightweight library if preferred
+- The same React component tree renders in both layouts — the CSS repositions elements, and a `useMediaQuery` hook (or `window.matchMedia`) lets components adjust text ("Click" → "Tap") and behavior (auto-expand sheet on stage change)
+
 ## Out of Scope
 
 - App renaming (tracked separately — Task #8)
 - Changes to map layer rendering, popups, or Street View modal internals (MapView only gets two new callback props: `onZoom` and `onStreetViewClose`)
 - Changes to data pipeline or data format
-- Mobile-specific layout changes (can be a follow-up)
-- Onboarding animations or transitions (start with instant show/hide, polish later)
+- Onboarding animations or transitions beyond basic sheet expand/collapse (polish later)
 - A/B testing or analytics on stage progression
 
 ## Decisions (Resolved)
