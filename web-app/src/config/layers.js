@@ -163,3 +163,47 @@ export const CANOPY_CHANGE_COLORS = {
   gain:      '#2563eb', // canopy gain (blue to distinguish from choropleth greens)
   loss:      '#dc2626', // canopy loss (red)
 }
+
+// ---------------------------------------------------------------------------
+// Progressive disclosure — exploration stages & prompt cards
+// ---------------------------------------------------------------------------
+
+export const EXPLORATION_STAGES = ['landing', 'neighborhood', 'street-level', 'post-streetview', 'exploring']
+
+export const PROMPT_CARDS = {
+  landing: {
+    headline: "Pittsburgh's tree canopy is shrinking.",
+    body: 'Between 2015 and 2020, neighborhoods across the city experienced significant canopy loss. Find yours to see the impact.',
+    borderColor: 'var(--accent)',
+  },
+  'street-level': {
+    headline: 'You can see the tree losses now.',
+    body: null, // body is dynamic: "Click/Tap one to see the before & after Street View."
+    borderColor: '#ef8a62',
+  },
+  // 'neighborhood' card is dynamic (built from selected feature data)
+  // 'post-streetview' and 'exploring' have no prompt card
+}
+
+export const CTA_LINKS = {
+  freeTree: {
+    label: 'Request a Free Tree',
+    description: 'City of Pittsburgh property owners',
+    url: 'https://shuc.org/wp-content/uploads/2024/10/SHUC-Tree-Request-Form-2024.pdf',
+    emoji: '\u{1F333}',
+  },
+  treeCaptain: {
+    label: 'Become a Tree Captain',
+    description: 'Lead tree planting in your community',
+    url: 'https://shuc.org/wp-content/uploads/2025/02/Squirrel-Hill-Tree-Captain-Overview.pdf',
+    emoji: '\u{1F3D8}\uFE0F',
+  },
+  volunteer: {
+    label: 'Volunteer with SHUC',
+    description: 'Join the Tree Committee',
+    url: 'https://shuc.org',
+    emoji: '\u{1F91D}',
+  },
+}
+
+export const LOCAL_STORAGE_KEY = 'pghCanopyExplorer'
