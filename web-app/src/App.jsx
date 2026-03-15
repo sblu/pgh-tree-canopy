@@ -45,6 +45,7 @@ export default function App() {
   const [hasViewedStreetView, setHasViewedStreetView] = useState(false)
   const [advancedExpanded, setAdvancedExpanded]   = useState(() => loadStorage('advancedExpanded', false))
   const [ctaDismissed, setCtaDismissed]           = useState(() => loadStorage('ctaDismissed', false))
+  const [streetPath, setStreetPath]               = useState(false)
 
   const [sheetState, setSheetState] = useState('peek') // peek | expanded | full
   const [isMobile, setIsMobile] = useState(
@@ -103,11 +104,18 @@ export default function App() {
 
   // Stage transitions (forward-only state machine — setState in effect is intentional)
   useEffect(() => {
-    if (explorationStage === 'landing' && selectedFeatureName) {
+    if (explorationStage === 'landing' && selectedFeatureName && !streetPath) {
       setExplorationStage('neighborhood') // eslint-disable-line react-hooks/set-state-in-effect
       saveStorage('hasVisited', true)
     }
-  }, [explorationStage, selectedFeatureName])
+  }, [explorationStage, selectedFeatureName, streetPath])
+
+  useEffect(() => {
+    if (explorationStage === 'landing' && selectedFeatureName && streetPath) {
+      setExplorationStage('street-level') // eslint-disable-line react-hooks/set-state-in-effect
+      saveStorage('hasVisited', true)
+    }
+  }, [explorationStage, selectedFeatureName, streetPath])
 
   useEffect(() => {
     if (explorationStage === 'neighborhood' && selectedFeatureName && currentZoom >= 12) {
@@ -159,6 +167,13 @@ export default function App() {
     setExplorationStage('exploring')
   }, [])
 
+  const handleStreetPathStart = useCallback(() => {
+    setStreetPath(true)
+    setActiveBoundaryLayerId('streets')
+    setSelectedFeatureName(null)
+    setHoveredFeature(null)
+  }, [])
+
   const handleMobileSearchFocus = useCallback(() => {
     if (isMobile && sheetState === 'peek') {
       setSheetState('expanded')
@@ -170,6 +185,8 @@ export default function App() {
     setSelectedFeatureName(null)
     setHoveredFeature(null)
     setHasViewedStreetView(false)
+    setStreetPath(false)
+    setActiveBoundaryLayerId('neighborhoods')
   }, [])
 
   // Mobile bottom sheet drag handling
@@ -253,6 +270,7 @@ export default function App() {
     setActiveBoundaryLayerId(id)
     setSelectedFeatureName(null)
     setHoveredFeature(null)
+    if (id !== 'streets') setStreetPath(false)
   }
 
   function handleFeatureSelect(name) {
@@ -299,6 +317,8 @@ export default function App() {
         onReset={resetExploration}
         selectedFeatureName={selectedFeatureName}
         onMobileSearchFocus={handleMobileSearchFocus}
+        streetPath={streetPath}
+        onStreetPathStart={handleStreetPathStart}
       />
       </div>
 
