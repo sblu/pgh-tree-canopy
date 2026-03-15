@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react'
-import { BOUNDARY_LAYERS, COLOR_METHODS, CHOROPLETH_COLORS, COVERAGE_COLORS, TREE_LOSS_COLORS, TREE_GAIN_COLORS, STREET_BUFFER_COLOR, CANOPY_CHANGE_COLORS } from '../config/layers'
+import {
+  BOUNDARY_LAYERS, COLOR_METHODS, CHOROPLETH_COLORS, COVERAGE_COLORS,
+  TREE_LOSS_COLORS, TREE_GAIN_COLORS, STREET_BUFFER_COLOR,
+  CANOPY_CHANGE_COLORS, PROMPT_CARDS, CTA_LINKS, LOCAL_STORAGE_KEY,
+} from '../config/layers'
 import Leaderboard from './Leaderboard'
 
-/**
- * Sidebar — all map controls and legend.
- * Pure presentational; all state lives in App.jsx.
- */
 export default function Sidebar({
   activeBoundaryLayerId,
   onBoundaryLayerChange,
@@ -30,6 +30,15 @@ export default function Sidebar({
   locationError,
   locationAvailable,
   onPanToLocation,
+  // New progressive disclosure props
+  explorationStage,
+  currentZoom,
+  advancedExpanded,
+  onAdvancedToggle,
+  ctaDismissed,
+  onCtaDismiss,
+  onReset,
+  selectedFeatureName,
 }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchFocused, setSearchFocused] = useState(false)
@@ -78,69 +87,67 @@ export default function Sidebar({
     return steps
   }, [colorBreaks, isCoverage])
 
+  const isTouchDevice = useMemo(() => window.matchMedia('(hover: none)').matches, [])
+  const clickOrTap = isTouchDevice ? 'Tap' : 'Click'
+
+  const hasVisited = useMemo(() => {
+    try {
+      const raw = localStorage.getItem(LOCAL_STORAGE_KEY)
+      return raw ? JSON.parse(raw).hasVisited : false
+    } catch { return false }
+  }, [])
+
+  // Build the neighborhood insight card dynamically
+  const neighborhoodCard = useMemo(() => {
+    if (!selectedFeatureName || !layerData?.features) return null
+    const feature = layerData.features.find(f => f.properties?.name === selectedFeatureName)
+    if (!feature) return null
+    const p = feature.properties
+    const method = COLOR_METHODS.find(m => m.id === activeMethodId)
+    const isCoverageMetric = method?.group === 'coverage'
+    const value = p[activeMethodId]
+    if (value == null) return null
+    const isLoss = !isCoverageMetric && value < 0
+    return {
+      headline: selectedFeatureName,
+      stat: isCoverageMetric ? `${value.toFixed(1)}%` : `${value >= 0 ? '+' : ''}${value.toFixed(1)}%`,
+      statColor: isCoverageMetric ? 'var(--sidebar-text)' : (isLoss ? '#f87171' : 'var(--accent)'),
+      statLabel: method?.description || '',
+      isLoss,
+      isCoverage: isCoverageMetric,
+    }
+  }, [selectedFeatureName, layerData, activeMethodId])
+
+  const showAtStreetLevel = currentZoom >= 12
+
   return (
     <aside className="sidebar">
+      {/* ── Header ── */}
       <header className="sidebar-header">
         <img src="images/shuc-logo.png" alt="SHUC logo" className="sidebar-logo" />
         <div>
           <div className="sidebar-title">Pittsburgh Tree Canopy</div>
           <div className="sidebar-subtitle">2015–2020 Change</div>
         </div>
+        {explorationStage !== 'landing' && (
+          <button className="reset-btn" onClick={onReset} title="Reset to start">↺</button>
+        )}
       </header>
 
-      {/* My Location */}
+      {/* ── Search ── */}
       <section className="sidebar-section">
-        <div className="locate-row">
-          <label className={`toggle-row${!locationAvailable ? ' disabled' : ''}`}>
-            <span className="locate-label">
-              My Location
-              <span
-                className={`locate-dot${userLocation ? ' active' : ''}`}
-                role="button"
-                tabIndex={userLocation ? 0 : -1}
-                onClick={e => { e.preventDefault(); e.stopPropagation(); if (userLocation) onPanToLocation() }}
-                title={userLocation ? 'Pan to my location' : 'Enable location first'}
-              />
-              {locationError && <span className="radio-description" style={{ color: '#f87171' }}>{locationError}</span>}
-              {!locationAvailable && !locationError && <span className="radio-description">Requires HTTPS</span>}
-            </span>
-            <input
-              type="checkbox"
-              className="toggle-input"
-              checked={showLocation}
-              onChange={e => onShowLocationChange(e.target.checked)}
-              disabled={!locationAvailable}
-            />
-            <span className="toggle-pill" />
-          </label>
+        <div className="section-label">
+          {selectedFeatureName ? (activeLayer?.label || 'Selected') : 'Find Your Neighborhood'}
         </div>
-      </section>
-
-      {/* Boundary layer switcher */}
-      <section className="sidebar-section">
-        <div className="section-label">Layers</div>
-        {BOUNDARY_LAYERS.map(layer => (
-          <label key={layer.id} className="radio-row">
-            <input
-              type="radio"
-              name="boundary"
-              value={layer.id}
-              checked={activeBoundaryLayerId === layer.id}
-              onChange={() => onBoundaryLayerChange(layer.id)}
-            />
-            <span>
-              {layer.label}
-              {layer.description && <span className="radio-description">{layer.description}</span>}
-            </span>
-          </label>
-        ))}
-      </section>
-
-      {/* Search */}
-      {activeLayer?.file && (
-        <section className="sidebar-section">
-          <div className="section-label">Search</div>
-          <div className="search-container">
+        <div className="search-container">
+          {selectedFeatureName ? (
+            <div
+              className="search-selected"
+              onClick={() => { onFeatureSelect(null); setSearchQuery('') }}
+            >
+              {selectedFeatureName} <span className="search-clear">&times;</span>
+            </div>
+          ) : (
             <input
               className="search-input"
               type="text"
@@ -150,147 +157,142 @@ export default function Sidebar({
               onFocus={() => setSearchFocused(true)}
               onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
             />
-            {searchFocused && filteredNames.length > 0 && (
-              <ul className="search-results">
-                {filteredNames.map(name => (
-                  <li key={name} onMouseDown={() => handleSelect(name)}>
-                    {name}
-                  </li>
-                ))}
-              </ul>
+          )}
+          {searchFocused && !selectedFeatureName && filteredNames.length > 0 && (
+            <ul className="search-results">
+              {filteredNames.map(name => (
+                <li key={name} onMouseDown={() => handleSelect(name)}>
+                  {name}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </section>
+
+      {/* ── Prompt Card ── */}
+      {explorationStage === 'landing' && !hasVisited && (
+        <div className="prompt-card" style={{ borderLeftColor: PROMPT_CARDS.landing.borderColor }}>
+          <div className="prompt-headline">{PROMPT_CARDS.landing.headline}</div>
+          <div className="prompt-body">{PROMPT_CARDS.landing.body}</div>
+        </div>
+      )}
+
+      {explorationStage === 'neighborhood' && neighborhoodCard && (
+        <div className="prompt-card" style={{ borderLeftColor: neighborhoodCard.isLoss ? '#f87171' : 'var(--accent)' }}>
+          <div className="prompt-headline">{neighborhoodCard.headline}</div>
+          <div className="prompt-body">
+            {neighborhoodCard.isCoverage ? (
+              <>
+                Has{' '}
+                <span style={{ color: neighborhoodCard.statColor, fontWeight: 600 }}>
+                  {neighborhoodCard.stat}
+                </span>
+                {' canopy coverage (2020).'}
+              </>
+            ) : (
+              <>
+                {neighborhoodCard.isLoss ? 'Lost ' : 'Gained '}
+                <span style={{ color: neighborhoodCard.statColor, fontWeight: 600 }}>
+                  {neighborhoodCard.stat}
+                </span>
+                {' of its canopy between 2015–2020.'}
+              </>
             )}
+            <br />
+            <span className="prompt-hint">{neighborhoodCard.statLabel}</span>
           </div>
-        </section>
+          <div className="prompt-action">Zoom in to see where individual mature trees were lost →</div>
+        </div>
       )}
 
-      {/* Color metric selector */}
-      {activeLayer?.file && (
-        <section className="sidebar-section">
-          <div className="section-label">Color By</div>
-          {COLOR_METHODS.filter(m => m.group === 'coverage').map(method => (
-            <label key={method.id} className="radio-row">
-              <input
-                type="radio"
-                name="method"
-                value={method.id}
-                checked={activeMethodId === method.id}
-                onChange={() => onMethodChange(method.id)}
-              />
-              <span>
-                {method.label}
-                <span className="radio-description">{method.description}</span>
-              </span>
-            </label>
-          ))}
-          <div className="section-label" style={{ marginTop: '10px' }}>Net Change Metric</div>
-          {COLOR_METHODS.filter(m => m.group === 'net_change').map(method => (
-            <label key={method.id} className="radio-row">
-              <input
-                type="radio"
-                name="method"
-                value={method.id}
-                checked={activeMethodId === method.id}
-                onChange={() => onMethodChange(method.id)}
-              />
-              <span>
-                {method.label}
-                <span className="radio-description">{method.description}</span>
-              </span>
-            </label>
-          ))}
-        </section>
+      {explorationStage === 'street-level' && (
+        <div className="prompt-card" style={{ borderLeftColor: PROMPT_CARDS['street-level'].borderColor }}>
+          <div className="prompt-headline">{PROMPT_CARDS['street-level'].headline}</div>
+          <div className="prompt-body">
+            Each <span style={{ color: '#e74c3c' }}>■</span> red shape is a mature tree lost between 2015–2020.
+            <br />
+            <strong>{clickOrTap} one to see the before &amp; after Street View.</strong>
+          </div>
+        </div>
       )}
 
-      {/* Leaderboard */}
-      {activeLayer?.file && (
+      {/* ── Leaderboard (appears at neighborhood stage or later) ── */}
+      {explorationStage !== 'landing' && activeLayer?.file && (
         <Leaderboard
           layerData={layerData}
           activeMethodId={activeMethodId}
           onHover={onHover}
           onHoverEnd={onHoverEnd}
           onFeatureSelect={onFeatureSelect}
+          defaultOpen={explorationStage === 'neighborhood'}
+          label="How Others Compare"
         />
       )}
 
-      {/* Detailed Zoom Settings */}
-      <section className="sidebar-section">
-        <div className="section-label">
-          <svg className="section-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492ZM5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0Z"/><path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a1.873 1.873 0 0 1-2.255 1.254l-.307-.1c-1.716-.56-3.137 1.467-2.014 2.875l.195.245a1.873 1.873 0 0 1-.39 2.564l-.26.19c-1.453 1.064-.636 3.338 1.16 3.226l.326-.02a1.873 1.873 0 0 1 1.945 1.554l.06.322c.33 1.775 2.893 1.967 3.486.262l.104-.3a1.873 1.873 0 0 1 2.378-1.108l.3.106c1.69.593 3.028-1.49 1.848-2.87l-.203-.238a1.873 1.873 0 0 1 .264-2.582l.252-.198c1.411-1.11.49-3.37-1.307-3.208l-.325.028a1.873 1.873 0 0 1-2.02-1.44l-.068-.323ZM8 10.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5Z"/></svg>
-          Detailed Zoom Settings
+      {/* ── CTA Section ── */}
+      {explorationStage === 'post-streetview' && !ctaDismissed ? (
+        <div className="cta-prominent">
+          <div className="cta-prominent-title">Help Restore Pittsburgh's Canopy</div>
+          <div className="cta-prominent-body">
+            Every tree matters. Here's how you can make a difference in your neighborhood:
+          </div>
+          <div className="cta-actions">
+            {Object.values(CTA_LINKS).map(link => (
+              <a key={link.url} href={link.url} target="_blank" rel="noreferrer" className="cta-action-btn">
+                <span className="cta-action-emoji">{link.emoji}</span>
+                <div>
+                  <div className="cta-action-label">{link.label}</div>
+                  <div className="cta-action-desc">{link.description}</div>
+                </div>
+              </a>
+            ))}
+          </div>
+          <button className="cta-dismiss" onClick={onCtaDismiss}>Dismiss</button>
         </div>
-        <div className="display-group">
-          <label className="toggle-row">
-            <span>
-              Show mature tree losses
-              <span className="radio-description">Red polygons at zoom 12+</span>
-            </span>
-            <input
-              type="checkbox"
-              className="toggle-input"
-              checked={showTreeLosses}
-              onChange={e => onShowTreeLossesChange(e.target.checked)}
-            />
-            <span className="toggle-pill" />
-          </label>
-          <label className="toggle-row">
-            <span>
-              Show significant gains
-              <span className="radio-description">Green polygons at zoom 12+</span>
-            </span>
-            <input
-              type="checkbox"
-              className="toggle-input"
-              checked={showTreeGains}
-              onChange={e => onShowTreeGainsChange(e.target.checked)}
-            />
-            <span className="toggle-pill" />
-          </label>
-          <label className="toggle-row">
-            <span>
-              Show only street tree areas
-              <span className="radio-description">Filter to 50 ft buffer around City of Pittsburgh streets</span>
-            </span>
-            <input
-              type="checkbox"
-              className="toggle-input"
-              checked={showStreetBuffer}
-              onChange={e => onShowStreetBufferChange(e.target.checked)}
-            />
-            <span className="toggle-pill" />
-          </label>
-        </div>
-        <label className="toggle-row" style={{ marginTop: '8px', paddingLeft: '10px', paddingRight: '10px' }}>
-          <span>
-            Show all canopy changes
-            <span className="radio-description">Gain, loss, no change at zoom 12+</span>
+      ) : (
+        <div className="cta-subtle">
+          <span className="cta-subtle-emoji">🌱</span>
+          <span className="cta-subtle-text">
+            Want to help?{' '}
+            <a href="https://shuc.org" target="_blank" rel="noreferrer">
+              Learn how you can take action
+            </a>
           </span>
-          <input
-            type="checkbox"
-            className="toggle-input"
-            checked={showCanopyChange}
-            onChange={e => onShowCanopyChangeChange(e.target.checked)}
-          />
-          <span className="toggle-pill" />
-        </label>
-      </section>
+        </div>
+      )}
 
-      {/* Legend */}
+      {/* ── Dynamic Legend ── */}
       <section className="sidebar-section">
         {activeLayer?.file && (
           <>
             <div className="section-label">
-              Legend — {isCoverage ? 'Canopy Coverage (2020)' : 'Net Canopy Change'}
+              {isCoverage ? 'Canopy Coverage (2020)' : 'Net Canopy Change'}
             </div>
-            {legendSteps.map(({ color, label }) => (
-              <div key={label} className="legend-row">
-                <span className="legend-swatch" style={{ background: color }} />
-                {label}
+            {explorationStage === 'landing' && !advancedExpanded ? (
+              <div className="legend-gradient-bar">
+                <div className="legend-gradient-colors">
+                  {paletteColors.map((c, i) => (
+                    <div key={i} style={{ background: c, flex: 1 }} />
+                  ))}
+                </div>
+                <div className="legend-gradient-labels">
+                  <span>{isCoverage ? 'Low' : 'Loss'}</span>
+                  <span>{isCoverage ? 'High' : 'Gain'}</span>
+                </div>
               </div>
-            ))}
+            ) : (
+              legendSteps.map(({ color, label }) => (
+                <div key={label} className="legend-row">
+                  <span className="legend-swatch" style={{ background: color }} />
+                  {label}
+                </div>
+              ))
+            )}
           </>
         )}
 
-        {showTreeLosses && (
+        {showTreeLosses && showAtStreetLevel && (
           <>
             <div className="section-label" style={{ marginTop: '12px' }}>Mature Tree Losses</div>
             <div className="legend-row">
@@ -304,7 +306,7 @@ export default function Sidebar({
           </>
         )}
 
-        {showTreeGains && (
+        {showTreeGains && showAtStreetLevel && (
           <>
             <div className="section-label" style={{ marginTop: showTreeLosses ? '8px' : '12px' }}>Gains</div>
             <div className="legend-row">
@@ -318,11 +320,11 @@ export default function Sidebar({
           </>
         )}
 
-        {(showTreeLosses || showTreeGains) && (
+        {(showTreeLosses || showTreeGains) && showAtStreetLevel && (
           <div className="legend-note">Visible at zoom level 12+</div>
         )}
 
-        {showStreetBuffer && (
+        {showStreetBuffer && showAtStreetLevel && (
           <>
             <div className="section-label" style={{ marginTop: '12px' }}>Street Buffer</div>
             <div className="legend-row">
@@ -332,7 +334,7 @@ export default function Sidebar({
           </>
         )}
 
-        {showCanopyChange && (
+        {showCanopyChange && showAtStreetLevel && (
           <>
             <div className="section-label" style={{ marginTop: '12px' }}>All Canopy Change</div>
             <div className="legend-row">
@@ -349,6 +351,112 @@ export default function Sidebar({
             </div>
             <div className="legend-note">Visible at zoom level 12+</div>
           </>
+        )}
+      </section>
+
+      {/* ── Advanced Zone ("More options") ── */}
+      <section className="advanced-zone">
+        <button
+          className="advanced-toggle"
+          onClick={() => onAdvancedToggle(!advancedExpanded)}
+        >
+          <span className="advanced-toggle-icon">⚙</span>
+          <span>More options</span>
+          <span className="advanced-chevron">{advancedExpanded ? '▾' : '▸'}</span>
+        </button>
+
+        {advancedExpanded && (
+          <div className="advanced-content">
+            {/* Boundary layer switcher */}
+            <div className="advanced-sub">
+              <div className="section-label">Boundary Layer</div>
+              {BOUNDARY_LAYERS.map(layer => (
+                <label key={layer.id} className="radio-row">
+                  <input
+                    type="radio"
+                    name="boundary"
+                    value={layer.id}
+                    checked={activeBoundaryLayerId === layer.id}
+                    onChange={() => onBoundaryLayerChange(layer.id)}
+                  />
+                  <span>
+                    {layer.label}
+                    {layer.description && <span className="radio-description">{layer.description}</span>}
+                  </span>
+                </label>
+              ))}
+            </div>
+
+            {/* Color metric selector */}
+            <div className="advanced-sub">
+              <div className="section-label">Color By</div>
+              {COLOR_METHODS.map(method => (
+                <label key={method.id} className="radio-row">
+                  <input
+                    type="radio"
+                    name="method"
+                    value={method.id}
+                    checked={activeMethodId === method.id}
+                    onChange={() => onMethodChange(method.id)}
+                  />
+                  <span>
+                    {method.label}
+                    <span className="radio-description">{method.description}</span>
+                  </span>
+                </label>
+              ))}
+            </div>
+
+            {/* Map layer toggles */}
+            <div className="advanced-sub">
+              <div className="section-label">Map Layers</div>
+              <label className="toggle-row">
+                <span>Mature tree losses</span>
+                <input type="checkbox" className="toggle-input"
+                  checked={showTreeLosses} onChange={e => onShowTreeLossesChange(e.target.checked)} />
+                <span className="toggle-pill" />
+              </label>
+              <label className="toggle-row">
+                <span>Significant gains</span>
+                <input type="checkbox" className="toggle-input"
+                  checked={showTreeGains} onChange={e => onShowTreeGainsChange(e.target.checked)} />
+                <span className="toggle-pill" />
+              </label>
+              <label className="toggle-row">
+                <span>Street tree areas only</span>
+                <input type="checkbox" className="toggle-input"
+                  checked={showStreetBuffer} onChange={e => onShowStreetBufferChange(e.target.checked)} />
+                <span className="toggle-pill" />
+              </label>
+              <label className="toggle-row">
+                <span>All canopy changes</span>
+                <input type="checkbox" className="toggle-input"
+                  checked={showCanopyChange} onChange={e => onShowCanopyChangeChange(e.target.checked)} />
+                <span className="toggle-pill" />
+              </label>
+            </div>
+
+            {/* My Location */}
+            <div className="advanced-sub">
+              <label className={`toggle-row${!locationAvailable ? ' disabled' : ''}`}>
+                <span className="locate-label">
+                  My Location
+                  <span
+                    className={`locate-dot${userLocation ? ' active' : ''}`}
+                    role="button"
+                    tabIndex={userLocation ? 0 : -1}
+                    onClick={e => { e.preventDefault(); e.stopPropagation(); if (userLocation) onPanToLocation() }}
+                    title={userLocation ? 'Pan to my location' : 'Enable location first'}
+                  />
+                  {locationError && <span className="radio-description" style={{ color: '#f87171' }}>{locationError}</span>}
+                  {!locationAvailable && !locationError && <span className="radio-description">Requires HTTPS</span>}
+                </span>
+                <input type="checkbox" className="toggle-input"
+                  checked={showLocation} onChange={e => onShowLocationChange(e.target.checked)} disabled={!locationAvailable} />
+                <span className="toggle-pill" />
+              </label>
+            </div>
+          </div>
         )}
       </section>
 
