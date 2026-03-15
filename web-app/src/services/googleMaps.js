@@ -9,6 +9,19 @@
 const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ''
 
 let bootstrapFailed = false
+let rejectBootstrap = null // allows gm_authFailure to reject the pending promise
+
+// Google calls this global function when the API key is invalid, the referrer
+// is not allowed, or any other auth-level error occurs.  Without this handler
+// the bootstrap promise hangs forever because the callback is never invoked.
+window.gm_authFailure = () => {
+  console.warn('[GoogleMaps] Auth failure (RefererNotAllowed / invalid key)')
+  bootstrapFailed = true
+  if (rejectBootstrap) {
+    rejectBootstrap(new Error('Google Maps auth failure (check API key restrictions)'))
+    rejectBootstrap = null
+  }
+}
 
 // ── Bootstrap (runs once at import time) ────────────────────────────────
 // Adapted from https://developers.google.com/maps/documentation/javascript/load-maps-js-api#dynamic-library-import
@@ -29,6 +42,7 @@ if (API_KEY) {
       const u = () =>
         h ||
         (h = new Promise(async (f, n) => {
+          rejectBootstrap = n
           await (a = m.createElement('script'))
           e.set('libraries', [...r] + '')
           for (k in g)
@@ -41,10 +55,20 @@ if (API_KEY) {
           a.onerror = () => {
             h = null
             bootstrapFailed = true
+            rejectBootstrap = null
             n(Error(p + ' could not load.'))
           }
-          d[q] = f
+          d[q] = (v) => { rejectBootstrap = null; f(v) }
           m.head.append(a)
+          // Safety timeout: if Google never calls back (auth error, network),
+          // reject after 15 seconds so the UI can fall back to a direct link.
+          setTimeout(() => {
+            if (rejectBootstrap === n) {
+              bootstrapFailed = true
+              rejectBootstrap = null
+              n(Error(p + ' timed out.'))
+            }
+          }, 15000)
         }))
       d[l]
         ? console.warn(p + ' only loads once. Ignoring:', g)
