@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { COLOR_METHODS } from '../config/layers'
 
 /**
@@ -27,8 +27,15 @@ export default function Leaderboard({
   onHover,
   onHoverEnd,
   onFeatureSelect,
+  defaultOpen = true,
+  label = 'Leaderboard',
 }) {
-  const [open, setOpen] = useState(true)
+  const [open, setOpen] = useState(defaultOpen)
+
+  // Sync with parent's defaultOpen when it changes (e.g., auto-collapse at street-level)
+  useEffect(() => {
+    setOpen(defaultOpen)
+  }, [defaultOpen])
   const [sortAsc, setSortAsc] = useState(false) // false = highest first
 
   const method = COLOR_METHODS.find(m => m.id === activeMethodId)
@@ -63,7 +70,7 @@ export default function Leaderboard({
         className="leaderboard-toggle"
         onClick={() => setOpen(o => !o)}
       >
-        <span className="section-label" style={{ marginBottom: 0 }}>Leaderboard</span>
+        <span className="section-label" style={{ marginBottom: 0 }}>{label}</span>
         <span className={`leaderboard-chevron ${open ? 'open' : ''}`}>&#9662;</span>
       </button>
 
