@@ -93,6 +93,17 @@ export default function useStreetView(clickedTree, streetCenterlines) {
       return
     }
 
+    // Catch auth failures that fired during page load (e.g. gm_authFailure
+    // set bootstrapFailed before the user ever clicked a tree polygon)
+    if (isBootstrapFailed()) {
+      disabledRef.current = true
+      setDisabled(true)
+      setDisableReason('sdk-load-failed')
+      setPanoData(null)
+      setLoading(false)
+      return
+    }
+
     const currentRequestId = ++requestIdRef.current
     const p = clickedTree.feature.properties
 
@@ -107,10 +118,10 @@ export default function useStreetView(clickedTree, streetCenterlines) {
     setLoading(true)
     setPanoData(null)
 
-    // Wall-clock safety net: if the async work hasn't finished in 8 seconds,
+    // Wall-clock safety net: if the async work hasn't finished in 3 seconds,
     // force-disable Street View so the popup shows a direct link instead of
-    // hanging on "Loading..." forever (e.g. when the API key's referrer
-    // restriction blocks the Google Maps SDK).
+    // hanging on "Loading..." forever.  Normal lookups complete in < 1 s;
+    // anything longer almost certainly means the SDK is blocked or broken.
     const timeoutId = setTimeout(() => {
       if (currentRequestId === requestIdRef.current) {
         console.warn('[useStreetView] Timed out — falling back to direct link')
@@ -121,7 +132,7 @@ export default function useStreetView(clickedTree, streetCenterlines) {
         setPanoData(null)
         setLoading(false)
       }
-    }, 8000)
+    }, 3000)
 
     ;(async () => {
       try {
