@@ -1,13 +1,31 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
-import { BOUNDARY_LAYERS, STREET_BUFFER_PATH, COLOR_METHODS, CHOROPLETH_COLORS, COVERAGE_COLORS } from './config/layers'
+import { BOUNDARY_LAYERS, STREET_BUFFER_PATH, COLOR_METHODS, CHOROPLETH_COLORS, COVERAGE_COLORS, LOCAL_STORAGE_KEY } from './config/layers'
 import { useLayerData, computeQuantileBreaks } from './hooks/useLayerData'
 import Sidebar from './components/Sidebar'
 import MapView from './components/MapView'
 import './index.css'
 
+function loadStorage(key, fallback) {
+  try {
+    const raw = localStorage.getItem(LOCAL_STORAGE_KEY)
+    if (!raw) return fallback
+    const parsed = JSON.parse(raw)
+    return parsed[key] ?? fallback
+  } catch { return fallback }
+}
+
+function saveStorage(key, value) {
+  try {
+    const raw = localStorage.getItem(LOCAL_STORAGE_KEY)
+    const obj = raw ? JSON.parse(raw) : {}
+    obj[key] = value
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(obj))
+  } catch { /* ignore */ }
+}
+
 export default function App() {
   const [activeBoundaryLayerId, setActiveBoundaryLayerId] = useState('neighborhoods')
-  const [activeMethodId, setActiveMethodId]               = useState('canopy_2020_pct')
+  const [activeMethodId, setActiveMethodId]               = useState('net_pct_of_area')
   const [showTreeLosses, setShowTreeLosses]               = useState(true)
   const [showTreeGains, setShowTreeGains]                 = useState(false)
   const [showStreetBuffer, setShowStreetBuffer]           = useState(true)
@@ -20,6 +38,13 @@ export default function App() {
   const [locationError, setLocationError]                 = useState(null)
   const [flyToLocation, setFlyToLocation]                 = useState(null)
   const watchIdRef                                        = useRef(null)
+
+  // Progressive disclosure state
+  const [explorationStage, setExplorationStage]   = useState('landing')
+  const [currentZoom, setCurrentZoom]             = useState(11)
+  const [hasViewedStreetView, setHasViewedStreetView] = useState(false)
+  const [advancedExpanded, setAdvancedExpanded]   = useState(() => loadStorage('advancedExpanded', false))
+  const [ctaDismissed, setCtaDismissed]           = useState(() => loadStorage('ctaDismissed', false))
 
   const locationAvailable = navigator.geolocation && window.isSecureContext
 
@@ -70,9 +95,54 @@ export default function App() {
     }
   }, [showLocation, locationAvailable])
 
+  // Stage transitions (forward-only)
+  useEffect(() => {
+    if (explorationStage === 'landing' && selectedFeatureName) {
+      setExplorationStage('neighborhood')
+      saveStorage('hasVisited', true)
+    }
+  }, [explorationStage, selectedFeatureName])
+
+  useEffect(() => {
+    if (explorationStage === 'neighborhood' && selectedFeatureName && currentZoom >= 12) {
+      setExplorationStage('street-level')
+    }
+  }, [explorationStage, selectedFeatureName, currentZoom])
+
+  useEffect(() => {
+    if (explorationStage === 'street-level' && hasViewedStreetView) {
+      setExplorationStage('post-streetview')
+    }
+  }, [explorationStage, hasViewedStreetView])
+
   const handlePanToLocation = useCallback(() => {
     if (userLocation) setFlyToLocation(userLocation)
   }, [userLocation])
+
+  const handleZoom = useCallback(zoom => {
+    setCurrentZoom(zoom)
+  }, [])
+
+  const handleStreetViewClose = useCallback(() => {
+    setHasViewedStreetView(true)
+  }, [])
+
+  const handleAdvancedToggle = useCallback(expanded => {
+    setAdvancedExpanded(expanded)
+    saveStorage('advancedExpanded', expanded)
+  }, [])
+
+  const handleCtaDismiss = useCallback(() => {
+    setCtaDismissed(true)
+    saveStorage('ctaDismissed', true)
+    setExplorationStage('exploring')
+  }, [])
+
+  const resetExploration = useCallback(() => {
+    setExplorationStage('landing')
+    setSelectedFeatureName(null)
+    setHoveredFeature(null)
+  }, [])
 
   const activeLayerConfig = BOUNDARY_LAYERS.find(l => l.id === activeBoundaryLayerId)
 
@@ -155,6 +225,14 @@ export default function App() {
         locationError={locationError}
         locationAvailable={locationAvailable}
         onPanToLocation={handlePanToLocation}
+        explorationStage={explorationStage}
+        currentZoom={currentZoom}
+        advancedExpanded={advancedExpanded}
+        onAdvancedToggle={handleAdvancedToggle}
+        ctaDismissed={ctaDismissed}
+        onCtaDismiss={handleCtaDismiss}
+        onReset={resetExploration}
+        selectedFeatureName={selectedFeatureName}
       />
       </div>
 
@@ -189,6 +267,8 @@ export default function App() {
           userLocation={userLocation}
           flyToLocation={flyToLocation}
           onFlyToComplete={() => setFlyToLocation(null)}
+          onZoom={handleZoom}
+          onStreetViewClose={handleStreetViewClose}
         />
       </main>
     </div>
