@@ -10,7 +10,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@googlemaps/js-api-loader": "^2.0.2",
     "@turf/along": "^7.3.4",
     "@turf/bearing": "^7.3.4",
     "@turf/helpers": "^7.3.4",

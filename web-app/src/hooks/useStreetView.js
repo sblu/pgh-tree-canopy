@@ -7,32 +7,9 @@ import { useState, useEffect, useRef } from 'react'
 import bearing from '@turf/bearing'
 import { point } from '@turf/helpers'
 import { getStreetViewPosition } from '../utils/streetView'
+import { importLibrary, isBootstrapFailed, markBootstrapFailed } from '../services/googleMaps'
 
 const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ''
-
-// ── SDK lazy-loader (singleton) ─────────────────────────────────────────
-
-let sdkPromise = null
-let sdkFailed = false
-
-function loadGoogleMapsSDK() {
-  if (sdkFailed) return Promise.reject(new Error('SDK previously failed to load'))
-  if (sdkPromise) return sdkPromise
-  if (window.google?.maps?.StreetViewService) return Promise.resolve()
-
-  sdkPromise = new Promise((resolve, reject) => {
-    const script = document.createElement('script')
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${API_KEY}`
-    script.async = true
-    script.onload = () => resolve()
-    script.onerror = () => {
-      sdkFailed = true
-      reject(new Error('Failed to load Google Maps SDK'))
-    }
-    document.head.appendChild(script)
-  })
-  return sdkPromise
-}
 
 // ── Helpers ─────────────────────────────────────────────────────────────
 
@@ -83,13 +60,14 @@ function buildStaticUrl(panoId, heading) {
 }
 
 function isPermanentError(err) {
-  if (sdkFailed) return true
+  if (isBootstrapFailed()) return true
   const code = err?.code || ''
   const msg = (err?.message || '').toLowerCase()
   return (
     code === 'REQUEST_DENIED' ||
     code === 'OVER_QUERY_LIMIT' ||
     msg.includes('failed to load google maps') ||
+    msg.includes('could not load') ||
     msg.includes('403') ||
     msg.includes('request_denied')
   )
@@ -131,14 +109,14 @@ export default function useStreetView(clickedTree, streetCenterlines) {
 
     ;(async () => {
       try {
-        await loadGoogleMapsSDK()
+        const { StreetViewService, StreetViewSource } = await importLibrary('streetView')
         if (currentRequestId !== requestIdRef.current) return
 
-        const service = new window.google.maps.StreetViewService()
+        const service = new StreetViewService()
         const response = await service.getPanorama({
           location: { lat: pos.lat, lng: pos.lng },
           radius: 50,
-          source: window.google.maps.StreetViewSource.OUTDOOR,
+          source: StreetViewSource.OUTDOOR,
         })
         if (currentRequestId !== requestIdRef.current) return
 
@@ -178,7 +156,8 @@ export default function useStreetView(clickedTree, streetCenterlines) {
         // Reverse geocode the pano location for an address label
         let address = null
         try {
-          const geocoder = new window.google.maps.Geocoder()
+          const { Geocoder } = await importLibrary('geocoding')
+          const geocoder = new Geocoder()
           const geoResponse = await geocoder.geocode({
             location: { lat: actualLat, lng: actualLng },
           })
@@ -205,6 +184,7 @@ export default function useStreetView(clickedTree, streetCenterlines) {
 
         if (isPermanentError(err)) {
           console.warn('[useStreetView] Permanent error — disabling Street View imagery')
+          markBootstrapFailed()
           disabledRef.current = true
           setDisabled(true)
           const reason = code === 'OVER_QUERY_LIMIT' ? 'quota-exceeded'
