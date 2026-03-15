@@ -90,12 +90,12 @@ export default function Sidebar({
   const isTouchDevice = useMemo(() => window.matchMedia('(hover: none)').matches, [])
   const clickOrTap = isTouchDevice ? 'Tap' : 'Click'
 
-  const hasVisited = useMemo(() => {
+  const [hasVisited] = useState(() => {
     try {
       const raw = localStorage.getItem(LOCAL_STORAGE_KEY)
-      return raw ? JSON.parse(raw).hasVisited : false
+      return raw ? JSON.parse(raw).hasVisited === true : false
     } catch { return false }
-  }, [])
+  })
 
   // Build the neighborhood insight card dynamically
   const neighborhoodCard = useMemo(() => {
