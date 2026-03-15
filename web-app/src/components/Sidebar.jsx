@@ -39,6 +39,7 @@ export default function Sidebar({
   onCtaDismiss,
   onReset,
   selectedFeatureName,
+  onMobileSearchFocus,
 }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchFocused, setSearchFocused] = useState(false)
@@ -122,6 +123,9 @@ export default function Sidebar({
 
   return (
     <aside className="sidebar">
+      <div className="sheet-drag-handle">
+        <div className="sheet-drag-handle-bar" />
+      </div>
       {/* ── Header ── */}
       <header className="sidebar-header">
         <img src="images/shuc-logo.png" alt="SHUC logo" className="sidebar-logo" />
@@ -154,7 +158,7 @@ export default function Sidebar({
               placeholder={activeLayer?.searchPlaceholder ?? 'Search…'}
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              onFocus={() => setSearchFocused(true)}
+              onFocus={() => { setSearchFocused(true); if (onMobileSearchFocus) onMobileSearchFocus() }}
               onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
             />
           )}

@@ -1043,3 +1043,149 @@ body { margin: 0; overflow: hidden; }
   opacity: 0.6;
   cursor: wait;
 }
+
+/* ─── Mobile: bottom sheet ───────────────────────────────────────────────── */
+@media (max-width: 767px) {
+  .app-layout {
+    flex-direction: column;
+  }
+
+  .sidebar-wrapper {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100% !important;
+    min-width: 100% !important;
+    height: auto;
+    max-height: 90dvh;
+    z-index: 20;
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.3);
+    transition: transform 0.3s ease;
+    overflow: hidden;
+  }
+
+  .sidebar-wrapper.collapsed {
+    width: 100% !important;
+    min-width: 100% !important;
+    transform: none;
+  }
+
+  .sidebar {
+    width: 100% !important;
+    min-width: 100% !important;
+    max-height: 90dvh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-right: 0;
+  }
+
+  /* Drag handle */
+  .sheet-drag-handle {
+    display: flex;
+    justify-content: center;
+    padding: 8px 0 4px;
+    cursor: grab;
+    touch-action: none;
+  }
+
+  .sheet-drag-handle-bar {
+    width: 36px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--sidebar-muted);
+    opacity: 0.5;
+  }
+
+  /* Bottom sheet states */
+  .sidebar-wrapper[data-sheet="peek"] {
+    max-height: 60px;
+    overflow: hidden;
+  }
+
+  .sidebar-wrapper[data-sheet="expanded"] {
+    max-height: 60dvh;
+  }
+
+  .sidebar-wrapper[data-sheet="full"] {
+    max-height: 90dvh;
+  }
+
+  /* Hide desktop sidebar toggle on mobile */
+  .sidebar-toggle {
+    display: none;
+  }
+
+  /* Peek bar: show handle + header + first search section only */
+  .sidebar-wrapper[data-sheet="peek"] .prompt-card,
+  .sidebar-wrapper[data-sheet="peek"] .cta-subtle,
+  .sidebar-wrapper[data-sheet="peek"] .cta-prominent,
+  .sidebar-wrapper[data-sheet="peek"] .leaderboard-section,
+  .sidebar-wrapper[data-sheet="peek"] .advanced-zone,
+  .sidebar-wrapper[data-sheet="peek"] .sidebar-footer {
+    display: none;
+  }
+
+  /* Hide all sidebar-sections in peek EXCEPT the search section (first one) */
+  .sidebar-wrapper[data-sheet="peek"] .sidebar-section ~ .sidebar-section {
+    display: none;
+  }
+
+  .sidebar-wrapper[data-sheet="peek"] .sidebar-header {
+    padding: 8px 14px;
+  }
+
+  /* Map needs full height on mobile */
+  .map-container {
+    height: 100dvh;
+  }
+
+  /* Mobile CTA banner (post-streetview, shown over map, above sheet z-index 20) */
+  .mobile-cta-banner {
+    display: block;
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    z-index: 25;
+    background: linear-gradient(135deg, rgba(30,41,59,0.95), rgba(15,23,42,0.95));
+    border: 1px solid rgba(74,222,128,0.3);
+    border-radius: 10px;
+    padding: 12px;
+    backdrop-filter: blur(8px);
+  }
+
+  .mobile-cta-banner .cta-prominent {
+    margin: 0;
+    border: none;
+    background: none;
+    padding: 0;
+  }
+
+  /* Search dropdown must work inside bottom sheet */
+  .search-results {
+    position: relative;
+    top: auto;
+  }
+
+  /* Stack Street View images vertically on mobile */
+  .sv-modal-images {
+    flex-direction: column;
+  }
+
+  .sv-modal-image-wrapper {
+    min-width: 100% !important;
+  }
+}
+
+/* Hide mobile-only elements on desktop */
+@media (min-width: 768px) {
+  .sheet-drag-handle {
+    display: none;
+  }
+
+  .mobile-cta-banner {
+    display: none;
+  }
+}

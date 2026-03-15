@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
-import { BOUNDARY_LAYERS, STREET_BUFFER_PATH, COLOR_METHODS, CHOROPLETH_COLORS, COVERAGE_COLORS, LOCAL_STORAGE_KEY } from './config/layers'
+import { BOUNDARY_LAYERS, STREET_BUFFER_PATH, COLOR_METHODS, CHOROPLETH_COLORS, COVERAGE_COLORS, LOCAL_STORAGE_KEY, CTA_LINKS } from './config/layers'
 import { useLayerData, computeQuantileBreaks } from './hooks/useLayerData'
 import Sidebar from './components/Sidebar'
 import MapView from './components/MapView'
@@ -45,6 +45,12 @@ export default function App() {
   const [hasViewedStreetView, setHasViewedStreetView] = useState(false)
   const [advancedExpanded, setAdvancedExpanded]   = useState(() => loadStorage('advancedExpanded', false))
   const [ctaDismissed, setCtaDismissed]           = useState(() => loadStorage('ctaDismissed', false))
+
+  const [sheetState, setSheetState] = useState('peek') // peek | expanded | full
+  const [isMobile, setIsMobile] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches
+  )
+  const sheetWrapperRef = useRef(null)
 
   const locationAvailable = navigator.geolocation && window.isSecureContext
 
@@ -115,6 +121,21 @@ export default function App() {
     }
   }, [explorationStage, hasViewedStreetView])
 
+  // Listen for viewport changes (resize, rotation)
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)')
+    const handler = e => setIsMobile(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
+
+  // Mobile: auto-expand sheet when stage changes (except landing)
+  useEffect(() => {
+    if (isMobile && explorationStage !== 'landing') {
+      setSheetState('expanded')
+    }
+  }, [explorationStage, isMobile])
+
   const handlePanToLocation = useCallback(() => {
     if (userLocation) setFlyToLocation(userLocation)
   }, [userLocation])
@@ -138,11 +159,50 @@ export default function App() {
     setExplorationStage('exploring')
   }, [])
 
+  const handleMobileSearchFocus = useCallback(() => {
+    if (isMobile && sheetState === 'peek') {
+      setSheetState('expanded')
+    }
+  }, [isMobile, sheetState])
+
   const resetExploration = useCallback(() => {
     setExplorationStage('landing')
     setSelectedFeatureName(null)
     setHoveredFeature(null)
   }, [])
+
+  // Mobile bottom sheet drag handling
+  const dragStartY = useRef(0)
+
+  useEffect(() => {
+    if (!isMobile) return
+    const wrapper = sheetWrapperRef.current
+    const handle = wrapper?.querySelector('.sheet-drag-handle')
+    if (!handle) return
+
+    const onTouchStart = e => {
+      dragStartY.current = e.touches[0].clientY
+    }
+
+    const onTouchEnd = e => {
+      const deltaY = e.changedTouches[0].clientY - dragStartY.current
+      const threshold = 50
+      if (deltaY < -threshold) {
+        // Swiped up
+        setSheetState(prev => prev === 'peek' ? 'expanded' : 'full')
+      } else if (deltaY > threshold) {
+        // Swiped down
+        setSheetState(prev => prev === 'full' ? 'expanded' : 'peek')
+      }
+    }
+
+    handle.addEventListener('touchstart', onTouchStart, { passive: true })
+    handle.addEventListener('touchend', onTouchEnd, { passive: true })
+    return () => {
+      handle.removeEventListener('touchstart', onTouchStart)
+      handle.removeEventListener('touchend', onTouchEnd)
+    }
+  }, [isMobile])
 
   const activeLayerConfig = BOUNDARY_LAYERS.find(l => l.id === activeBoundaryLayerId)
 
@@ -200,7 +260,11 @@ export default function App() {
 
   return (
     <div className="app-layout">
-      <div className={`sidebar-wrapper${sidebarOpen ? '' : ' collapsed'}`}>
+      <div
+        className={`sidebar-wrapper${sidebarOpen ? '' : ' collapsed'}`}
+        data-sheet={isMobile ? sheetState : undefined}
+        ref={sheetWrapperRef}
+      >
       <Sidebar
         activeBoundaryLayerId={activeBoundaryLayerId}
         onBoundaryLayerChange={handleBoundaryLayerChange}
@@ -233,6 +297,7 @@ export default function App() {
         onCtaDismiss={handleCtaDismiss}
         onReset={resetExploration}
         selectedFeatureName={selectedFeatureName}
+        onMobileSearchFocus={handleMobileSearchFocus}
       />
       </div>
 
@@ -244,6 +309,29 @@ export default function App() {
         >
           {sidebarOpen ? '\u25C0' : '\u25B6'}
         </button>
+        {/* Mobile: prominent CTA banner shown over map */}
+        {isMobile && explorationStage === 'post-streetview' && !ctaDismissed && (
+          <div className="mobile-cta-banner">
+            <div className="cta-prominent">
+              <div className="cta-prominent-title">Help Restore Pittsburgh's Canopy</div>
+              <div className="cta-prominent-body">
+                Every tree matters. Here's how you can make a difference:
+              </div>
+              <div className="cta-actions">
+                {Object.values(CTA_LINKS).map(link => (
+                  <a key={link.url} href={link.url} target="_blank" rel="noreferrer" className="cta-action-btn">
+                    <span className="cta-action-emoji">{link.emoji}</span>
+                    <div>
+                      <div className="cta-action-label">{link.label}</div>
+                      <div className="cta-action-desc">{link.description}</div>
+                    </div>
+                  </a>
+                ))}
+              </div>
+              <button className="cta-dismiss" onClick={handleCtaDismiss}>Dismiss</button>
+            </div>
+          </div>
+        )}
         {loading && <div className="map-status">Loading layer data…</div>}
         {error   && <div className="map-status error">Error: {error}</div>}
 
