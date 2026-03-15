@@ -107,6 +107,22 @@ export default function useStreetView(clickedTree, streetCenterlines) {
     setLoading(true)
     setPanoData(null)
 
+    // Wall-clock safety net: if the async work hasn't finished in 8 seconds,
+    // force-disable Street View so the popup shows a direct link instead of
+    // hanging on "Loading..." forever (e.g. when the API key's referrer
+    // restriction blocks the Google Maps SDK).
+    const timeoutId = setTimeout(() => {
+      if (currentRequestId === requestIdRef.current) {
+        console.warn('[useStreetView] Timed out — falling back to direct link')
+        markBootstrapFailed()
+        disabledRef.current = true
+        setDisabled(true)
+        setDisableReason('sdk-load-failed')
+        setPanoData(null)
+        setLoading(false)
+      }
+    }, 8000)
+
     ;(async () => {
       try {
         const { StreetViewService, StreetViewSource } = await importLibrary('streetView')
@@ -177,6 +193,7 @@ export default function useStreetView(clickedTree, streetCenterlines) {
           address,
         })
       } catch (err) {
+        clearTimeout(timeoutId)
         const code = err?.code || ''
         const msg = err?.message || String(err)
         console.warn('[useStreetView]', msg, code ? `(code: ${code})` : '', err)
@@ -194,6 +211,7 @@ export default function useStreetView(clickedTree, streetCenterlines) {
         }
         setPanoData(null)
       } finally {
+        clearTimeout(timeoutId)
         if (currentRequestId === requestIdRef.current) {
           setLoading(false)
         }
