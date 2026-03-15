@@ -66,6 +66,8 @@ export default function MapView({
   userLocation,
   flyToLocation,
   onFlyToComplete,
+  onZoom,
+  onStreetViewClose,
 }) {
   const mapRef = useRef(null)
   const [clickedTree, setClickedTree] = useState(null)
@@ -219,6 +221,9 @@ export default function MapView({
       onMouseLeave={handleMouseLeave}
       onClick={handleClick}
       onError={handleMapError}
+      onMoveEnd={e => {
+        if (onZoom) onZoom(e.target.getZoom())
+      }}
       cursor={hoveredFeature || hoveredTree ? 'pointer' : 'grab'}
     >
       <NavigationControl position="top-right" />
@@ -593,7 +598,10 @@ export default function MapView({
           panoData={svPanoData}
           isGain={clickedTree.isGain}
           feature={clickedTree.feature}
-          onClose={() => setClickedTree(null)}
+          onClose={() => {
+            setClickedTree(null)
+            if (onStreetViewClose) onStreetViewClose()
+          }}
         />
       )}
     </>
