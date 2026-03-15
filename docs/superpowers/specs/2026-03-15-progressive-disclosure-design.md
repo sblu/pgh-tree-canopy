@@ -1,7 +1,7 @@
 # Progressive Disclosure: Guided Exploration Redesign
 
 **Date:** 2026-03-15
-**Status:** Draft
+**Status:** Approved
 **Goal:** Transform the sidebar from a power-user GIS tool into a narrative advocacy journey that progressively reveals complexity as users explore.
 
 ## Context
@@ -25,12 +25,13 @@ A single `explorationStage` state variable drives what the sidebar shows. It adv
 |-------|---------|-------------|
 | `landing` | App load | Welcome hook + search prompt |
 | `neighborhood` | User selects a boundary feature | Stats for selected area + leaderboard + zoom hint |
-| `street-level` | Zoom ≥ 12 with a feature selected | "Click a red shape" prompt + tree loss legend |
-| `post-streetview` | First Street View modal close | Prominent CTA panel with action buttons |
+| `street-level` | Map zoom ≥ 12 with a feature selected (via `onZoom` callback from MapView) | "Click a red shape" prompt + tree loss legend |
+| `post-streetview` | First Street View modal close (via `onStreetViewClose` callback from MapView) | Prominent CTA panel with action buttons |
 | `exploring` | CTA dismissed | Steady-state exploring with contextual cards |
 
 **Stage transition rules:**
 - Stages only advance forward automatically (landing → neighborhood → street-level → post-streetview → exploring)
+- Both search selection and map click selection of a boundary feature trigger the `neighborhood` transition
 - Selecting a different neighborhood while at `street-level` or later does NOT regress to `neighborhood` — the insight card updates in place
 - Zooming back out from street level does NOT regress — the prompt card updates contextually
 - Reset button returns to `landing` and clears the selected feature
@@ -44,7 +45,7 @@ The sidebar is split into two zones:
 
 1. **Header** — Logo, title, subtitle. Reset button (↺) appears after leaving `landing` stage.
 
-2. **Search** — Always visible. Label changes contextually ("Find your neighborhood" at landing, shows selected name with ✕ clear button when a feature is selected). The search field and behavior are the same as today but with updated labeling.
+2. **Search** — Always visible. Label changes contextually ("Find your neighborhood" at landing, shows selected name with ✕ clear button when a feature is selected). The search field and behavior are the same as today but with updated labeling. Search always operates against the currently active boundary layer (default: `neighborhoods`). The boundary layer selector lives in the Advanced zone, but the default layer applies even when Advanced is collapsed.
 
 3. **Prompt Card Slot** — One contextual card at a time, with a colored left border. Content depends on current stage:
    - `landing`: "Pittsburgh's tree canopy is shrinking." + brief context about 2015–2020 decline
@@ -63,7 +64,7 @@ The sidebar is split into two zones:
    - "Dismiss" collapses prominent CTA back to subtle version and advances stage to `exploring`.
 
 6. **Dynamic Legend** — Shows only legends relevant to what's currently visible:
-   - Boundary choropleth legend (when a boundary layer is active) — compact horizontal gradient bar with "Loss" / "Gain" labels at landing; full legend rows when in advanced or when user has engaged deeper
+   - Boundary choropleth legend (when a boundary layer is active) — compact horizontal gradient bar with "Loss" / "Gain" labels at `landing` stage; full legend with labeled rows at `neighborhood` stage or later, or when Advanced zone is expanded
    - Mature tree losses legend (when zoom ≥ 12 and tree losses layer is on)
    - Gains legend (when zoom ≥ 12 and gains layer is on)
    - Street buffer legend (when street buffer is on and zoom ≥ 12)
@@ -85,13 +86,13 @@ Changing settings in the Advanced zone updates the map and legend immediately bu
 
 ### Persistence (localStorage)
 
-Key: `canopyExplorer` (or similar namespace)
+Key: `pghCanopyExplorer`
 
 | Property | Type | Purpose |
 |----------|------|---------|
 | `advancedExpanded` | boolean | Remember if user opened the advanced section |
 | `ctaDismissed` | boolean | Don't show prominent CTA again after dismissal |
-| `hasVisited` | boolean | Return visitors skip the welcome prompt card and go straight to search-focused landing |
+| `hasVisited` | boolean | Set to `true` on first navigation away from `landing` stage. Return visitors skip the welcome prompt card and go straight to search-focused landing. |
 
 ### Reset Behavior
 
@@ -99,7 +100,7 @@ The Reset button (↺ icon in header, visible after leaving `landing`):
 - Sets `explorationStage` back to `landing`
 - Clears selected feature / search
 - Collapses leaderboard
-- Collapses advanced section (but does NOT clear the `advancedExpanded` localStorage flag — if the user explicitly expanded it before, it re-opens on next interaction)
+- If `advancedExpanded` is set in localStorage, the advanced section stays open (power users who prefer it open always get it open). Otherwise, collapses it.
 - Does NOT clear map position or zoom
 - Does NOT change layer/color-by settings
 
@@ -122,11 +123,17 @@ All other defaults (tree losses on, gains off, street buffer on, neighborhoods l
 
 **App.jsx:**
 - Add `explorationStage` state (string enum)
-- Add stage transition logic (effects that watch for triggers)
+- Add `currentZoom` state (number, updated via `onZoom` callback from MapView)
+- Add stage transition logic (effects that watch for triggers: `selectedFeatureName` for `neighborhood`, `currentZoom >= 12` for `street-level`, `streetViewClosed` flag for `post-streetview`)
 - Add `advancedExpanded` state (synced to localStorage)
 - Add `ctaDismissed` state (synced to localStorage)
+- Add `hasViewedStreetView` state (tracks first Street View close)
 - Add `resetExploration` callback
 - Pass new props to Sidebar
+
+**MapView.jsx:**
+- Add `onZoom` callback prop — fires on `onMoveEnd` with the current zoom level so App.jsx can track it for stage transitions
+- Add `onStreetViewClose` callback prop — fires when the StreetViewModal is closed, so App.jsx can detect the first Street View interaction. The existing `setClickedTree(null)` logic stays internal to MapView; this is an additional notification to the parent.
 
 **Sidebar.jsx:**
 - Major restructure: split into Primary and Advanced zones
@@ -155,21 +162,21 @@ None anticipated — this is a restructure of Sidebar.jsx, not new components. I
 - Defined as data so content is easy to adjust without touching layout logic
 
 **New: CTA links (in config or Sidebar.jsx):**
-- Free tree request URL
-- Tree captain overview URL
-- Volunteer URL
+- Free tree request: `https://shuc.org/wp-content/uploads/2024/10/SHUC-Tree-Request-Form-2024.pdf`
+- Tree captain overview: `https://shuc.org/wp-content/uploads/2025/02/Squirrel-Hill-Tree-Captain-Overview.pdf`
+- Volunteer with SHUC: `https://shuc.org` (link to main SHUC site; update to specific volunteer page if one exists)
 
 ## Out of Scope
 
 - App renaming (tracked separately — Task #8)
-- Changes to the map itself (layer rendering, popups, Street View modal)
+- Changes to map layer rendering, popups, or Street View modal internals (MapView only gets two new callback props: `onZoom` and `onStreetViewClose`)
 - Changes to data pipeline or data format
 - Mobile-specific layout changes (can be a follow-up)
 - Onboarding animations or transitions (start with instant show/hide, polish later)
 - A/B testing or analytics on stage progression
 
-## Open Questions
+## Decisions (Resolved)
 
-1. **Return visitors:** Should `hasVisited` skip the welcome prompt entirely, or show a shorter version? Leaning toward showing search immediately with no prompt card.
-2. **Street View CTA timing:** Should the prominent CTA appear after the FIRST Street View close, or after a short delay / second view? Starting with first close, can adjust.
-3. **Boundary layer change in guided mode:** If a user in `neighborhood` stage switches to City Council Districts via Advanced, should the insight card update to show council district stats? Yes — the card should be driven by the selected feature, not hardcoded to neighborhoods.
+1. **Return visitors:** When `hasVisited` is true, the `landing` stage skips the welcome prompt card entirely — the sidebar shows the search bar prominently with no narrative text. The stage is still `landing` until they select a feature.
+2. **Street View CTA timing:** The prominent CTA appears after the FIRST Street View modal close. This can be adjusted later if it feels too aggressive.
+3. **Boundary layer change in guided mode:** The insight card is always driven by the currently selected feature and active boundary layer. If a user switches to City Council Districts via Advanced, the insight card updates to show council district stats for whatever feature is selected.
