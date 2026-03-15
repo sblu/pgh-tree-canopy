@@ -174,24 +174,26 @@ None anticipated beyond what's needed for mobile. The bottom sheet behavior can 
 
 The app currently has no responsive breakpoints. This spec adds mobile support as a first-class concern.
 
-**Breakpoint:** `768px` (standard tablet/phone threshold). Below this width, the sidebar switches to a bottom sheet pattern.
+**Breakpoint:** `@media (max-width: 767px)` — below 768px, the sidebar switches to a bottom sheet pattern.
 
 ### Mobile Sidebar: Bottom Sheet
 
-On viewports below 768px:
+On viewports at or below 767px:
 
 - **The sidebar becomes a bottom sheet** that slides up from the bottom of the screen, overlaying the map
 - **Default state:** Collapsed to a **peek bar** (~60px) showing the app title and a drag handle / tap-to-expand affordance. The map fills the full screen behind it.
-- **Expanded state:** Sheet slides up to cover ~60% of the viewport height. Contents are the same Primary + Advanced zones as desktop, scrollable within the sheet.
+- **Expanded state:** Sheet slides up to cover ~60% of the viewport height (use `dvh` units for mobile Safari compatibility with dynamic browser chrome). Contents are the same Primary + Advanced zones as desktop, scrollable within the sheet.
 - **Full-expanded state:** User can drag or tap to expand the sheet to ~90% of viewport height for comfortable reading of the leaderboard or advanced controls.
+- **Snap behavior:** When the user releases a drag, the sheet snaps to the nearest state (peek / expanded / full-expanded). Dragging past the peek threshold downward snaps to peek; dragging past the expanded threshold upward snaps to full-expanded.
+- **Desktop sidebar toggle button:** Hidden on mobile via CSS. The bottom sheet's drag handle and tap-to-expand replace it entirely.
 
 ### Mobile-Specific Adjustments
 
 - **Search bar in peek bar:** At the `landing` stage, the peek bar shows "Find your neighborhood..." as a tappable input that expands the sheet when focused. This keeps the core action accessible without expanding the sheet.
-- **Prompt cards:** Same content as desktop but rendered within the sheet. When a new prompt card appears (e.g., transitioning to `neighborhood` stage), the sheet auto-expands to ~60% briefly to show the insight, then the user can collapse it to keep exploring the map.
+- **Prompt cards:** Same content as desktop but rendered within the sheet. When a new prompt card appears (e.g., transitioning to `neighborhood` stage), the sheet auto-expands to the expanded (~60%) state and stays there until the user explicitly collapses it. No auto-collapse timer — let the user read at their own pace.
 - **Leaderboard:** Scrollable within the sheet, same as desktop.
 - **Legend:** Compact horizontal gradient bar at all stages on mobile (no expanded legend rows in the primary zone — full legend available in Advanced).
-- **CTA:** The subtle CTA bar appears in the peek bar area. The prominent post-Street-View CTA renders as a brief toast/banner at the top of the screen (not in the sheet) so it's visible even when the sheet is collapsed.
+- **CTA:** The subtle CTA bar appears in the peek bar area. The prominent post-Street-View CTA renders as a persistent banner at the top of the screen (not in the sheet) so it's visible even when the sheet is collapsed. It stays until the user taps "Dismiss" or taps through to an action link. Positioned below the map status overlay (z-index just below `.map-status`) and not overlapping the sidebar toggle area (which is hidden on mobile anyway).
 - **Street View modal:** Already renders as a full-screen overlay, which works on mobile. Side-by-side before/after images should stack vertically (top/bottom) on narrow viewports.
 - **Reset button:** Moves into the sheet header (same position as desktop, just within the sheet).
 - **"More options":** Same collapsible behavior as desktop, within the sheet.
@@ -201,6 +203,8 @@ On viewports below 768px:
 - **No hover states for core functionality.** The existing `@media (hover: hover)` pattern for popup close buttons is already correct. Prompt card hints should say "Tap" instead of "Click" on touch devices (detect via `@media (hover: none)` or `pointer: coarse`).
 - **Drag handle on sheet:** Standard bottom-sheet drag interaction. CSS `touch-action: none` on the drag handle, prevent scroll interference.
 - **Map interaction:** The map must remain fully interactive (pan, zoom, tap polygons) when the sheet is in peek/collapsed state. Sheet expansion should not interfere with map gestures.
+- **Search dropdown in bottom sheet:** The search autocomplete dropdown renders inside the sheet's scrollable area (not `position: absolute` relative to the viewport). On mobile, the sheet should auto-expand to at least the expanded state when search is focused, giving enough room for the dropdown list within the sheet's scroll area.
+- **Rapid stage transitions on fitBounds:** On mobile, tapping a boundary feature triggers `fitBounds` which may zoom past 12 immediately, causing `neighborhood` → `street-level` to fire in quick succession. This is acceptable — the prompt card simply updates to the `street-level` content. The sheet stays expanded (it was already expanded from the `neighborhood` transition), so the user sees the updated card naturally. No minimum dwell time is needed.
 
 ### Implementation Approach
 
