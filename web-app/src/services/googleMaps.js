@@ -9,11 +9,11 @@
 const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ''
 
 let bootstrapFailed = false
-let rejectBootstrap = null // allows gm_authFailure to reject the pending promise
+let rejectBootstrap = null // allows gm_authFailure to reject the pending bootstrap promise
+const pendingRejects = new Set() // rejects for in-flight importLibrary calls
 
 // Google calls this global function when the API key is invalid, the referrer
-// is not allowed, or any other auth-level error occurs.  Without this handler
-// the bootstrap promise hangs forever because the callback is never invoked.
+// is not allowed, or any other auth-level error occurs.
 window.gm_authFailure = () => {
   console.warn('[GoogleMaps] Auth failure (RefererNotAllowed / invalid key)')
   bootstrapFailed = true
@@ -21,6 +21,10 @@ window.gm_authFailure = () => {
     rejectBootstrap(new Error('Google Maps auth failure (check API key restrictions)'))
     rejectBootstrap = null
   }
+  // Reject all in-flight importLibrary calls
+  const err = new Error('Google Maps auth failure (check API key restrictions)')
+  for (const reject of pendingRejects) reject(err)
+  pendingRejects.clear()
 }
 
 // ── Bootstrap (runs once at import time) ────────────────────────────────
@@ -92,6 +96,8 @@ export function markBootstrapFailed() {
 /**
  * Thin wrapper around `google.maps.importLibrary()`.
  * Short-circuits with a rejection when the bootstrap has permanently failed.
+ * Races the real call against a timeout + gm_authFailure signal so it never
+ * hangs forever on referrer/auth errors.
  */
 export function importLibrary(name) {
   if (bootstrapFailed) {
@@ -100,5 +106,16 @@ export function importLibrary(name) {
   if (!window.google?.maps?.importLibrary) {
     return Promise.reject(new Error('Google Maps bootstrap was not installed'))
   }
-  return window.google.maps.importLibrary(name)
+  const realImport = window.google.maps.importLibrary(name)
+  let rejectFn
+  const failsafe = new Promise((_, reject) => {
+    rejectFn = reject
+    // gm_authFailure can reject this immediately
+    pendingRejects.add(reject)
+    // Safety timeout in case neither success nor auth failure fires
+    setTimeout(() => reject(new Error('Google Maps importLibrary timed out')), 10000)
+  })
+  return Promise.race([realImport, failsafe]).finally(() => {
+    pendingRejects.delete(rejectFn)
+  })
 }
