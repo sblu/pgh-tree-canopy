@@ -101,23 +101,23 @@ export default function App() {
     }
   }, [showLocation, locationAvailable])
 
-  // Stage transitions (forward-only)
+  // Stage transitions (forward-only state machine — setState in effect is intentional)
   useEffect(() => {
     if (explorationStage === 'landing' && selectedFeatureName) {
-      setExplorationStage('neighborhood')
+      setExplorationStage('neighborhood') // eslint-disable-line react-hooks/set-state-in-effect
       saveStorage('hasVisited', true)
     }
   }, [explorationStage, selectedFeatureName])
 
   useEffect(() => {
     if (explorationStage === 'neighborhood' && selectedFeatureName && currentZoom >= 12) {
-      setExplorationStage('street-level')
+      setExplorationStage('street-level') // eslint-disable-line react-hooks/set-state-in-effect
     }
   }, [explorationStage, selectedFeatureName, currentZoom])
 
   useEffect(() => {
     if (explorationStage === 'street-level' && hasViewedStreetView) {
-      setExplorationStage('post-streetview')
+      setExplorationStage('post-streetview') // eslint-disable-line react-hooks/set-state-in-effect
     }
   }, [explorationStage, hasViewedStreetView])
 
@@ -132,7 +132,7 @@ export default function App() {
   // Mobile: auto-expand sheet when stage changes (except landing)
   useEffect(() => {
     if (isMobile && explorationStage !== 'landing') {
-      setSheetState('expanded')
+      setSheetState('expanded') // eslint-disable-line react-hooks/set-state-in-effect
     }
   }, [explorationStage, isMobile])
 
