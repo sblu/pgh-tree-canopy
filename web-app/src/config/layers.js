@@ -168,8 +168,6 @@ export const CANOPY_CHANGE_COLORS = {
 // Progressive disclosure — exploration stages & prompt cards
 // ---------------------------------------------------------------------------
 
-export const EXPLORATION_STAGES = ['landing', 'neighborhood', 'street-level', 'post-streetview', 'exploring']
-
 export const PROMPT_CARDS = {
   landing: {
     headline: "Pittsburgh's tree canopy is shrinking.",

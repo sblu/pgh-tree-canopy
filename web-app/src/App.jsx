@@ -61,7 +61,7 @@ export default function App() {
         navigator.geolocation.clearWatch(watchIdRef.current)
         watchIdRef.current = null
       }
-      setUserLocation(null)
+      setUserLocation(null) // eslint-disable-line react-hooks/set-state-in-effect
       // Don't clear locationError here — let it persist so user sees why it failed
       return
     }
@@ -169,6 +169,7 @@ export default function App() {
     setExplorationStage('landing')
     setSelectedFeatureName(null)
     setHoveredFeature(null)
+    setHasViewedStreetView(false)
   }, [])
 
   // Mobile bottom sheet drag handling
