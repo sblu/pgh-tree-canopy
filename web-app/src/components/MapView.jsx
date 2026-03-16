@@ -68,6 +68,8 @@ export default function MapView({
   onFlyToComplete,
   onZoom,
   onStreetViewClose,
+  isMobile,
+  sheetState,
 }) {
   const mapRef = useRef(null)
   const [clickedTree, setClickedTree] = useState(null)
@@ -139,8 +141,16 @@ export default function MapView({
       else coords.forEach(addCoords)
     }
     addCoords(feature.geometry.coordinates)
-    map.fitBounds(bounds, { padding: 60, maxZoom: 15, duration: 800 })
-  }, [selectedFeatureName, layerData])
+    // On mobile, add extra bottom padding so the feature isn't hidden behind the sheet
+    const bottomPad = isMobile && sheetState !== 'peek'
+      ? Math.round(window.innerHeight * (sheetState === 'full' ? 0.85 : 0.55))
+      : 60
+    map.fitBounds(bounds, {
+      padding: { top: 60, left: 60, right: 60, bottom: bottomPad },
+      maxZoom: 15,
+      duration: 800,
+    })
+  }, [selectedFeatureName, layerData, isMobile, sheetState])
 
   // Fly to user's location when requested
   useEffect(() => {

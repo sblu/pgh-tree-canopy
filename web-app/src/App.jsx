@@ -424,6 +424,8 @@ export default function App() {
           onFlyToComplete={() => setFlyToLocation(null)}
           onZoom={handleZoom}
           onStreetViewClose={handleStreetViewClose}
+          isMobile={isMobile}
+          sheetState={sheetState}
         />
       </main>
     </div>
