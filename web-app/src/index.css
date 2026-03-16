@@ -1075,10 +1075,11 @@ body { margin: 0; overflow: hidden; }
   .sidebar {
     width: 100% !important;
     min-width: 100% !important;
-    max-height: 90dvh;
-    overflow-y: auto;
+    max-height: none;
+    overflow-y: visible;
     overscroll-behavior: contain;
     padding-right: 0;
+    padding-bottom: 32px;
   }
 
   /* Drag handle */
@@ -1107,11 +1108,13 @@ body { margin: 0; overflow: hidden; }
   .sidebar-wrapper[data-sheet="expanded"] {
     max-height: 60dvh;
     overflow-y: auto;
+    overscroll-behavior: contain;
   }
 
   .sidebar-wrapper[data-sheet="full"] {
     max-height: 90dvh;
     overflow-y: auto;
+    overscroll-behavior: contain;
   }
 
   /* Hide desktop sidebar toggle on mobile */
