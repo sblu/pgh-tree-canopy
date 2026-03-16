@@ -1062,7 +1062,7 @@ body { margin: 0; overflow: hidden; }
     z-index: 20;
     border-radius: 16px 16px 0 0;
     box-shadow: 0 -4px 20px rgba(0,0,0,0.3);
-    transition: transform 0.3s ease;
+    transition: max-height 0.3s ease;
     overflow: hidden;
   }
 

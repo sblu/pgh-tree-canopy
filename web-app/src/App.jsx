@@ -199,8 +199,10 @@ export default function App() {
     setFlyToLocation({ longitude: -79.9959, latitude: 40.4406, zoom: 11 })
   }, [])
 
-  // Mobile bottom sheet: tap header to toggle, swipe to change state
+  // Mobile bottom sheet: tap header to toggle, drag to resize live
   const dragStartY = useRef(0)
+  const dragStartHeight = useRef(0)
+  const isDragging = useRef(false)
 
   useEffect(() => {
     if (!isMobile) return
@@ -212,33 +214,55 @@ export default function App() {
     const targets = [handle, header].filter(Boolean)
 
     const onTouchStart = e => {
+      if (e.target.closest('button, a')) return
       dragStartY.current = e.touches[0].clientY
+      dragStartHeight.current = wrapper.getBoundingClientRect().height
+      isDragging.current = false
+      // Disable transition during drag for immediate feedback
+      wrapper.style.transition = 'none'
+    }
+
+    const onTouchMove = e => {
+      const deltaY = dragStartY.current - e.touches[0].clientY // positive = dragging up
+      if (Math.abs(deltaY) > 10) isDragging.current = true
+      const newHeight = Math.max(60, Math.min(window.innerHeight * 0.9, dragStartHeight.current + deltaY))
+      wrapper.style.maxHeight = `${newHeight}px`
     }
 
     const onTouchEnd = e => {
-      // Ignore touches on buttons/links inside the header
       if (e.target.closest('button, a')) return
-      const deltaY = e.changedTouches[0].clientY - dragStartY.current
-      const threshold = 50
-      if (deltaY < -threshold) {
-        // Swiped up
-        setSheetState(prev => prev === 'peek' ? 'expanded' : 'full')
-      } else if (deltaY > threshold) {
-        // Swiped down
-        setSheetState(prev => prev === 'full' ? 'expanded' : 'peek')
-      } else {
-        // Tap (no significant drag) — toggle between peek and expanded
+      // Re-enable transition for snap animation
+      wrapper.style.transition = ''
+      wrapper.style.maxHeight = ''
+
+      if (!isDragging.current) {
+        // Tap — toggle between peek and expanded
         setSheetState(prev => prev === 'peek' ? 'expanded' : 'peek')
+        return
+      }
+
+      // Snap to nearest state based on final height
+      const finalHeight = wrapper.getBoundingClientRect().height
+      const vh = window.innerHeight
+      // Thresholds: peek < 15%vh, expanded < 70%vh, full >= 70%vh
+      if (finalHeight < vh * 0.15) {
+        setSheetState('peek')
+      } else if (finalHeight < vh * 0.7) {
+        setSheetState('expanded')
+      } else {
+        setSheetState('full')
       }
     }
 
     for (const el of targets) {
       el.addEventListener('touchstart', onTouchStart, { passive: true })
+      el.addEventListener('touchmove', onTouchMove, { passive: true })
       el.addEventListener('touchend', onTouchEnd, { passive: true })
     }
     return () => {
       for (const el of targets) {
         el.removeEventListener('touchstart', onTouchStart)
+        el.removeEventListener('touchmove', onTouchMove)
         el.removeEventListener('touchend', onTouchEnd)
       }
     }
