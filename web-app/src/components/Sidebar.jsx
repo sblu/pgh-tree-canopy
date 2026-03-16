@@ -192,7 +192,11 @@ export default function Sidebar({
           {searchFocused && !selectedFeatureName && filteredNames.length > 0 && (
             <ul className="search-results">
               {filteredNames.map(name => (
-                <li key={name} onMouseDown={() => handleSelect(name)}>
+                <li
+                  key={name}
+                  onMouseDown={() => handleSelect(name)}
+                  onTouchEnd={e => { e.preventDefault(); handleSelect(name) }}
+                >
                   {name}
                 </li>
               ))}

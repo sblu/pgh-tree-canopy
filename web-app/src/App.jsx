@@ -199,14 +199,17 @@ export default function App() {
     setFlyToLocation({ longitude: -79.9959, latitude: 40.4406, zoom: 11 })
   }, [])
 
-  // Mobile bottom sheet drag handling
+  // Mobile bottom sheet: tap header to toggle, swipe to change state
   const dragStartY = useRef(0)
 
   useEffect(() => {
     if (!isMobile) return
     const wrapper = sheetWrapperRef.current
     const handle = wrapper?.querySelector('.sheet-drag-handle')
-    if (!handle) return
+    const header = wrapper?.querySelector('.sidebar-header')
+    if (!handle && !header) return
+
+    const targets = [handle, header].filter(Boolean)
 
     const onTouchStart = e => {
       dragStartY.current = e.touches[0].clientY
@@ -221,14 +224,21 @@ export default function App() {
       } else if (deltaY > threshold) {
         // Swiped down
         setSheetState(prev => prev === 'full' ? 'expanded' : 'peek')
+      } else {
+        // Tap (no significant drag) — toggle between peek and expanded
+        setSheetState(prev => prev === 'peek' ? 'expanded' : 'peek')
       }
     }
 
-    handle.addEventListener('touchstart', onTouchStart, { passive: true })
-    handle.addEventListener('touchend', onTouchEnd, { passive: true })
+    for (const el of targets) {
+      el.addEventListener('touchstart', onTouchStart, { passive: true })
+      el.addEventListener('touchend', onTouchEnd, { passive: true })
+    }
     return () => {
-      handle.removeEventListener('touchstart', onTouchStart)
-      handle.removeEventListener('touchend', onTouchEnd)
+      for (const el of targets) {
+        el.removeEventListener('touchstart', onTouchStart)
+        el.removeEventListener('touchend', onTouchEnd)
+      }
     }
   }, [isMobile])
 
