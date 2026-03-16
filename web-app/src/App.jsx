@@ -216,6 +216,8 @@ export default function App() {
     }
 
     const onTouchEnd = e => {
+      // Ignore touches on buttons/links inside the header
+      if (e.target.closest('button, a')) return
       const deltaY = e.changedTouches[0].clientY - dragStartY.current
       const threshold = 50
       if (deltaY < -threshold) {
