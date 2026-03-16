@@ -1106,10 +1106,12 @@ body { margin: 0; overflow: hidden; }
 
   .sidebar-wrapper[data-sheet="expanded"] {
     max-height: 60dvh;
+    overflow-y: auto;
   }
 
   .sidebar-wrapper[data-sheet="full"] {
     max-height: 90dvh;
+    overflow-y: auto;
   }
 
   /* Hide desktop sidebar toggle on mobile */
