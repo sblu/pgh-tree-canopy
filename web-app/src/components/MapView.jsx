@@ -148,7 +148,7 @@ export default function MapView({
     const map = mapRef.current.getMap()
     map.flyTo({
       center: [flyToLocation.longitude, flyToLocation.latitude],
-      zoom: 15,
+      zoom: flyToLocation.zoom ?? 15,
       duration: 1200,
     })
     onFlyToComplete()

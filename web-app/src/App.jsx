@@ -187,6 +187,7 @@ export default function App() {
     setHasViewedStreetView(false)
     setStreetPath(false)
     setActiveBoundaryLayerId('neighborhoods')
+    setFlyToLocation({ longitude: -79.9959, latitude: 40.4406, zoom: 11 })
   }, [])
 
   // Mobile bottom sheet drag handling
