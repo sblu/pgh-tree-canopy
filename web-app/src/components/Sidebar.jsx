@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   BOUNDARY_LAYERS, COLOR_METHODS, CHOROPLETH_COLORS, COVERAGE_COLORS,
   TREE_LOSS_COLORS, TREE_GAIN_COLORS, STREET_BUFFER_COLOR,
@@ -93,12 +93,17 @@ export default function Sidebar({
   const isTouchDevice = useMemo(() => window.matchMedia('(hover: none)').matches, [])
   const clickOrTap = isTouchDevice ? 'Tap' : 'Click'
 
-  const [hasVisited] = useState(() => {
+  const [hasVisited, setHasVisited] = useState(() => {
     try {
       const raw = localStorage.getItem(LOCAL_STORAGE_KEY)
       return raw ? JSON.parse(raw).hasVisited === true : false
     } catch { return false }
   })
+
+  // Re-show the landing card when the user resets
+  useEffect(() => {
+    if (explorationStage === 'landing') setHasVisited(false) // eslint-disable-line react-hooks/set-state-in-effect
+  }, [explorationStage])
 
   // Build the neighborhood insight card dynamically
   const neighborhoodCard = useMemo(() => {
