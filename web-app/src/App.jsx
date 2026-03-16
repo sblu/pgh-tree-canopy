@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
-import { BOUNDARY_LAYERS, STREET_BUFFER_PATH, COLOR_METHODS, CHOROPLETH_COLORS, COVERAGE_COLORS, LOCAL_STORAGE_KEY, CTA_LINKS } from './config/layers'
+import { BOUNDARY_LAYERS, STREET_BUFFER_PATH, COLOR_METHODS, CHOROPLETH_COLORS, COVERAGE_COLORS, LOCAL_STORAGE_KEY } from './config/layers'
 import { useLayerData, computeQuantileBreaks } from './hooks/useLayerData'
 import Sidebar from './components/Sidebar'
 import MapView from './components/MapView'
@@ -165,6 +165,10 @@ export default function App() {
     setCtaDismissed(true)
     saveStorage('ctaDismissed', true)
     setExplorationStage('exploring')
+  }, [])
+
+  const handleCtaReshow = useCallback(() => {
+    setCtaDismissed(false)
   }, [])
 
   const handleStreetPathStart = useCallback(() => {
@@ -360,6 +364,7 @@ export default function App() {
         onAdvancedToggle={handleAdvancedToggle}
         ctaDismissed={ctaDismissed}
         onCtaDismiss={handleCtaDismiss}
+        onCtaReshow={handleCtaReshow}
         onReset={resetExploration}
         selectedFeatureName={selectedFeatureName}
         onMobileSearchFocus={handleMobileSearchFocus}
@@ -376,29 +381,6 @@ export default function App() {
         >
           {sidebarOpen ? '\u25C0' : '\u25B6'}
         </button>
-        {/* Mobile: prominent CTA banner shown over map */}
-        {isMobile && explorationStage === 'post-streetview' && !ctaDismissed && (
-          <div className="mobile-cta-banner">
-            <div className="cta-prominent">
-              <div className="cta-prominent-title">Help Restore Pittsburgh's Canopy</div>
-              <div className="cta-prominent-body">
-                Every tree matters. Here's how you can make a difference:
-              </div>
-              <div className="cta-actions">
-                {Object.values(CTA_LINKS).map(link => (
-                  <a key={link.url} href={link.url} target="_blank" rel="noreferrer" className="cta-action-btn">
-                    <span className="cta-action-emoji">{link.emoji}</span>
-                    <div>
-                      <div className="cta-action-label">{link.label}</div>
-                      <div className="cta-action-desc">{link.description}</div>
-                    </div>
-                  </a>
-                ))}
-              </div>
-              <button className="cta-dismiss" onClick={handleCtaDismiss}>Dismiss</button>
-            </div>
-          </div>
-        )}
         {loading && <div className="map-status">Loading layer data…</div>}
         {error   && <div className="map-status error">Error: {error}</div>}
 

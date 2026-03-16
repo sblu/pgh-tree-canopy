@@ -572,6 +572,12 @@ body { margin: 0; overflow: hidden; }
   font-size: 12px;
 }
 
+.cta-external-icon {
+  font-size: 10px;
+  opacity: 0.6;
+  margin-left: 2px;
+}
+
 .cta-action-desc {
   font-size: 10px;
   color: var(--sidebar-muted);

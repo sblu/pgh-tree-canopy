@@ -37,6 +37,7 @@ export default function Sidebar({
   onAdvancedToggle,
   ctaDismissed,
   onCtaDismiss,
+  onCtaReshow,
   onReset,
   selectedFeatureName,
   onMobileSearchFocus,
@@ -287,18 +288,18 @@ export default function Sidebar({
       )}
 
       {/* ── CTA Section ── */}
-      {explorationStage === 'post-streetview' && !ctaDismissed ? (
+      {!ctaDismissed ? (
         <div className="cta-prominent">
           <div className="cta-prominent-title">Help Restore Pittsburgh's Canopy</div>
           <div className="cta-prominent-body">
-            Every tree matters. Here's how you can make a difference in your neighborhood:
+            Every tree matters. Here's how you can make a difference in Squirrel Hill:
           </div>
           <div className="cta-actions">
             {Object.values(CTA_LINKS).map(link => (
-              <a key={link.url} href={link.url} target="_blank" rel="noreferrer" className="cta-action-btn">
+              <a key={link.label} href={link.url} target="_blank" rel="noreferrer" className="cta-action-btn">
                 <span className="cta-action-emoji">{link.emoji}</span>
                 <div>
-                  <div className="cta-action-label">{link.label}</div>
+                  <div className="cta-action-label">{link.label} <span className="cta-external-icon">↗</span></div>
                   <div className="cta-action-desc">{link.description}</div>
                 </div>
               </a>
@@ -311,8 +312,11 @@ export default function Sidebar({
           <span className="cta-subtle-emoji">🌱</span>
           <span className="cta-subtle-text">
             Want to help?{' '}
-            <a href="https://shuc.org/about-us/committees/parks-and-open-space-committee/" target="_blank" rel="noreferrer">
-              Learn how you can take action
+            <a
+              href="#"
+              onClick={e => { e.preventDefault(); onCtaReshow() }}
+            >
+              Learn how you can take action in Squirrel Hill
             </a>
           </span>
         </div>

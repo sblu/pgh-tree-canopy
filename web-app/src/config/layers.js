@@ -183,23 +183,25 @@ export const PROMPT_CARDS = {
   // 'post-streetview' and 'exploring' have no prompt card
 }
 
+export const CTA_URL = 'https://shuc.org/about-us/committees/parks-and-open-space-committee/'
+
 export const CTA_LINKS = {
   freeTree: {
     label: 'Request a Free Tree',
     description: 'City of Pittsburgh property owners',
-    url: 'https://shuc.org/wp-content/uploads/2024/10/SHUC-Tree-Request-Form-2024.pdf',
+    url: CTA_URL,
     emoji: '\u{1F333}',
   },
   treeCaptain: {
     label: 'Become a Tree Captain',
     description: 'Lead tree planting in your community',
-    url: 'https://shuc.org/wp-content/uploads/2025/02/Squirrel-Hill-Tree-Captain-Overview.pdf',
+    url: CTA_URL,
     emoji: '\u{1F3D8}\uFE0F',
   },
   volunteer: {
     label: 'Volunteer with SHUC',
     description: 'Join the Tree Committee',
-    url: 'https://shuc.org',
+    url: CTA_URL,
     emoji: '\u{1F91D}',
   },
 }
