@@ -155,14 +155,17 @@ export default function Sidebar({
       </div>
       {/* ── Header ── */}
       <header className="sidebar-header">
-        <img src="images/shuc-logo.png" alt="SHUC logo" className="sidebar-logo" />
-        <div>
-          <div className="sidebar-title">Pittsburgh Tree Canopy</div>
-          <div className="sidebar-subtitle">2015–2020 Change</div>
+        <div className="sidebar-header-top">
+          <img src="images/shuc-logo.png" alt="SHUC logo" className="sidebar-logo" />
+          <div>
+            <div className="sidebar-title">Pittsburgh Tree Canopy Explorer</div>
+            <div className="sidebar-subtitle">Based on 2015 to 2020 canopy changes</div>
+          </div>
+          {explorationStage !== 'landing' && (
+            <button className="reset-btn" onClick={onReset} title="Start over">↺</button>
+          )}
         </div>
-        {explorationStage !== 'landing' && (
-          <button className="reset-btn" onClick={onReset} title="Start over">↺</button>
-        )}
+        <div className="sidebar-header-tagline"><em>Brought to you by the Squirrel Hill Urban Coalition Tree Committee</em></div>
       </header>
 
       {/* ── Search ── */}

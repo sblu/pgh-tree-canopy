@@ -1,4 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" rx="8" fill="#1b7837"/>
-  <path d="M32 8 L18 28 H24 L14 44 H26 V56 H38 V44 H50 L40 28 H46 Z" fill="#fff"/>
+  <!-- Round green canopy -->
+  <circle cx="32" cy="24" r="20" fill="#1b7837"/>
+  <!-- Brown trunk -->
+  <rect x="28" y="40" width="8" height="18" rx="2" fill="#8B5E3C"/>
 </svg>

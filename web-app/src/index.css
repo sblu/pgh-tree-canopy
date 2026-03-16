@@ -82,11 +82,22 @@ body { margin: 0; overflow: hidden; }
 
 .sidebar-header {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 16px 14px 14px;
+  flex-direction: column;
+  padding: 16px 14px 10px;
   background: #0f172a;
   border-bottom: 1px solid var(--section-sep);
+}
+
+.sidebar-header-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sidebar-header-tagline {
+  font-size: 11px;
+  color: var(--sidebar-muted);
+  margin-top: 6px;
 }
 
 .sidebar-logo {
@@ -1145,6 +1156,10 @@ body { margin: 0; overflow: hidden; }
 
   .sidebar-wrapper[data-sheet="peek"] .sidebar-header {
     padding: 8px 14px;
+  }
+
+  .sidebar-wrapper[data-sheet="peek"] .sidebar-header-tagline {
+    display: none;
   }
 
   /* Map needs full height on mobile */
