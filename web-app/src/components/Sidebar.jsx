@@ -507,7 +507,7 @@ export default function Sidebar({
                 <span className="toggle-pill" />
               </label>
               <label className="toggle-row">
-                <span>Street tree areas only</span>
+                <span>Street tree areas only<span className="toggle-subtext">Limits to City of Pittsburgh only</span></span>
                 <input type="checkbox" className="toggle-input"
                   checked={showStreetBuffer} onChange={e => onShowStreetBufferChange(e.target.checked)} />
                 <span className="toggle-pill" />

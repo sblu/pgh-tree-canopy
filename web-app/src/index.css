@@ -190,6 +190,13 @@ body { margin: 0; overflow: hidden; }
   line-height: 1.35;
 }
 
+.toggle-subtext {
+  display: block;
+  font-size: 10px;
+  color: var(--sidebar-muted);
+  font-weight: 400;
+}
+
 .toggle-input {
   position: absolute;
   opacity: 0;

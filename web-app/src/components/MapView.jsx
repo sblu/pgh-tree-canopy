@@ -72,6 +72,7 @@ export default function MapView({
   sheetState,
 }) {
   const mapRef = useRef(null)
+  const [mapLoaded, setMapLoaded] = useState(false)
   const [clickedTree, setClickedTree] = useState(null)
   const { loading: svLoading, panoData: svPanoData, disabled: svDisabled, disableReason: svDisableReason } = useStreetView(clickedTree, streetCenterlines)
 
@@ -230,6 +231,7 @@ export default function MapView({
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       onClick={handleClick}
+      onLoad={() => setMapLoaded(true)}
       onError={handleMapError}
       onMoveEnd={e => {
         if (onZoom) onZoom(e.target.getZoom())
@@ -265,7 +267,7 @@ export default function MapView({
       )}
 
       {/* ── Full canopy change layer (3.3M polygons, PMTiles) ──────── */}
-      {showCanopyChange && (
+      {mapLoaded && showCanopyChange && (
         <Source id="canopy-change" type="vector" url={canopyChangeUrl}>
           <Layer
             {...{
@@ -429,7 +431,7 @@ export default function MapView({
       )}
 
       {/* ── Mature tree loss polygons (PMTiles) ─────────────────────── */}
-      {showTreeLosses && (
+      {mapLoaded && showTreeLosses && (
         <Source id="tree-losses" type="vector" url={treeLossesUrl}>
           <Layer
             {...{
@@ -481,7 +483,7 @@ export default function MapView({
       )}
 
       {/* ── Gain polygons (PMTiles) ────────────────────────────────── */}
-      {showTreeGains && (
+      {mapLoaded && showTreeGains && (
         <Source id="tree-gains" type="vector" url={treeGainsUrl}>
           <Layer
             {...{
