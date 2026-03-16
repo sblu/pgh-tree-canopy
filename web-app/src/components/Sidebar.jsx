@@ -136,7 +136,7 @@ export default function Sidebar({
           <div className="sidebar-subtitle">2015–2020 Change</div>
         </div>
         {explorationStage !== 'landing' && (
-          <button className="reset-btn" onClick={onReset} title="Reset to start">↺</button>
+          <button className="reset-btn" onClick={onReset} title="Start over">↺</button>
         )}
       </header>
 
@@ -385,6 +385,27 @@ export default function Sidebar({
 
         {advancedExpanded && (
           <div className="advanced-content">
+            {/* My Location */}
+            <div className="advanced-sub">
+              <label className={`toggle-row${!locationAvailable ? ' disabled' : ''}`}>
+                <span className="locate-label">
+                  My Location
+                  <span
+                    className={`locate-dot${userLocation ? ' active' : ''}`}
+                    role="button"
+                    tabIndex={userLocation ? 0 : -1}
+                    onClick={e => { e.preventDefault(); e.stopPropagation(); if (userLocation) onPanToLocation() }}
+                    title={userLocation ? 'Pan to my location' : 'Enable location first'}
+                  />
+                  {locationError && <span className="radio-description" style={{ color: '#f87171' }}>{locationError}</span>}
+                  {!locationAvailable && !locationError && <span className="radio-description">Requires HTTPS</span>}
+                </span>
+                <input type="checkbox" className="toggle-input"
+                  checked={showLocation} onChange={e => onShowLocationChange(e.target.checked)} disabled={!locationAvailable} />
+                <span className="toggle-pill" />
+              </label>
+            </div>
+
             {/* Boundary layer switcher */}
             <div className="advanced-sub">
               <div className="section-label">Boundary Layer</div>
@@ -450,27 +471,6 @@ export default function Sidebar({
                 <span>All canopy changes</span>
                 <input type="checkbox" className="toggle-input"
                   checked={showCanopyChange} onChange={e => onShowCanopyChangeChange(e.target.checked)} />
-                <span className="toggle-pill" />
-              </label>
-            </div>
-
-            {/* My Location */}
-            <div className="advanced-sub">
-              <label className={`toggle-row${!locationAvailable ? ' disabled' : ''}`}>
-                <span className="locate-label">
-                  My Location
-                  <span
-                    className={`locate-dot${userLocation ? ' active' : ''}`}
-                    role="button"
-                    tabIndex={userLocation ? 0 : -1}
-                    onClick={e => { e.preventDefault(); e.stopPropagation(); if (userLocation) onPanToLocation() }}
-                    title={userLocation ? 'Pan to my location' : 'Enable location first'}
-                  />
-                  {locationError && <span className="radio-description" style={{ color: '#f87171' }}>{locationError}</span>}
-                  {!locationAvailable && !locationError && <span className="radio-description">Requires HTTPS</span>}
-                </span>
-                <input type="checkbox" className="toggle-input"
-                  checked={showLocation} onChange={e => onShowLocationChange(e.target.checked)} disabled={!locationAvailable} />
                 <span className="toggle-pill" />
               </label>
             </div>

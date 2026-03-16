@@ -25,7 +25,7 @@ function saveStorage(key, value) {
 
 export default function App() {
   const [activeBoundaryLayerId, setActiveBoundaryLayerId] = useState('neighborhoods')
-  const [activeMethodId, setActiveMethodId]               = useState('net_pct_of_area')
+  const [activeMethodId, setActiveMethodId]               = useState('net_pct_of_2015_canopy')
   const [showTreeLosses, setShowTreeLosses]               = useState(true)
   const [showTreeGains, setShowTreeGains]                 = useState(false)
   const [showStreetBuffer, setShowStreetBuffer]           = useState(true)
