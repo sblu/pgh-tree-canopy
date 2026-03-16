@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   BOUNDARY_LAYERS, COLOR_METHODS, CHOROPLETH_COLORS, COVERAGE_COLORS,
   TREE_LOSS_COLORS, TREE_GAIN_COLORS, STREET_BUFFER_COLOR,
@@ -45,6 +45,7 @@ export default function Sidebar({
 }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchFocused, setSearchFocused] = useState(false)
+  const searchInputRef = useRef(null)
 
   const activeLayer = BOUNDARY_LAYERS.find(l => l.id === activeBoundaryLayerId)
 
@@ -67,6 +68,24 @@ export default function Sidebar({
     setSearchQuery('')
     setSearchFocused(false)
     onFeatureSelect(name)
+  }
+
+  function focusSearch() {
+    setTimeout(() => searchInputRef.current?.focus(), 0)
+  }
+
+  function handleNeighborhoodLink() {
+    if (streetPath) {
+      onBoundaryLayerChange('neighborhoods')
+    }
+    focusSearch()
+  }
+
+  function handleStreetLink() {
+    if (!streetPath) {
+      onStreetPathStart()
+    }
+    focusSearch()
   }
 
   const activeMethod = COLOR_METHODS.find(m => m.id === activeMethodId)
@@ -160,6 +179,7 @@ export default function Sidebar({
             </div>
           ) : (
             <input
+              ref={searchInputRef}
               className="search-input"
               type="text"
               placeholder={activeLayer?.searchPlaceholder ?? 'Search…'}
@@ -187,13 +207,22 @@ export default function Sidebar({
           <div className="prompt-headline">{PROMPT_CARDS.landing.headline}</div>
           <div className="prompt-body">{PROMPT_CARDS.landing.body}</div>
           <div className="prompt-action" style={{ marginTop: '8px' }}>
-            Find your neighborhood or{' '}
             <span
               role="button"
               tabIndex={0}
-              onClick={onStreetPathStart}
-              onKeyDown={e => e.key === 'Enter' && onStreetPathStart()}
-              style={{ cursor: 'pointer', textDecoration: 'underline' }}
+              onClick={handleNeighborhoodLink}
+              onKeyDown={e => e.key === 'Enter' && handleNeighborhoodLink()}
+              style={{ cursor: 'pointer', textDecoration: streetPath ? 'underline' : 'none', fontWeight: streetPath ? 'normal' : 600 }}
+            >
+              Find your neighborhood
+            </span>
+            {' or '}
+            <span
+              role="button"
+              tabIndex={0}
+              onClick={handleStreetLink}
+              onKeyDown={e => e.key === 'Enter' && handleStreetLink()}
+              style={{ cursor: 'pointer', textDecoration: streetPath ? 'none' : 'underline', fontWeight: streetPath ? 600 : 'normal' }}
             >
               find your street
             </span>
