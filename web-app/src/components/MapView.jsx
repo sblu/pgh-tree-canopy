@@ -320,10 +320,9 @@ export default function MapView({
             paint={{
               'fill-color': fillColorExpr,
               'fill-opacity': [
-                'case',
-                ['==', ['get', 'name'], selectedFeatureName ?? ''],
-                0.9,
-                0.75,
+                'interpolate', ['linear'], ['zoom'],
+                11, ['case', ['==', ['get', 'name'], selectedFeatureName ?? ''], 0.9, 0.75],
+                12, ['case', ['==', ['get', 'name'], selectedFeatureName ?? ''], 0.55, 0.4],
               ],
             }}
           />
@@ -333,7 +332,7 @@ export default function MapView({
             paint={{
               'line-color': '#333',
               'line-width': 1.5,
-              'line-opacity': 0.7,
+              'line-opacity': ['interpolate', ['linear'], ['zoom'], 11, 0.7, 12, 0.3],
             }}
           />
           <Layer

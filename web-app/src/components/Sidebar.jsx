@@ -327,11 +327,28 @@ export default function Sidebar({
 
       {/* ── Dynamic Legend ── */}
       <section className="sidebar-section">
+        <div className="section-label">
+          {isCoverage ? 'Canopy Coverage by Boundary' : 'Net Canopy Change by Boundary'}
+          {!isCoverage && (
+            <span className="section-label-sub">
+              {activeMethodId === 'net_pct_of_area' ? '(% of area)' : '(% of 2015 canopy)'}
+            </span>
+          )}
+        </div>
+        <select
+          className="boundary-select"
+          value={activeBoundaryLayerId}
+          onChange={e => onBoundaryLayerChange(e.target.value)}
+        >
+          {BOUNDARY_LAYERS.map(layer => (
+            <option key={layer.id} value={layer.id}>
+              {layer.label}{layer.description ? ` — ${layer.description}` : ''}
+            </option>
+          ))}
+        </select>
+
         {activeLayer?.file && (
           <>
-            <div className="section-label">
-              {isCoverage ? 'Canopy Coverage (2020)' : 'Net Canopy Change'}
-            </div>
             {explorationStage === 'landing' && !advancedExpanded ? (
               <div className="legend-gradient-bar">
                 <div className="legend-gradient-colors">
@@ -355,122 +372,93 @@ export default function Sidebar({
           </>
         )}
 
-        {showTreeLosses && showAtStreetLevel && (
+        {(showTreeLosses || showTreeGains) && (
           <>
-            <div className="section-label" style={{ marginTop: '12px' }}>Mature Tree Losses</div>
-            <div className="legend-row">
-              <span className="legend-swatch" style={{ background: TREE_LOSS_COLORS.tree }} />
-              Single tree ≥ 0.04 acres
+            <div className="section-label" style={{ marginTop: '12px' }}>
+              {showTreeLosses && showTreeGains
+                ? 'Tree Losses and Gains'
+                : showTreeGains
+                  ? 'Tree Gains'
+                  : 'Tree Losses'}
             </div>
-            <div className="legend-row">
-              <span className="legend-swatch" style={{ background: TREE_LOSS_COLORS.grove }} />
-              Grove ≥ 0.07 acres
-            </div>
+            {showAtStreetLevel ? (
+              <>
+                {showTreeLosses && (
+                  <>
+                    <div className="legend-row">
+                      <span className="legend-swatch" style={{ background: TREE_LOSS_COLORS.tree }} />
+                      Single tree ≥ 0.04 acres
+                    </div>
+                    <div className="legend-row">
+                      <span className="legend-swatch" style={{ background: TREE_LOSS_COLORS.grove }} />
+                      Grove ≥ 0.07 acres
+                    </div>
+                  </>
+                )}
+                {showTreeGains && (
+                  <>
+                    <div className="legend-row">
+                      <span className="legend-swatch" style={{ background: TREE_GAIN_COLORS.tree }} />
+                      Medium gain ≥ 0.04 acres
+                    </div>
+                    <div className="legend-row">
+                      <span className="legend-swatch" style={{ background: TREE_GAIN_COLORS.grove }} />
+                      Large gain ≥ 0.07 acres
+                    </div>
+                  </>
+                )}
+              </>
+            ) : (
+              <div className="legend-note">Zoom in to see this data</div>
+            )}
           </>
-        )}
-
-        {showTreeGains && showAtStreetLevel && (
-          <>
-            <div className="section-label" style={{ marginTop: showTreeLosses ? '8px' : '12px' }}>Gains</div>
-            <div className="legend-row">
-              <span className="legend-swatch" style={{ background: TREE_GAIN_COLORS.tree }} />
-              Medium gain ≥ 0.04 acres
-            </div>
-            <div className="legend-row">
-              <span className="legend-swatch" style={{ background: TREE_GAIN_COLORS.grove }} />
-              Large gain ≥ 0.07 acres
-            </div>
-          </>
-        )}
-
-        {(showTreeLosses || showTreeGains) && showAtStreetLevel && (
-          <div className="legend-note">Visible at zoom level 12+</div>
         )}
 
         {showStreetBuffer && showAtStreetLevel && (
-          <>
-            <div className="section-label" style={{ marginTop: '12px' }}>Street Buffer</div>
-            <div className="legend-row">
-              <span className="legend-swatch" style={{ background: STREET_BUFFER_COLOR, opacity: 0.3 }} />
-              50 ft road buffer
-            </div>
-          </>
+          <div className="legend-row" style={{ marginTop: '12px' }}>
+            <span className="legend-swatch" style={{ background: STREET_BUFFER_COLOR, opacity: 0.3 }} />
+            Street tree area
+          </div>
         )}
 
-        {showCanopyChange && showAtStreetLevel && (
+        {showCanopyChange && (
           <>
             <div className="section-label" style={{ marginTop: '12px' }}>All Canopy Change</div>
-            <div className="legend-row">
-              <span className="legend-swatch" style={{ background: CANOPY_CHANGE_COLORS.no_change }} />
-              No change (2015–2020)
-            </div>
-            <div className="legend-row">
-              <span className="legend-swatch" style={{ background: CANOPY_CHANGE_COLORS.gain }} />
-              Canopy gain
-            </div>
-            <div className="legend-row">
-              <span className="legend-swatch" style={{ background: CANOPY_CHANGE_COLORS.loss }} />
-              Canopy loss
-            </div>
-            <div className="legend-note">Visible at zoom level 12+</div>
+            {showAtStreetLevel ? (
+              <>
+                <div className="legend-row">
+                  <span className="legend-swatch" style={{ background: CANOPY_CHANGE_COLORS.no_change }} />
+                  No change (2015–2020)
+                </div>
+                <div className="legend-row">
+                  <span className="legend-swatch" style={{ background: CANOPY_CHANGE_COLORS.gain }} />
+                  Canopy gain
+                </div>
+                <div className="legend-row">
+                  <span className="legend-swatch" style={{ background: CANOPY_CHANGE_COLORS.loss }} />
+                  Canopy loss
+                </div>
+              </>
+            ) : (
+              <div className="legend-note">Zoom in to see this data</div>
+            )}
           </>
         )}
       </section>
 
-      {/* ── Advanced Zone ("More options") ── */}
+      {/* ── Viewing Options ── */}
       <section className="advanced-zone">
         <button
           className="advanced-toggle"
           onClick={() => onAdvancedToggle(!advancedExpanded)}
         >
           <span className="advanced-toggle-icon">⚙</span>
-          <span>More options</span>
+          <span>Viewing Options</span>
           <span className="advanced-chevron">{advancedExpanded ? '▾' : '▸'}</span>
         </button>
 
         {advancedExpanded && (
           <div className="advanced-content">
-            {/* My Location */}
-            <div className="advanced-sub">
-              <label className={`toggle-row${!locationAvailable ? ' disabled' : ''}`}>
-                <span className="locate-label">
-                  My Location
-                  <span
-                    className={`locate-dot${userLocation ? ' active' : ''}`}
-                    role="button"
-                    tabIndex={userLocation ? 0 : -1}
-                    onClick={e => { e.preventDefault(); e.stopPropagation(); if (userLocation) onPanToLocation() }}
-                    title={userLocation ? 'Pan to my location' : 'Enable location first'}
-                  />
-                  {locationError && <span className="radio-description" style={{ color: '#f87171' }}>{locationError}</span>}
-                  {!locationAvailable && !locationError && <span className="radio-description">Requires HTTPS</span>}
-                </span>
-                <input type="checkbox" className="toggle-input"
-                  checked={showLocation} onChange={e => onShowLocationChange(e.target.checked)} disabled={!locationAvailable} />
-                <span className="toggle-pill" />
-              </label>
-            </div>
-
-            {/* Boundary layer switcher */}
-            <div className="advanced-sub">
-              <div className="section-label">Boundary Layer</div>
-              {BOUNDARY_LAYERS.map(layer => (
-                <label key={layer.id} className="radio-row">
-                  <input
-                    type="radio"
-                    name="boundary"
-                    value={layer.id}
-                    checked={activeBoundaryLayerId === layer.id}
-                    onChange={() => onBoundaryLayerChange(layer.id)}
-                  />
-                  <span>
-                    {layer.label}
-                    {layer.description && <span className="radio-description">{layer.description}</span>}
-                  </span>
-                </label>
-              ))}
-            </div>
-
             {/* Color metric selector */}
             <div className="advanced-sub">
               <div className="section-label">Color By</div>
@@ -493,7 +481,24 @@ export default function Sidebar({
 
             {/* Map layer toggles */}
             <div className="advanced-sub">
-              <div className="section-label">Map Layers</div>
+              <div className="section-label">Viewing Options</div>
+              <label className={`toggle-row${!locationAvailable ? ' disabled' : ''}`}>
+                <span className="locate-label">
+                  My Location
+                  <span
+                    className={`locate-dot${userLocation ? ' active' : ''}`}
+                    role="button"
+                    tabIndex={userLocation ? 0 : -1}
+                    onClick={e => { e.preventDefault(); e.stopPropagation(); if (userLocation) onPanToLocation() }}
+                    title={userLocation ? 'Pan to my location' : 'Enable location first'}
+                  />
+                  {locationError && <span className="radio-description" style={{ color: '#f87171' }}>{locationError}</span>}
+                  {!locationAvailable && !locationError && <span className="radio-description">Requires HTTPS</span>}
+                </span>
+                <input type="checkbox" className="toggle-input"
+                  checked={showLocation} onChange={e => onShowLocationChange(e.target.checked)} disabled={!locationAvailable} />
+                <span className="toggle-pill" />
+              </label>
               <label className="toggle-row">
                 <span>Mature tree losses</span>
                 <input type="checkbox" className="toggle-input"
