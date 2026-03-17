@@ -267,7 +267,7 @@ export default function MapView({
       )}
 
       {/* ── Full canopy change layer (3.3M polygons, PMTiles) ──────── */}
-      {mapLoaded && showCanopyChange && (
+      {mapLoaded && (
         <Source id="canopy-change" type="vector" url={canopyChangeUrl}>
           <Layer
             {...{
@@ -275,6 +275,7 @@ export default function MapView({
               type: 'fill',
               'source-layer': CANOPY_CHANGE_SOURCE_LAYER,
               minzoom: CANOPY_CHANGE_MIN_ZOOM,
+              layout: { visibility: showCanopyChange ? 'visible' : 'none' },
               filter: ['==', ['get', 'change_class'], 'no_change'],
               paint: {
                 'fill-color': CANOPY_CHANGE_COLORS.no_change,
@@ -288,6 +289,7 @@ export default function MapView({
               type: 'fill',
               'source-layer': CANOPY_CHANGE_SOURCE_LAYER,
               minzoom: CANOPY_CHANGE_MIN_ZOOM,
+              layout: { visibility: showCanopyChange ? 'visible' : 'none' },
               filter: ['==', ['get', 'change_class'], 'gain'],
               paint: {
                 'fill-color': CANOPY_CHANGE_COLORS.gain,
@@ -301,6 +303,7 @@ export default function MapView({
               type: 'fill',
               'source-layer': CANOPY_CHANGE_SOURCE_LAYER,
               minzoom: CANOPY_CHANGE_MIN_ZOOM,
+              layout: { visibility: showCanopyChange ? 'visible' : 'none' },
               filter: ['==', ['get', 'change_class'], 'loss'],
               paint: {
                 'fill-color': CANOPY_CHANGE_COLORS.loss,
@@ -430,7 +433,7 @@ export default function MapView({
       )}
 
       {/* ── Mature tree loss polygons (PMTiles) ─────────────────────── */}
-      {mapLoaded && showTreeLosses && (
+      {mapLoaded && (
         <Source id="tree-losses" type="vector" url={treeLossesUrl}>
           <Layer
             {...{
@@ -438,6 +441,7 @@ export default function MapView({
               type: 'fill',
               'source-layer': TREE_LOSSES_SOURCE_LAYER,
               minzoom: TREE_LOSSES_MIN_ZOOM,
+              layout: { visibility: showTreeLosses ? 'visible' : 'none' },
               filter: showStreetBuffer
                 ? ['all', ['==', ['get', 'size_category'], 'grove'], ['==', ['get', 'in_street_buffer'], 1]]
                 : ['==', ['get', 'size_category'], 'grove'],
@@ -453,6 +457,7 @@ export default function MapView({
               type: 'fill',
               'source-layer': TREE_LOSSES_SOURCE_LAYER,
               minzoom: TREE_LOSSES_MIN_ZOOM,
+              layout: { visibility: showTreeLosses ? 'visible' : 'none' },
               filter: showStreetBuffer
                 ? ['all', ['==', ['get', 'size_category'], 'tree'], ['==', ['get', 'in_street_buffer'], 1]]
                 : ['==', ['get', 'size_category'], 'tree'],
@@ -468,6 +473,7 @@ export default function MapView({
               type: 'line',
               'source-layer': TREE_LOSSES_SOURCE_LAYER,
               minzoom: TREE_LOSSES_MIN_ZOOM + 1,
+              layout: { visibility: showTreeLosses ? 'visible' : 'none' },
               filter: showStreetBuffer
                 ? ['==', ['get', 'in_street_buffer'], 1]
                 : ['has', 'size_category'],
@@ -482,7 +488,7 @@ export default function MapView({
       )}
 
       {/* ── Gain polygons (PMTiles) ────────────────────────────────── */}
-      {mapLoaded && showTreeGains && (
+      {mapLoaded && (
         <Source id="tree-gains" type="vector" url={treeGainsUrl}>
           <Layer
             {...{
@@ -490,6 +496,7 @@ export default function MapView({
               type: 'fill',
               'source-layer': TREE_GAINS_SOURCE_LAYER,
               minzoom: TREE_LOSSES_MIN_ZOOM,
+              layout: { visibility: showTreeGains ? 'visible' : 'none' },
               filter: showStreetBuffer
                 ? ['all', ['==', ['get', 'size_category'], 'grove'], ['==', ['get', 'in_street_buffer'], 1]]
                 : ['==', ['get', 'size_category'], 'grove'],
@@ -505,6 +512,7 @@ export default function MapView({
               type: 'fill',
               'source-layer': TREE_GAINS_SOURCE_LAYER,
               minzoom: TREE_LOSSES_MIN_ZOOM,
+              layout: { visibility: showTreeGains ? 'visible' : 'none' },
               filter: showStreetBuffer
                 ? ['all', ['==', ['get', 'size_category'], 'tree'], ['==', ['get', 'in_street_buffer'], 1]]
                 : ['==', ['get', 'size_category'], 'tree'],
@@ -520,6 +528,7 @@ export default function MapView({
               type: 'line',
               'source-layer': TREE_GAINS_SOURCE_LAYER,
               minzoom: TREE_LOSSES_MIN_ZOOM + 1,
+              layout: { visibility: showTreeGains ? 'visible' : 'none' },
               filter: showStreetBuffer
                 ? ['==', ['get', 'in_street_buffer'], 1]
                 : ['has', 'size_category'],
