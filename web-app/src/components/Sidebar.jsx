@@ -156,7 +156,9 @@ export default function Sidebar({
       {/* ── Header ── */}
       <header className="sidebar-header">
         <div className="sidebar-header-top">
-          <img src="images/shuc-logo.png" alt="SHUC logo" className="sidebar-logo" />
+          <a href="https://shuc.org/about-us/committees/parks-and-open-space-committee/">
+            <img src="images/shuc-logo.png" alt="SHUC logo" className="sidebar-logo" />
+          </a>
           <div>
             <div className="sidebar-title">Pittsburgh Tree Canopy Explorer</div>
             <div className="sidebar-subtitle">Based on 2015 to 2020 canopy changes</div>
