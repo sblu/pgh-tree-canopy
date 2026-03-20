@@ -536,10 +536,12 @@ export default function Sidebar({
 
       <footer className="sidebar-footer">
         Canopy data: Western PA Conservancy · 2015–2020<br />
-        Data analysis:{' '}
+        Data analysis and web app:{' '}
         <a href="https://github.com/sblu/pgh-tree-canopy" target="_blank" rel="noreferrer">
           GitHub
         </a>
+        <br />
+        <span className="build-tag">Build: {__BUILD_TAG__}</span>
       </footer>
     </aside>
   )
