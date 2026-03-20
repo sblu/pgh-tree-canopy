@@ -5,12 +5,18 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { toPng } from 'html-to-image'
 import { QRCodeSVG } from 'qrcode.react'
+import { trackEvent } from '../utils/analytics'
 
 export default function StreetViewModal({ panoData, isGain, feature, onClose }) {
   const [currentImgError, setCurrentImgError] = useState(false)
   const [historicalImgError, setHistoricalImgError] = useState(false)
   const [screenshotting, setScreenshotting] = useState(false)
   const captureRef = useRef(null)
+
+  // Track street view open
+  useEffect(() => {
+    trackEvent('street_view_open', { type: isGain ? 'gain' : 'loss' })
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Close on Escape key
   useEffect(() => {
@@ -125,6 +131,7 @@ export default function StreetViewModal({ panoData, isGain, feature, onClose }) 
             target="_blank"
             rel="noreferrer"
             className="sv-modal-link"
+            onClick={() => trackEvent('street_view_external', { type: isGain ? 'gain' : 'loss' })}
           >
             Open in Google Street View
           </a>

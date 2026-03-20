@@ -7,6 +7,7 @@ import 'maplibre-gl/dist/maplibre-gl.css'
 import TreePopup from './TreePopup'
 import StreetViewModal from './StreetViewModal'
 import useStreetView from '../hooks/useStreetView'
+import { trackEvent } from '../utils/analytics'
 import {
   CHOROPLETH_COLORS,
   TREE_LOSS_COLORS,
@@ -208,10 +209,12 @@ export default function MapView({
         lngLat: e.lngLat,
         isGain,
       })
+      trackEvent('tree_polygon_click', { type: isGain ? 'gain' : 'loss' })
     } else {
       setClickedTree(null)
       setHoveredTree(null)
       onFeatureClick(feature.properties?.name)
+      trackEvent('feature_select', { name: feature.properties?.name, source: 'map_click' })
     }
   }, [onFeatureClick])
 

@@ -4,6 +4,7 @@ import {
   TREE_LOSS_COLORS, TREE_GAIN_COLORS, STREET_BUFFER_COLOR,
   CANOPY_CHANGE_COLORS, PROMPT_CARDS, CTA_LINKS, LOCAL_STORAGE_KEY,
 } from '../config/layers'
+import { trackEvent } from '../utils/analytics'
 import Leaderboard from './Leaderboard'
 
 export default function Sidebar({
@@ -69,6 +70,7 @@ export default function Sidebar({
     setSearchQuery('')
     setSearchFocused(false)
     onFeatureSelect(name)
+    trackEvent('feature_select', { name, boundary_layer: activeBoundaryLayerId })
   }
 
   function focusSearch() {
@@ -156,7 +158,8 @@ export default function Sidebar({
       {/* ── Header ── */}
       <header className="sidebar-header">
         <div className="sidebar-header-top">
-          <a href="https://shuc.org/about-us/committees/parks-and-open-space-committee/">
+          <a href="https://shuc.org/about-us/committees/parks-and-open-space-committee/"
+            onClick={() => trackEvent('cta_click', { link: 'shuc_logo' })}>
             <img src="images/shuc-logo.png" alt="SHUC logo" className="sidebar-logo" />
           </a>
           <div>
@@ -301,7 +304,8 @@ export default function Sidebar({
           </div>
           <div className="cta-actions">
             {Object.values(CTA_LINKS).map(link => (
-              <a key={link.label} href={link.url} target="_blank" rel="noreferrer" className="cta-action-btn">
+              <a key={link.label} href={link.url} target="_blank" rel="noreferrer" className="cta-action-btn"
+                onClick={() => trackEvent('cta_click', { link: link.label })}>
                 <span className="cta-action-emoji">{link.emoji}</span>
                 <div>
                   <div className="cta-action-label">{link.label} <span className="cta-external-icon">↗</span></div>
@@ -319,7 +323,7 @@ export default function Sidebar({
             Want to help?{' '}
             <a
               href="#"
-              onClick={e => { e.preventDefault(); onCtaReshow() }}
+              onClick={e => { e.preventDefault(); onCtaReshow(); trackEvent('cta_click', { link: 'reshow_how_to_help' }) }}
             >
               Learn how you can take action in Squirrel Hill
             </a>
@@ -340,7 +344,7 @@ export default function Sidebar({
         <select
           className="boundary-select"
           value={activeBoundaryLayerId}
-          onChange={e => onBoundaryLayerChange(e.target.value)}
+          onChange={e => { onBoundaryLayerChange(e.target.value); trackEvent('boundary_layer_change', { layer: e.target.value }) }}
         >
           {BOUNDARY_LAYERS.map(layer => (
             <option key={layer.id} value={layer.id}>
@@ -471,7 +475,7 @@ export default function Sidebar({
                     name="method"
                     value={method.id}
                     checked={activeMethodId === method.id}
-                    onChange={() => onMethodChange(method.id)}
+                    onChange={() => { onMethodChange(method.id); trackEvent('color_method_change', { method: method.id }) }}
                   />
                   <span>
                     {method.label}
@@ -504,25 +508,25 @@ export default function Sidebar({
               <label className="toggle-row">
                 <span>Mature tree losses</span>
                 <input type="checkbox" className="toggle-input"
-                  checked={showTreeLosses} onChange={e => onShowTreeLossesChange(e.target.checked)} />
+                  checked={showTreeLosses} onChange={e => { onShowTreeLossesChange(e.target.checked); trackEvent('layer_toggle', { layer: 'tree_losses', enabled: e.target.checked }) }} />
                 <span className="toggle-pill" />
               </label>
               <label className="toggle-row">
                 <span>Significant gains</span>
                 <input type="checkbox" className="toggle-input"
-                  checked={showTreeGains} onChange={e => onShowTreeGainsChange(e.target.checked)} />
+                  checked={showTreeGains} onChange={e => { onShowTreeGainsChange(e.target.checked); trackEvent('layer_toggle', { layer: 'tree_gains', enabled: e.target.checked }) }} />
                 <span className="toggle-pill" />
               </label>
               <label className="toggle-row">
                 <span>Street tree areas only<span className="toggle-subtext">Limits to City of Pittsburgh only</span></span>
                 <input type="checkbox" className="toggle-input"
-                  checked={showStreetBuffer} onChange={e => onShowStreetBufferChange(e.target.checked)} />
+                  checked={showStreetBuffer} onChange={e => { onShowStreetBufferChange(e.target.checked); trackEvent('layer_toggle', { layer: 'street_buffer', enabled: e.target.checked }) }} />
                 <span className="toggle-pill" />
               </label>
               <label className="toggle-row">
                 <span>All canopy changes</span>
                 <input type="checkbox" className="toggle-input"
-                  checked={showCanopyChange} onChange={e => onShowCanopyChangeChange(e.target.checked)} />
+                  checked={showCanopyChange} onChange={e => { onShowCanopyChangeChange(e.target.checked); trackEvent('layer_toggle', { layer: 'canopy_change', enabled: e.target.checked }) }} />
                 <span className="toggle-pill" />
               </label>
             </div>
