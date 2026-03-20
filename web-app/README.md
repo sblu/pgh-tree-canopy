@@ -78,6 +78,54 @@ If the API key is missing or misconfigured, the app gracefully degrades:
 The rest of the map (canopy layers, boundaries, search) works fully
 without the Google Maps API.
 
+## Google Analytics
+
+The app includes lightweight GA4 event tracking that is inactive unless the
+GA snippet is present in the HTML. No analytics code or tag IDs are committed
+to the repository — tracking is activated manually at deploy time.
+
+### Activating Analytics
+
+After building (`npm run build`), open `dist/index.html` and paste this
+snippet inside `<head>`, **before** the existing `<script>` tags:
+
+```html
+<!-- Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-XXXXXXXXXX');
+</script>
+```
+
+Replace `G-XXXXXXXXXX` with your GA4 Measurement ID. If the app is hosted
+on a site that already has GA4 (e.g. WordPress), use the same tag ID so all
+events appear in the same property.
+
+### Tracked Events
+
+| Event Name | Trigger | Parameters |
+|---|---|---|
+| `cta_click` | Any "how to help" CTA link clicked | `link`: button label (e.g. `Request a Free Tree`) |
+| `cta_click` | SHUC logo clicked | `link: shuc_logo` |
+| `cta_click` | "Learn how you can take action" reshow link | `link: reshow_how_to_help` |
+| `feature_select` | Boundary selected via search dropdown | `name`: feature name, `boundary_layer`: active layer id |
+| `feature_select` | Boundary clicked on the map | `name`: feature name, `source: map_click` |
+| `boundary_layer_change` | Boundary layer dropdown changed | `layer`: layer id (e.g. `neighborhoods`) |
+| `color_method_change` | Color-by radio button changed | `method`: method id |
+| `layer_toggle` | Viewing option checkbox toggled | `layer`: layer id, `enabled`: `true`/`false` |
+| `tree_polygon_click` | Tree loss/gain polygon clicked on map | `type`: `gain` or `loss` |
+| `street_view_open` | Street View modal opens | `type`: `gain` or `loss` |
+| `street_view_external` | "Open in Google Street View" link clicked | `type`: `gain` or `loss` |
+
+Events are sent via `window.gtag()`. When the GA snippet is not present
+(dev server, GitHub Pages, etc.), all calls are silently ignored.
+
+In GA4, events appear under **Reports > Engagement > Events**. Event
+parameters can be registered as custom dimensions for richer breakdowns.
+
 ## Production Build
 
 ```bash
@@ -112,6 +160,7 @@ providers do this by default).
 | `src/components/InfoPanel.jsx` | Hover popup content (zone statistics table) |
 | `src/components/Leaderboard.jsx` | Collapsible ranked list of zones by active metric |
 | `src/components/TreePopup.jsx` | Click popup for gain/loss polygons with Street View link |
+| `src/utils/analytics.js` | GA4 event helper (no-op when gtag not loaded) |
 | `src/utils/streetView.js` | Nearest-street + heading calculation for Street View URLs |
 | `src/config/layers.js` | Layer definitions, color scales, PMTiles paths |
 | `src/hooks/useLayerData.js` | GeoJSON fetching, quantile breaks, color expressions |
