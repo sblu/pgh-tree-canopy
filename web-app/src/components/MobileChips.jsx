@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { BOUNDARY_LAYERS, COLOR_METHODS } from '../config/layers'
 
 const CHIP_LABELS = {
-  neighborhoods:   'Hoods',
+  neighborhoods:   'Neighborhoods',
   city_council:    'City Council',
   county_council:  'County Council',
   parks_municipal: 'City Parks',

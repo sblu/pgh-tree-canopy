@@ -10,6 +10,7 @@ export default function TopBar({
   onReset,             // () => void
   isMobile,            // boolean
   onMobileSearch,      // () => void  — opens bottom sheet to search
+  onHelpOpen,          // () => void  — opens help modal
 }) {
   const [query, setQuery]           = useState('')
   const [focused, setFocused]       = useState(false)
@@ -105,13 +106,20 @@ export default function TopBar({
         </div>
       )}
 
-      {/* Mobile: search icon opens bottom sheet */}
+      {/* Mobile: search + help icons */}
       {isMobile && (
-        <button className="top-bar-icon-btn" onClick={onMobileSearch} title="Search" style={{ marginLeft: 'auto' }}>
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/>
-          </svg>
-        </button>
+        <div className="top-bar-mobile-icons">
+          <button className="top-bar-icon-btn" onClick={onMobileSearch} title="Search">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/>
+            </svg>
+          </button>
+          <button className="top-bar-icon-btn" onClick={onHelpOpen} title="Help">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+          </button>
+        </div>
       )}
 
       {/* Actions */}

@@ -35,59 +35,100 @@ export default function MobileSheet({
   const dragStartY      = useRef(0)
   const dragStartHeight = useRef(0)
   const isDragging      = useRef(false)
+  // 'drag' | null
+  const dragMode        = useRef(null)
 
   const [query,   setQuery]   = useState('')
   const [focused, setFocused] = useState(false)
 
-  // Auto-focus search when sheet expands
-  useEffect(() => {
-    if (sheetState === 'expanded') {
-      setTimeout(() => searchRef.current?.focus(), 300)
-    }
-  }, [sheetState])
 
-  // Touch drag/snap (identical logic from App.jsx)
+  // Drag/snap using Pointer Events (avoids iOS passive-listener / touchcancel issues)
   useEffect(() => {
     const wrapper = wrapperRef.current
     if (!wrapper) return
-    const handle = wrapper.querySelector('.sheet-drag-handle')
-    if (!handle) return
 
-    const onTouchStart = e => {
+    const onPointerDown = e => {
+      const draggable = e.target.closest('.sheet-drag-handle, .sheet-peek-summary')
+      if (!draggable) return
       if (e.target.closest('button, a, input')) return
-      dragStartY.current      = e.touches[0].clientY
+
+      // Capture so all subsequent pointer events come here even if finger moves away
+      wrapper.setPointerCapture(e.pointerId)
+      dragStartY.current      = e.clientY
       dragStartHeight.current = wrapper.getBoundingClientRect().height
       isDragging.current      = false
+      dragMode.current        = 'drag'
       wrapper.style.transition = 'none'
     }
-    const onTouchMove = e => {
-      const deltaY = dragStartY.current - e.touches[0].clientY
-      if (Math.abs(deltaY) > 10) isDragging.current = true
-      const newH = Math.max(60, Math.min(window.innerHeight * 0.95, dragStartHeight.current + deltaY))
-      wrapper.style.maxHeight = `${newH}px`
-    }
-    const onTouchEnd = e => {
-      if (e.target.closest('button, a, input')) return
-      wrapper.style.transition = ''
-      wrapper.style.maxHeight  = ''
-      if (!isDragging.current) {
-        onSheetStateChange(s => s === 'peek' ? 'expanded' : 'peek')
+
+    const onPointerMove = e => {
+      if (dragMode.current !== 'drag') return
+      const deltaY = dragStartY.current - e.clientY // positive = finger moved up
+      const state  = wrapper.dataset.state || 'peek'
+
+      if (state === 'peek') {
+        // In peek state the expanded content isn't in the DOM so max-height can't
+        // grow the sheet — snap to expanded as soon as the swipe is intentional.
+        if (deltaY > 20) {
+          dragMode.current = null
+          wrapper.style.transition = ''
+          onSheetStateChange('expanded')
+        }
         return
       }
-      const finalH = wrapper.getBoundingClientRect().height
-      const vh = window.innerHeight
-      if      (finalH < vh * 0.15) onSheetStateChange('peek')
-      else if (finalH < vh * 0.70) onSheetStateChange('expanded')
-      else                          onSheetStateChange('full')
+
+      // Expanded/full: let the user drag down to preview collapsing.
+      // (Upward drags do nothing — content is already showing.)
+      if (deltaY < -4) {
+        isDragging.current = true
+        const newH = Math.max(60, dragStartHeight.current + deltaY)
+        wrapper.style.maxHeight = `${newH}px`
+      }
     }
 
-    handle.addEventListener('touchstart', onTouchStart, { passive: true })
-    handle.addEventListener('touchmove',  onTouchMove,  { passive: true })
-    handle.addEventListener('touchend',   onTouchEnd,   { passive: true })
+    const onPointerCancel = () => {
+      dragMode.current   = null
+      isDragging.current = false
+      wrapper.style.transition = ''
+      wrapper.style.maxHeight  = ''
+    }
+
+    const onPointerUp = e => {
+      if (dragMode.current !== 'drag') { return }
+      dragMode.current = null
+      wrapper.style.transition = ''
+
+      if (!isDragging.current) {
+        // Tap on handle/peek-summary → toggle peek ↔ expanded
+        wrapper.style.maxHeight = ''
+        if (!e.target.closest('button, a, input')) {
+          onSheetStateChange(s => s === 'peek' ? 'expanded' : 'peek')
+        }
+        return
+      }
+      isDragging.current = false
+
+      const finalH      = wrapper.getBoundingClientRect().height
+      wrapper.style.maxHeight = ''
+      const vh          = window.innerHeight
+      const draggedDown = dragStartHeight.current - finalH // positive = dragged downward
+
+      // Collapse if the user dragged down more than 15% of viewport height
+      if (draggedDown > vh * 0.15) {
+        onSheetStateChange('peek')
+      }
+      // Otherwise restore the expanded/full state (no-op — CSS handles it)
+    }
+
+    wrapper.addEventListener('pointerdown',   onPointerDown)
+    wrapper.addEventListener('pointermove',   onPointerMove)
+    wrapper.addEventListener('pointerup',     onPointerUp)
+    wrapper.addEventListener('pointercancel', onPointerCancel)
     return () => {
-      handle.removeEventListener('touchstart', onTouchStart)
-      handle.removeEventListener('touchmove',  onTouchMove)
-      handle.removeEventListener('touchend',   onTouchEnd)
+      wrapper.removeEventListener('pointerdown',   onPointerDown)
+      wrapper.removeEventListener('pointermove',   onPointerMove)
+      wrapper.removeEventListener('pointerup',     onPointerUp)
+      wrapper.removeEventListener('pointercancel', onPointerCancel)
     }
   }, [onSheetStateChange])
 
@@ -121,9 +162,10 @@ export default function MobileSheet({
     onFeatureSelect(name)
     setQuery('')
     setFocused(false)
+    onSheetStateChange('peek')
   }
 
-  const showResults = focused && filtered.length > 0 && !selectedFeatureName
+  const showResults = focused && query.trim().length > 0 && filtered.length > 0 && !selectedFeatureName
 
   return (
     <div className="mobile-sheet" data-state={sheetState} ref={wrapperRef}>
@@ -187,7 +229,6 @@ export default function MobileSheet({
           </div>
 
           {/* Controls (reuse ControlsPanel in inline mode) */}
-          <div className="panel-section-heading">Controls</div>
           <ControlsPanel
             inline
             activeBoundaryLayerId={activeBoundaryLayerId}
@@ -208,6 +249,7 @@ export default function MobileSheet({
           <div className="panel-section-heading" style={{ marginTop: '18px' }}>Rankings</div>
           <LeaderboardPanel
             isOpen={true}
+            inline
             layerData={layerData}
             activeMethodId={activeMethodId}
             selectedFeatureName={selectedFeatureName}
@@ -215,6 +257,12 @@ export default function MobileSheet({
             onHover={onHover}
             onHoverEnd={onHoverEnd}
           />
+
+          <div className="legend-attribution" style={{ marginTop: '18px' }}>
+            Canopy data: <a href="https://www.treepittsburgh.org" target="_blank" rel="noopener noreferrer">Tree Pittsburgh</a>
+            &nbsp;·&nbsp;
+            Visualization: <a href="https://github.com/sblu/pgh-tree-canopy" target="_blank" rel="noopener noreferrer">GitHub</a>
+          </div>
         </div>
       )}
     </div>

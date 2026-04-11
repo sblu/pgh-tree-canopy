@@ -10,6 +10,7 @@ import LegendPanel     from './components/LegendPanel'
 import MobileChips     from './components/MobileChips'
 import MobileSheet     from './components/MobileSheet'
 import MapView         from './components/MapView'
+import HelpModal       from './components/HelpModal'
 import './index.css'
 
 
@@ -25,6 +26,7 @@ export default function App() {
   const [hoveredFeature, setHoveredFeature]               = useState(null)
   const [selectedFeatureName, setSelectedFeatureName]     = useState(hashState?.selected ?? null)
   const [leaderboardOpen, setLeaderboardOpen]              = useState(true)
+  const [showHelp, setShowHelp]                            = useState(false)
   const [showLocation, setShowLocation]                   = useState(false)
   const [userLocation, setUserLocation]                   = useState(null)
   const [locationError, setLocationError]                 = useState(null)
@@ -274,6 +276,7 @@ export default function App() {
         onReset={resetExploration}
         isMobile={isMobile}
         onMobileSearch={() => setSheetState('expanded')}
+        onHelpOpen={() => setShowHelp(true)}
       />
 
       {/* ── Desktop panels ── */}
@@ -281,7 +284,7 @@ export default function App() {
         <>
           {/* Left icon rail */}
           <nav className="left-rail" aria-label="Map navigation">
-            <button className="rail-icon rail-icon--active" title="Map view" aria-label="Map view">
+            <button className="rail-icon rail-icon--active" title="Reset view" aria-label="Reset view" onClick={resetExploration}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/>
               </svg>
@@ -304,6 +307,17 @@ export default function App() {
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
+              </svg>
+            </button>
+            <div className="rail-divider" />
+            <button
+              className={`rail-icon${showHelp ? ' rail-icon--active' : ''}`}
+              onClick={() => setShowHelp(o => !o)}
+              title="Help &amp; how to use"
+              aria-label="Help"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>
               </svg>
             </button>
           </nav>
@@ -379,6 +393,8 @@ export default function App() {
           />
         </>
       )}
+
+      {showHelp && <HelpModal onClose={() => setShowHelp(false)} />}
     </div>
   )
 }

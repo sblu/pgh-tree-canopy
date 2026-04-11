@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { COLOR_METHODS } from '../config/layers'
+import { COLOR_METHODS, CTA_LINKS } from '../config/layers'
 
 function computeCentroid(geometry) {
   let sumLng = 0, sumLat = 0, count = 0
@@ -25,6 +25,7 @@ function fmtPct(v, isCoverage) {
 
 export default function LeaderboardPanel({
   isOpen,           // boolean — controlled by left-rail icon in App.jsx
+  inline = false,   // true when rendered inside MobileSheet
   layerData,        // GeoJSON FeatureCollection | null
   activeMethodId,   // string
   selectedFeatureName, // string | null
@@ -62,7 +63,7 @@ export default function LeaderboardPanel({
   const isLoss = netVal != null && !isCoverage && netVal < 0
 
   return (
-    <div className={`leaderboard-panel${isOpen ? '' : ' leaderboard-panel--closed'}`}>
+    <div className={`leaderboard-panel${inline ? ' leaderboard-panel--inline' : (isOpen ? '' : ' leaderboard-panel--closed')}`}>
       <div className="lb-inner">
         <div className="lb-panel-title">
           {method?.label ?? 'Leaderboard'}
@@ -143,6 +144,20 @@ export default function LeaderboardPanel({
             })}
           </>
         )}
+
+        {/* Calls to action */}
+        <div className="cta-section">
+          <div className="cta-heading">How to Help</div>
+          {Object.values(CTA_LINKS).map(cta => (
+            <a key={cta.label} href={cta.url} target="_blank" rel="noopener noreferrer" className="cta-link">
+              <span className="cta-emoji">{cta.emoji}</span>
+              <span className="cta-text">
+                <span className="cta-label">{cta.label}</span>
+                <span className="cta-desc">{cta.description}</span>
+              </span>
+            </a>
+          ))}
+        </div>
       </div>
     </div>
   )

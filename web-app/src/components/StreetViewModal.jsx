@@ -3,6 +3,7 @@
  * Street View static imagery for a tree canopy change polygon.
  */
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { toPng } from 'html-to-image'
 import { QRCodeSVG } from 'qrcode.react'
 import { trackEvent } from '../utils/analytics'
@@ -58,7 +59,7 @@ export default function StreetViewModal({ panoData, isGain, feature, onClose, on
     ? `${typeLabel} \u2014 ${sizeCategory} (${acres} acres)`
     : `${typeLabel} \u2014 ${sizeCategory}`
 
-  return (
+  return createPortal(
     <div className="sv-modal-backdrop" onClick={onClose}>
       <div className="sv-modal" onClick={e => e.stopPropagation()}>
         {/* Capture region: header + address + images (not footer buttons) */}
@@ -164,6 +165,7 @@ export default function StreetViewModal({ panoData, isGain, feature, onClose, on
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

@@ -13,7 +13,7 @@ const DISABLE_REASONS = {
   'sdk-load-failed': 'Street View failed to load',
 }
 
-export default function TreePopup({ feature, isGain, streetCenterlines, hoverMode, streetViewLoading, streetViewDisabled, disableReason }) {
+export default function TreePopup({ feature, isGain, streetCenterlines, hoverMode, onClickStreetView, streetViewLoading, streetViewDisabled, disableReason }) {
   const p = feature?.properties
 
   // Compute Street View URL: position on nearest street, aimed at polygon centroid
@@ -49,9 +49,9 @@ export default function TreePopup({ feature, isGain, streetCenterlines, hoverMod
           </div>
         )}
         {hoverMode ? (
-          <div className="tree-popup-hint">
+          <button className="tree-popup-hint tree-popup-hint--btn" onClick={e => { e.stopPropagation(); onClickStreetView?.() }}>
             Click for Google Street View
-          </div>
+          </button>
         ) : (streetViewLoading && !streetViewDisabled) ? (
           <div className="tree-popup-hint">
             Loading Street View...
