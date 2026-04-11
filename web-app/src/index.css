@@ -391,7 +391,7 @@ html, body, #root {
 /* ─── Controls panel ────────────────────────────────────────────────────── */
 .controls-panel {
   position: fixed;
-  top: 60px;
+  top: calc(var(--top-bar-h) + 12px);
   right: 12px;
   width: var(--controls-w);
   background: var(--glass);
