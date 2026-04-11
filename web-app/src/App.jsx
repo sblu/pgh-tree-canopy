@@ -3,8 +3,13 @@ import { BOUNDARY_LAYERS, STREET_BUFFER_PATH, COLOR_METHODS, CHOROPLETH_COLORS, 
 import { DATA_PREFIX, SOURCE_LABEL, IS_PUBLIC_SOURCE } from './config/dataSource'
 import { useLayerData, computeQuantileBreaks } from './hooks/useLayerData'
 import { useUrlHash } from './hooks/useUrlHash'
-import Sidebar from './components/Sidebar'
-import MapView from './components/MapView'
+import TopBar          from './components/TopBar'
+import ControlsPanel   from './components/ControlsPanel'
+import LeaderboardPanel from './components/LeaderboardPanel'
+import LegendPanel     from './components/LegendPanel'
+import MobileChips     from './components/MobileChips'
+import MobileSheet     from './components/MobileSheet'
+import MapView         from './components/MapView'
 import './index.css'
 
 function loadStorage(key, fallback) {
@@ -36,7 +41,7 @@ export default function App() {
   const [showCanopyChange, setShowCanopyChange]           = useState(hashState?.canopy ?? false)
   const [hoveredFeature, setHoveredFeature]               = useState(null)
   const [selectedFeatureName, setSelectedFeatureName]     = useState(hashState?.selected ?? null)
-  const [sidebarOpen, setSidebarOpen]                     = useState(true)
+  const [leaderboardOpen, setLeaderboardOpen]              = useState(true)
   const [showLocation, setShowLocation]                   = useState(false)
   const [userLocation, setUserLocation]                   = useState(null)
   const [locationError, setLocationError]                 = useState(null)
@@ -64,8 +69,6 @@ export default function App() {
   const [isMobile, setIsMobile] = useState(
     () => typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches
   )
-  const sheetWrapperRef = useRef(null)
-
   const locationAvailable = navigator.geolocation && window.isSecureContext
 
   // Active tree for URL sharing (set by MapView when street view is open)
@@ -260,75 +263,6 @@ export default function App() {
     setFlyToLocation({ longitude: -79.9959, latitude: 40.4406, zoom: 11 })
   }, [])
 
-  // Mobile bottom sheet: tap header to toggle, drag to resize live
-  const dragStartY = useRef(0)
-  const dragStartHeight = useRef(0)
-  const isDragging = useRef(false)
-
-  useEffect(() => {
-    if (!isMobile) return
-    const wrapper = sheetWrapperRef.current
-    const handle = wrapper?.querySelector('.sheet-drag-handle')
-    const header = wrapper?.querySelector('.sidebar-header')
-    if (!handle && !header) return
-
-    const targets = [handle, header].filter(Boolean)
-
-    const onTouchStart = e => {
-      if (e.target.closest('button, a')) return
-      dragStartY.current = e.touches[0].clientY
-      dragStartHeight.current = wrapper.getBoundingClientRect().height
-      isDragging.current = false
-      // Disable transition during drag for immediate feedback
-      wrapper.style.transition = 'none'
-    }
-
-    const onTouchMove = e => {
-      const deltaY = dragStartY.current - e.touches[0].clientY // positive = dragging up
-      if (Math.abs(deltaY) > 10) isDragging.current = true
-      const newHeight = Math.max(60, Math.min(window.innerHeight * 0.9, dragStartHeight.current + deltaY))
-      wrapper.style.maxHeight = `${newHeight}px`
-    }
-
-    const onTouchEnd = e => {
-      if (e.target.closest('button, a')) return
-      // Re-enable transition for snap animation
-      wrapper.style.transition = ''
-      wrapper.style.maxHeight = ''
-
-      if (!isDragging.current) {
-        // Tap — toggle between peek and expanded
-        setSheetState(prev => prev === 'peek' ? 'expanded' : 'peek')
-        return
-      }
-
-      // Snap to nearest state based on final height
-      const finalHeight = wrapper.getBoundingClientRect().height
-      const vh = window.innerHeight
-      // Thresholds: peek < 15%vh, expanded < 70%vh, full >= 70%vh
-      if (finalHeight < vh * 0.15) {
-        setSheetState('peek')
-      } else if (finalHeight < vh * 0.7) {
-        setSheetState('expanded')
-      } else {
-        setSheetState('full')
-      }
-    }
-
-    for (const el of targets) {
-      el.addEventListener('touchstart', onTouchStart, { passive: true })
-      el.addEventListener('touchmove', onTouchMove, { passive: true })
-      el.addEventListener('touchend', onTouchEnd, { passive: true })
-    }
-    return () => {
-      for (const el of targets) {
-        el.removeEventListener('touchstart', onTouchStart)
-        el.removeEventListener('touchmove', onTouchMove)
-        el.removeEventListener('touchend', onTouchEnd)
-      }
-    }
-  }, [isMobile])
-
   const activeLayerConfig = BOUNDARY_LAYERS.find(l => l.id === activeBoundaryLayerId)
 
   // Fetch boundary GeoJSON (cached after first load)
@@ -388,73 +322,15 @@ export default function App() {
   }
 
   return (
-    <div className="app-layout">
+    <div className="app-root">
+      {loading && <div className="map-status">Loading layer data…</div>}
+      {error   && <div className="map-status error">Error: {error}</div>}
       {IS_PUBLIC_SOURCE && (
-        <div style={{
-          position: 'fixed', top: 0, left: '50%', transform: 'translateX(-50%)',
-          zIndex: 9999, background: '#2563eb', color: 'white', padding: '4px 16px',
-          borderRadius: '0 0 8px 8px', fontSize: '12px', fontWeight: 600,
-          boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-        }}>
-          {SOURCE_LABEL} Data
-        </div>
+        <div className="public-banner">{SOURCE_LABEL} Data</div>
       )}
-      <div
-        className={`sidebar-wrapper${sidebarOpen ? '' : ' collapsed'}`}
-        data-sheet={isMobile ? sheetState : undefined}
-        ref={sheetWrapperRef}
-      >
-      <Sidebar
-        activeBoundaryLayerId={activeBoundaryLayerId}
-        onBoundaryLayerChange={handleBoundaryLayerChange}
-        activeMethodId={activeMethodId}
-        onMethodChange={setActiveMethodId}
-        showTreeLosses={showTreeLosses}
-        onShowTreeLossesChange={setShowTreeLosses}
-        showTreeGains={showTreeGains}
-        onShowTreeGainsChange={setShowTreeGains}
-        showStreetBuffer={showStreetBuffer}
-        onShowStreetBufferChange={setShowStreetBuffer}
-        showCanopyChange={showCanopyChange}
-        onShowCanopyChangeChange={setShowCanopyChange}
-        layerData={enrichedLayerData}
-        colorBreaks={colorBreaks}
-        onFeatureSelect={handleFeatureSelect}
-        onHover={setHoveredFeature}
-        onHoverEnd={() => setHoveredFeature(null)}
-        showLocation={showLocation}
-        onShowLocationChange={setShowLocation}
-        userLocation={userLocation}
-        locationError={locationError}
-        locationAvailable={locationAvailable}
-        onPanToLocation={handlePanToLocation}
-        explorationStage={explorationStage}
-        currentZoom={currentZoom}
-        advancedExpanded={advancedExpanded}
-        onAdvancedToggle={handleAdvancedToggle}
-        ctaDismissed={ctaDismissed}
-        onCtaDismiss={handleCtaDismiss}
-        onCtaReshow={handleCtaReshow}
-        onReset={resetExploration}
-        selectedFeatureName={selectedFeatureName}
-        onMobileSearchFocus={handleMobileSearchFocus}
-        streetPath={streetPath}
-        onStreetPathStart={handleStreetPathStart}
-        onShare={handleShare}
-      />
-      </div>
 
-      <main className="map-container">
-        <button
-          className="sidebar-toggle"
-          onClick={() => setSidebarOpen(o => !o)}
-          title={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
-        >
-          {sidebarOpen ? '\u25C0' : '\u25B6'}
-        </button>
-        {loading && <div className="map-status">Loading layer data…</div>}
-        {error   && <div className="map-status error">Error: {error}</div>}
-
+      {/* Map — always fills full viewport */}
+      <div className="map-container">
         <MapView
           layerData={enrichedLayerData}
           activeLayerConfig={activeLayerConfig}
@@ -487,7 +363,124 @@ export default function App() {
           pendingTree={pendingTree}
           onPendingTreeHandled={() => setPendingTree(null)}
         />
-      </main>
+      </div>
+
+      {/* Top bar — always visible */}
+      <TopBar
+        activeLayer={activeLayerConfig}
+        layerData={enrichedLayerData}
+        selectedFeatureName={selectedFeatureName}
+        onFeatureSelect={handleFeatureSelect}
+        onShare={handleShare}
+        onReset={resetExploration}
+        isMobile={isMobile}
+        onMobileSearch={() => setSheetState('expanded')}
+      />
+
+      {/* ── Desktop panels ── */}
+      {!isMobile && (
+        <>
+          {/* Left icon rail */}
+          <nav className="left-rail" aria-label="Map navigation">
+            <button className="rail-icon rail-icon--active" title="Map view" aria-label="Map view">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/>
+              </svg>
+            </button>
+            <button
+              className={`rail-icon${leaderboardOpen ? ' rail-icon--active' : ''}`}
+              onClick={() => setLeaderboardOpen(o => !o)}
+              title={leaderboardOpen ? 'Hide leaderboard' : 'Show leaderboard'}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+              </svg>
+            </button>
+            <div className="rail-divider" />
+            <button
+              className={`rail-icon${showLocation ? ' rail-icon--active' : ''}`}
+              onClick={() => setShowLocation(o => !o)}
+              title={locationError || (showLocation ? 'Hide my location' : 'Show my location')}
+              disabled={!locationAvailable}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
+              </svg>
+            </button>
+          </nav>
+
+          <LeaderboardPanel
+            isOpen={leaderboardOpen}
+            layerData={enrichedLayerData}
+            activeMethodId={activeMethodId}
+            selectedFeatureName={selectedFeatureName}
+            onFeatureSelect={handleFeatureSelect}
+            onHover={setHoveredFeature}
+            onHoverEnd={() => setHoveredFeature(null)}
+          />
+
+          <ControlsPanel
+            activeBoundaryLayerId={activeBoundaryLayerId}
+            onBoundaryLayerChange={handleBoundaryLayerChange}
+            activeMethodId={activeMethodId}
+            onMethodChange={setActiveMethodId}
+            showTreeLosses={showTreeLosses}
+            onShowTreeLossesChange={setShowTreeLosses}
+            showTreeGains={showTreeGains}
+            onShowTreeGainsChange={setShowTreeGains}
+            showStreetBuffer={showStreetBuffer}
+            onShowStreetBufferChange={setShowStreetBuffer}
+            showCanopyChange={showCanopyChange}
+            onShowCanopyChangeChange={setShowCanopyChange}
+          />
+
+          <LegendPanel
+            colorBreaks={colorBreaks}
+            activeMethodId={activeMethodId}
+            isCoverage={isCoverage}
+          />
+        </>
+      )}
+
+      {/* ── Mobile panels ── */}
+      {isMobile && (
+        <>
+          <MobileChips
+            activeBoundaryLayerId={activeBoundaryLayerId}
+            onBoundaryLayerChange={handleBoundaryLayerChange}
+            activeMethodId={activeMethodId}
+            onMethodChange={setActiveMethodId}
+            showTreeLosses={showTreeLosses}
+            onShowTreeLossesChange={setShowTreeLosses}
+            showTreeGains={showTreeGains}
+            onShowTreeGainsChange={setShowTreeGains}
+          />
+          <MobileSheet
+            sheetState={sheetState}
+            onSheetStateChange={setSheetState}
+            selectedFeatureName={selectedFeatureName}
+            layerData={enrichedLayerData}
+            activeMethodId={activeMethodId}
+            isCoverage={isCoverage}
+            activeLayer={activeLayerConfig}
+            onFeatureSelect={handleFeatureSelect}
+            activeBoundaryLayerId={activeBoundaryLayerId}
+            onBoundaryLayerChange={handleBoundaryLayerChange}
+            onMethodChange={setActiveMethodId}
+            showTreeLosses={showTreeLosses}
+            onShowTreeLossesChange={setShowTreeLosses}
+            showTreeGains={showTreeGains}
+            onShowTreeGainsChange={setShowTreeGains}
+            showStreetBuffer={showStreetBuffer}
+            onShowStreetBufferChange={setShowStreetBuffer}
+            showCanopyChange={showCanopyChange}
+            onShowCanopyChangeChange={setShowCanopyChange}
+            onHover={setHoveredFeature}
+            onHoverEnd={() => setHoveredFeature(null)}
+            colorBreaks={colorBreaks}
+          />
+        </>
+      )}
     </div>
   )
 }
