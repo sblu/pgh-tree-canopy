@@ -1,20 +1,22 @@
 """
 04_street_buffer.py
 
-Creates a 50-foot buffer around Pittsburgh street centerlines.
+Creates a 50-foot buffer around Allegheny County street centerlines.
 
-The PittsburghRoads source layer is in EPSG:4269 (NAD83 geographic, degrees).
-Buffering requires a projected CRS whose linear unit is feet, so the roads
-are first reprojected to EPSG:2272 (Pennsylvania South State Plane, US survey
-feet) before the 50 ft buffer is applied.
+The county street centerlines shapefile is already in EPSG:2272 (PA South
+State Plane, US survey feet), so the 50 ft buffer is applied directly without
+reprojection.
 
-Two outputs are produced:
+Three outputs are produced:
   street_segments_buffered.gpkg  – individual segment buffer polygons
                                    (EPSG:2272, GeoPackage for QGIS + script 05)
+  street_buffer_area.geojson     – dissolved union of all buffers
+                                   (WGS84, used by script 06 to tag tree polygons)
   street_centerlines.geojson     – road centerlines with FULLNAME attribute
                                    (WGS84, for web map display and QGIS)
 
 Script 05 reads street_segments_buffered.gpkg to run the canopy intersection.
+Script 06 reads street_buffer_area.geojson to tag mature tree polygons.
 
 Usage:
   python3 scripts/04_street_buffer.py
@@ -32,13 +34,14 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
-ROADS_GDB = REPO_ROOT / "source-gis-data" / "PittsburghRoads" / "p20" / "context.gdb"
+ROADS_SHP = (
+    REPO_ROOT / "public-gis-data" / "streets"
+    / "AlleghenyCounty_StreetCenterlines20260316.shp"
+)
 
 OUTPUT_DIR = REPO_ROOT / "data-pipeline" / "output" / "streets"
 
-# Source roads CRS (NAD83 geographic)
-SOURCE_CRS = "EPSG:4269"
-# Projected CRS for buffering: PA South State Plane, unit = US survey foot
+# The county shapefile is already in EPSG:2272 (PA South State Plane, US survey feet)
 BUFFER_CRS = "EPSG:2272"
 # Web output CRS
 WEB_CRS = "EPSG:4326"
@@ -52,8 +55,8 @@ BUFFER_FEET = 50
 
 
 def main() -> None:
-    if not ROADS_GDB.exists():
-        print(f"ERROR: Roads GDB not found:\n  {ROADS_GDB}", file=sys.stderr)
+    if not ROADS_SHP.exists():
+        print(f"ERROR: Roads shapefile not found:\n  {ROADS_SHP}", file=sys.stderr)
         sys.exit(1)
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -61,16 +64,21 @@ def main() -> None:
     # ------------------------------------------------------------------
     # Step 1: Load road centerlines
     # ------------------------------------------------------------------
-    print("Loading PittsburghRoads …")
-    roads = gpd.read_file(ROADS_GDB, layer="PittsburghRoads")
+    print("Loading Allegheny County street centerlines …")
+    roads = gpd.read_file(ROADS_SHP)
+    # Rename FULL_NAME → FULLNAME for consistency with downstream scripts
+    roads = roads.rename(columns={"FULL_NAME": "FULLNAME"})
     print(f"  {len(roads):,} segments, {roads['FULLNAME'].nunique():,} unique street names")
-    print(f"  Source CRS: {roads.crs}")
+    print(f"  CRS: {roads.crs}")
 
     # ------------------------------------------------------------------
-    # Step 2: Reproject to EPSG:2272 for accurate foot-based buffering
+    # Step 2: Verify CRS — shapefile should already be EPSG:2272
     # ------------------------------------------------------------------
-    print(f"\nReprojecting to {BUFFER_CRS} …")
-    roads_proj = roads.to_crs(BUFFER_CRS)
+    if roads.crs.to_epsg() != 2272:
+        print(f"  Reprojecting to {BUFFER_CRS} …")
+        roads = roads.to_crs(BUFFER_CRS)
+    else:
+        print(f"  CRS confirmed: {BUFFER_CRS} (no reprojection needed)")
 
     # ------------------------------------------------------------------
     # Step 3: Buffer each segment by 50 ft
@@ -78,13 +86,11 @@ def main() -> None:
     # cap_style=2 = flat end caps on line termini (square).
     # join_style=2 = mitered joins at bends.
     # ------------------------------------------------------------------
-    print(f"Buffering by {BUFFER_FEET} ft …")
-    roads_proj["geometry"] = roads_proj.geometry.buffer(
+    print(f"\nBuffering by {BUFFER_FEET} ft …")
+    buffers = roads[["FULLNAME", "geometry"]].copy()
+    buffers["geometry"] = buffers.geometry.buffer(
         BUFFER_FEET, cap_style="flat", join_style="mitre"
     )
-
-    # Keep only fields needed downstream
-    buffers = roads_proj[["LINEARID", "FULLNAME", "geometry"]].copy()
 
     # ------------------------------------------------------------------
     # Step 4: Save individual segment buffers as GeoPackage (EPSG:2272)
@@ -95,10 +101,23 @@ def main() -> None:
     buffers.to_file(seg_path, driver="GPKG")
     print(f"\n  ✓ street_segments_buffered.gpkg  ({seg_path.stat().st_size / 1e6:.1f} MB)")
     print(f"    {len(buffers):,} features, CRS: {BUFFER_CRS}")
-    print(f"    Open in QGIS to inspect 50 ft buffer coverage")
 
     # ------------------------------------------------------------------
-    # Step 5: Save road centerlines as WGS84 GeoJSON (web + QGIS)
+    # Step 5: Save dissolved street buffer area (WGS84 GeoJSON)
+    # A single-polygon union of all segment buffers, used by script 06 to
+    # tag mature tree loss/gain polygons with in_street_buffer.
+    # ------------------------------------------------------------------
+    print("\nDissolving all buffers to a single union polygon …")
+    union_geom = buffers.dissolve().geometry.iloc[0]
+    union_gdf = gpd.GeoDataFrame(geometry=[union_geom], crs=BUFFER_CRS)
+    union_wgs = union_gdf.to_crs(WEB_CRS)
+
+    buf_area_path = OUTPUT_DIR / "street_buffer_area.geojson"
+    union_wgs.to_file(buf_area_path, driver="GeoJSON")
+    print(f"  ✓ street_buffer_area.geojson  ({buf_area_path.stat().st_size / 1e6:.1f} MB)")
+
+    # ------------------------------------------------------------------
+    # Step 6: Save road centerlines as WGS84 GeoJSON (web + QGIS)
     # Include only FULLNAME for the web search feature.
     # ------------------------------------------------------------------
     centerlines = roads[["FULLNAME", "geometry"]].copy()
@@ -110,8 +129,9 @@ def main() -> None:
     print(f"    {len(centerlines):,} features, CRS: {WEB_CRS}")
 
     print("\nDone. Run script 05 next to compute canopy statistics.")
-    print("\nQGIS tip: load street_segments_buffered.gpkg and overlay on")
-    print("  the boundary layers to visually verify the 50 ft buffer extent.")
+    print("\nQGIS tips:")
+    print("  - Load street_segments_buffered.gpkg to inspect 50 ft buffer coverage")
+    print("  - Load street_buffer_area.geojson to see the full county street buffer union")
 
 
 if __name__ == "__main__":

@@ -27,9 +27,9 @@ Methodology note on street intersections:
   double-counting is acceptable for visualisation purposes.
 
 Performance:
-  The spatial overlay filters the county-wide 3.3M-polygon canopy dataset
-  to the Pittsburgh bounding box (~688K features) before processing.
-  Expect 10–30 minutes on a typical workstation.
+  The spatial overlay pre-filters the county-wide 3.3M-polygon canopy dataset
+  to the bounding box of the street buffer network (county-wide coverage).
+  Expect 15–45 minutes on a typical workstation.
 
 Usage:
   python3 scripts/05_street_canopy_stats.py
@@ -159,10 +159,10 @@ def add_loss_pct_columns(
 
 
 def compute_canopy_in_street_buffer(
-    pittsburgh_bounds: tuple,
+    canopy_bbox: tuple,
 ) -> gpd.GeoDataFrame:
     """
-    Load Pittsburgh-area canopy polygons, clip them to the street buffer
+    Load canopy polygons within canopy_bbox, clip them to the street buffer
     union, and return the clipped GeoDataFrame in EPSG:2272 with an
     added 'area_acres' column.
     """
@@ -173,8 +173,8 @@ def compute_canopy_in_street_buffer(
 
     # Dissolve all segments into a single union polygon, then simplify its
     # geometry to reduce vertex count before intersection.
-    # The dissolved raw union has ~152K vertices; at 5 ft tolerance it drops
-    # to ~72K with negligible impact on canopy area accuracy (5 ft ≈ 1.5 m).
+    # At 5 ft tolerance the vertex count drops substantially with negligible
+    # impact on canopy area accuracy (5 ft ≈ 1.5 m).
     SIMPLIFY_TOLERANCE_FT = 5
     log("Dissolving street buffers to union …", 1)
     t = time.time()
@@ -182,13 +182,13 @@ def compute_canopy_in_street_buffer(
     street_union = gpd.GeoDataFrame(geometry=[union_geom], crs=seg_buffers.crs)
     log(f"Done ({elapsed(t)}) — union simplified to {SIMPLIFY_TOLERANCE_FT} ft tolerance", 2)
 
-    # Load Pittsburgh-area canopy change polygons using bbox pre-filter
-    log("Loading Pittsburgh-area canopy change polygons (bbox filter) …", 1)
+    # Load canopy change polygons using bbox pre-filter
+    log("Loading canopy change polygons (bbox filter) …", 1)
     t = time.time()
     canopy = gpd.read_file(
         CANOPY_GDB,
         layer=CANOPY_LAYER,
-        bbox=pittsburgh_bounds,
+        bbox=canopy_bbox,
     )
     canopy = canopy[["Change", "geometry"]].copy()
     log(f"{len(canopy):,} features loaded ({elapsed(t)})", 2)
@@ -197,7 +197,7 @@ def compute_canopy_in_street_buffer(
     # gpd.clip is faster than gpd.overlay for this pattern (one complex mask
     # polygon vs. many input polygons) because it uses a simpler code path.
     # Chunking gives us progress reporting and bounds per-chunk memory use.
-    CHUNK_SIZE = 50_000  # → ~14 chunks for 688K features; ~1–2 min each
+    CHUNK_SIZE = 50_000  # → ~66 chunks for 3.3M county-wide features; ~1–2 min each
     n_total  = len(canopy)
     n_chunks = (n_total + CHUNK_SIZE - 1) // CHUNK_SIZE
 
@@ -427,19 +427,20 @@ def main() -> None:
     log("")
 
     # ------------------------------------------------------------------
-    # Get Pittsburgh bounding box from neighborhoods layer (EPSG:2272)
-    # to pre-filter the county-wide canopy dataset.
+    # Derive bounding box from the street buffer network (county-wide).
+    # Used to pre-filter the 3.3M-polygon canopy dataset before the
+    # expensive spatial overlay.
     # ------------------------------------------------------------------
-    log("Reading Pittsburgh bounding box …")
-    neighborhoods = gpd.read_file(BOUNDARY_DIR / "neighborhoods.geojson").to_crs(BUFFER_CRS)
-    pittsburgh_bounds = tuple(neighborhoods.total_bounds)
-    log(f"  Bounds (EPSG:2272): {tuple(round(v) for v in pittsburgh_bounds)}", 1)
+    log("Reading county street buffer bounding box …")
+    seg_buffers_meta = gpd.read_file(STREETS_DIR / "street_segments_buffered.gpkg")
+    county_bounds = tuple(seg_buffers_meta.total_bounds)
+    log(f"  Bounds (EPSG:2272): {tuple(round(v) for v in county_bounds)}", 1)
 
     # ------------------------------------------------------------------
     # Core intersection: canopy clipped to street buffer union
     # ------------------------------------------------------------------
     log("\n--- Step 1: Canopy × street buffer intersection ---")
-    canopy_in_streets = compute_canopy_in_street_buffer(pittsburgh_bounds)
+    canopy_in_streets = compute_canopy_in_street_buffer(county_bounds)
 
     # Save for QGIS inspection (reproject to WGS84)
     log("\nSaving canopy_in_street_buffer.geojson for QGIS inspection …")
