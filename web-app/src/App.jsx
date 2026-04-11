@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
-import { BOUNDARY_LAYERS, STREET_BUFFER_PATH, COLOR_METHODS, CHOROPLETH_COLORS, COVERAGE_COLORS, LOCAL_STORAGE_KEY } from './config/layers'
+import { BOUNDARY_LAYERS, STREET_BUFFER_PATH, COLOR_METHODS, CHOROPLETH_COLORS, COVERAGE_COLORS } from './config/layers'
 import { DATA_PREFIX, SOURCE_LABEL, IS_PUBLIC_SOURCE } from './config/dataSource'
 import { useLayerData, computeQuantileBreaks } from './hooks/useLayerData'
 import { useUrlHash } from './hooks/useUrlHash'
@@ -12,23 +12,6 @@ import MobileSheet     from './components/MobileSheet'
 import MapView         from './components/MapView'
 import './index.css'
 
-function loadStorage(key, fallback) {
-  try {
-    const raw = localStorage.getItem(LOCAL_STORAGE_KEY)
-    if (!raw) return fallback
-    const parsed = JSON.parse(raw)
-    return parsed[key] ?? fallback
-  } catch { return fallback }
-}
-
-function saveStorage(key, value) {
-  try {
-    const raw = localStorage.getItem(LOCAL_STORAGE_KEY)
-    const obj = raw ? JSON.parse(raw) : {}
-    obj[key] = value
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(obj))
-  } catch { /* ignore */ }
-}
 
 export default function App() {
   const { initialState: hashState, writeHash, getShareUrl } = useUrlHash()
@@ -57,13 +40,7 @@ export default function App() {
   // Tree to open on load (from URL hash)
   const [pendingTree, setPendingTree] = useState(hashState?.tree ?? null)
 
-  // Progressive disclosure state — skip landing if URL has state
-  const [explorationStage, setExplorationStage]   = useState(hashState ? 'exploring' : 'landing')
   const [currentZoom, setCurrentZoom]             = useState(hashState?.z ?? 11)
-  const [hasViewedStreetView, setHasViewedStreetView] = useState(false)
-  const [advancedExpanded, setAdvancedExpanded]   = useState(() => loadStorage('advancedExpanded', false))
-  const [ctaDismissed, setCtaDismissed]           = useState(() => loadStorage('ctaDismissed', false))
-  const [streetPath, setStreetPath]               = useState(false)
 
   const [sheetState, setSheetState] = useState('peek') // peek | expanded | full
   const [isMobile, setIsMobile] = useState(
@@ -162,33 +139,6 @@ export default function App() {
     }
   }, [showLocation, locationAvailable])
 
-  // Stage transitions (forward-only state machine — setState in effect is intentional)
-  useEffect(() => {
-    if (explorationStage === 'landing' && selectedFeatureName && !streetPath) {
-      setExplorationStage('neighborhood') // eslint-disable-line react-hooks/set-state-in-effect
-      saveStorage('hasVisited', true)
-    }
-  }, [explorationStage, selectedFeatureName, streetPath])
-
-  useEffect(() => {
-    if (explorationStage === 'landing' && selectedFeatureName && streetPath) {
-      setExplorationStage('street-level') // eslint-disable-line react-hooks/set-state-in-effect
-      saveStorage('hasVisited', true)
-    }
-  }, [explorationStage, selectedFeatureName, streetPath])
-
-  useEffect(() => {
-    if (explorationStage === 'neighborhood' && selectedFeatureName && currentZoom >= 12) {
-      setExplorationStage('street-level') // eslint-disable-line react-hooks/set-state-in-effect
-    }
-  }, [explorationStage, selectedFeatureName, currentZoom])
-
-  useEffect(() => {
-    if (explorationStage === 'street-level' && hasViewedStreetView) {
-      setExplorationStage('post-streetview') // eslint-disable-line react-hooks/set-state-in-effect
-    }
-  }, [explorationStage, hasViewedStreetView])
-
   // Listen for viewport changes (resize, rotation)
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 767px)')
@@ -197,59 +147,13 @@ export default function App() {
     return () => mq.removeEventListener('change', handler)
   }, [])
 
-  // Mobile: auto-expand sheet when stage changes (except landing)
-  useEffect(() => {
-    if (isMobile && explorationStage !== 'landing') {
-      setSheetState('expanded') // eslint-disable-line react-hooks/set-state-in-effect
-    }
-  }, [explorationStage, isMobile])
-
-  const handlePanToLocation = useCallback(() => {
-    if (userLocation) setFlyToLocation(userLocation)
-  }, [userLocation])
-
   const handleZoom = useCallback(zoom => {
     setCurrentZoom(zoom)
   }, [])
 
-  const handleStreetViewClose = useCallback(() => {
-    setHasViewedStreetView(true)
-  }, [])
-
-  const handleAdvancedToggle = useCallback(expanded => {
-    setAdvancedExpanded(expanded)
-    saveStorage('advancedExpanded', expanded)
-  }, [])
-
-  const handleCtaDismiss = useCallback(() => {
-    setCtaDismissed(true)
-    saveStorage('ctaDismissed', true)
-    setExplorationStage('exploring')
-  }, [])
-
-  const handleCtaReshow = useCallback(() => {
-    setCtaDismissed(false)
-  }, [])
-
-  const handleStreetPathStart = useCallback(() => {
-    setStreetPath(true)
-    setActiveBoundaryLayerId('streets')
-    setSelectedFeatureName(null)
-    setHoveredFeature(null)
-  }, [])
-
-  const handleMobileSearchFocus = useCallback(() => {
-    if (isMobile && sheetState === 'peek') {
-      setSheetState('expanded')
-    }
-  }, [isMobile, sheetState])
-
   const resetExploration = useCallback(() => {
-    setExplorationStage('landing')
     setSelectedFeatureName(null)
     setHoveredFeature(null)
-    setHasViewedStreetView(false)
-    setStreetPath(false)
     setActiveBoundaryLayerId('neighborhoods')
     setActiveMethodId('net_pct_of_2015_canopy')
     setShowTreeLosses(true)
@@ -257,9 +161,6 @@ export default function App() {
     setShowStreetBuffer(true)
     setShowCanopyChange(false)
     setShowLocation(false)
-    setAdvancedExpanded(false)
-    saveStorage('advancedExpanded', false)
-    setCtaDismissed(false)
     setFlyToLocation({ longitude: -79.9959, latitude: 40.4406, zoom: 11 })
   }, [])
 
@@ -314,7 +215,6 @@ export default function App() {
     setActiveBoundaryLayerId(id)
     setSelectedFeatureName(null)
     setHoveredFeature(null)
-    if (id !== 'streets') setStreetPath(false)
   }
 
   function handleFeatureSelect(name) {
@@ -353,7 +253,6 @@ export default function App() {
           onFlyToComplete={() => setFlyToLocation(null)}
           onZoom={handleZoom}
           onMapMove={handleMapMove}
-          onStreetViewClose={handleStreetViewClose}
           onActiveTreeChange={setActiveTreeForShare}
           onShare={handleShare}
           isMobile={isMobile}
