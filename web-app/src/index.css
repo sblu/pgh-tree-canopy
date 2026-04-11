@@ -758,3 +758,92 @@ html, body, #root {
 
 /* ─── MapLibre map fills container ─────────────────────────────────────── */
 .maplibregl-map { width: 100% !important; height: 100% !important; }
+
+/* ─── User location dot ─────────────────────────────────────────────────── */
+.user-location-dot {
+  width: 14px;
+  height: 14px;
+  background: #4285f4;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 6px rgba(66,133,244,0.6);
+}
+
+/* ─── Tree click/hover popup ────────────────────────────────────────────── */
+.tree-popup { font-size: 12px; min-width: 200px; }
+.tree-popup-header { font-weight: 700; font-size: 13px; padding: 8px 12px; color: #fff; }
+.tree-popup-header.loss { background: #dc2626; }
+.tree-popup-header.gain { background: var(--primary-dim); }
+.tree-popup-body { padding: 8px 12px 10px; }
+.tree-popup-row { display: flex; justify-content: space-between; padding: 2px 0; }
+.tree-popup-label { color: var(--muted); }
+.tree-popup-streetview {
+  display: block; margin-top: 8px; padding: 6px 10px;
+  background: rgba(155,252,150,0.15); color: var(--primary);
+  text-align: center; border-radius: 4px; text-decoration: none;
+  font-weight: 600; font-size: 11px; border: 1px solid var(--border-active);
+}
+.tree-popup-streetview:hover { background: rgba(155,252,150,0.25); }
+.tree-popup-hint { margin-top: 8px; color: var(--primary); font-size: 11px; font-weight: 600; text-align: center; }
+.tree-popup-no-coords { margin-top: 8px; color: var(--inactive); font-style: italic; font-size: 11px; }
+.tree-popup-disable-reason { margin-top: 4px; color: var(--inactive); font-size: 10px; text-align: center; }
+
+/* ─── Popup close button (white circle, touch-friendly) ─────────────────── */
+.popup-hover .maplibregl-popup-close-button,
+.popup-with-close .maplibregl-popup-close-button {
+  font-size: 16px !important; font-weight: 700 !important;
+  width: 28px !important; height: 28px !important;
+  line-height: 28px !important; text-align: center !important;
+  padding: 0 !important; color: #1e293b !important;
+  background: #fff !important; border: 2px solid #cbd5e1 !important;
+  border-radius: 50% !important; cursor: pointer !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.25) !important;
+  top: -12px !important; right: -12px !important; z-index: 1 !important;
+}
+@media (hover: hover) {
+  .popup-hover .maplibregl-popup-close-button { display: none !important; }
+}
+.popup-with-close .maplibregl-popup-close-button:hover {
+  color: #000 !important; background: #f1f5f9 !important; border-color: #94a3b8 !important;
+}
+
+/* ─── Street View modal ─────────────────────────────────────────────────── */
+.sv-modal-backdrop {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+  z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px;
+}
+.sv-modal {
+  background: #fff; border-radius: 10px; max-width: 900px; width: 100%;
+  max-height: 90vh; overflow-y: auto; box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+}
+.sv-modal-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; }
+.sv-modal-address { padding: 0 16px 12px; font-size: 12px; color: #475569; border-bottom: 1px solid #e2e8f0; }
+.sv-modal-title { font-weight: 700; font-size: 14px; }
+.sv-modal-title.loss { color: #dc2626; }
+.sv-modal-title.gain { color: #16a34a; }
+.sv-modal-close { background: none; border: none; font-size: 24px; color: #64748b; cursor: pointer; padding: 0 4px; line-height: 1; }
+.sv-modal-close:hover { color: #1e293b; }
+.sv-modal-images { display: flex; gap: 12px; padding: 16px; flex-wrap: wrap; }
+.sv-modal-image-wrapper { flex: 1; min-width: 200px; }
+.sv-modal-img { width: 100%; height: auto; border-radius: 6px; display: block; }
+.sv-modal-img-fallback {
+  width: 100%; aspect-ratio: 3/2; background: #f1f5f9; border-radius: 6px;
+  display: flex; align-items: center; justify-content: center; color: #64748b; font-size: 13px;
+}
+.sv-modal-no-historical { border: 2px dashed #cbd5e1; }
+.sv-modal-date { text-align: center; font-size: 12px; color: #475569; margin-top: 6px; font-weight: 500; }
+.sv-modal-qr { display: flex; align-items: center; gap: 10px; padding: 10px 16px; border-top: 1px solid #e2e8f0; }
+.sv-modal-qr-label { font-size: 11px; color: #64748b; }
+.sv-modal-footer {
+  padding: 12px 16px; border-top: 1px solid #e2e8f0;
+  text-align: center; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;
+}
+.sv-modal-link { display: inline-block; padding: 8px 20px; background: #1e40af; color: #fff; border-radius: 5px; text-decoration: none; font-weight: 600; font-size: 12px; }
+.sv-modal-link:hover { background: #1d4ed8; }
+.sv-modal-screenshot-btn { border: none; cursor: pointer; }
+.sv-modal-screenshot-btn:disabled { opacity: 0.6; cursor: wait; }
+
+@media (max-width: 767px) {
+  .sv-modal-images { flex-direction: column; }
+  .sv-modal-image-wrapper { min-width: 100% !important; }
+}
