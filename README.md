@@ -42,8 +42,8 @@ grown or shrunk between 2015 and 2020. Key features:
 
 ```
 pgh-tree-canopy/
-├── data-pipeline/          # Python scripts: GDB → GeoJSON / PMTiles
-│   ├── scripts/
+├── data-pipeline/          # Python scripts: source data → GeoJSON / PMTiles
+│   ├── scripts/            # Default pipeline — reads Tree Pittsburgh GDB
 │   │   ├── 01_extract_boundary_layers.py
 │   │   ├── 02_extract_mature_tree_losses.py
 │   │   ├── 03_generate_pmtiles.py
@@ -51,6 +51,11 @@ pgh-tree-canopy/
 │   │   ├── 05_street_canopy_stats.py
 │   │   ├── 06_tag_street_buffer.py
 │   │   └── 07_full_canopy_change.py
+│   ├── public/             # Experimental pipeline — reads only public PASDA data
+│   │   ├── 00_download.py … 09_full_canopy_change.py
+│   │   ├── discrepancy-report/  # Comparison vs default pipeline
+│   │   ├── config.py
+│   │   └── README.md
 │   ├── output/             # Generated data files (not committed to git)
 │   │   ├── boundary_layers/
 │   │   ├── canopy_change/
@@ -119,6 +124,26 @@ that can be opened directly in QGIS for visual inspection and validation.
 
 See [`data-pipeline/README.md`](data-pipeline/README.md) for detailed
 documentation of each script, output schemas, and CRS information.
+
+### Alternative: Public Data Pipeline (Experimental)
+
+A second, fully open-source pipeline lives in
+[`data-pipeline/public/`](data-pipeline/public/). It reproduces the
+analysis using **only publicly downloadable PASDA data** — no GDB
+required — so anyone can rebuild the dataset from scratch.
+
+It is **not** used by the deployed site: reproducing the change
+classification from raw PASDA footprints yields a ~4.1% larger 2015
+canopy estimate than the refined GDB. See
+[`data-pipeline/public/README.md`](data-pipeline/public/README.md)
+and [`data-pipeline/public/discrepancy-report/`](data-pipeline/public/discrepancy-report/)
+for the full comparison.
+
+The web app can preview the public pipeline's output via a hidden
+URL parameter: append `?source=public` to any page URL to switch
+every data fetch to the experimental dataset. A blue
+**"Public Pipeline Data"** banner appears while the parameter is
+active.
 
 ---
 

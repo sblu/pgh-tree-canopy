@@ -3,6 +3,19 @@
 Python scripts that process Allegheny County GIS data into GeoJSON and
 PMTiles files for the Pittsburgh Tree Canopy web visualization.
 
+This is the **default pipeline** used to build the deployed site. It
+reads the pre-classified `TreeCanopyChange_2015_2020_AlleghenyCounty.gdb`
+produced by the UVM Spatial Analysis Lab for Tree Pittsburgh / WPC —
+the authoritative, most carefully analyzed version of the 2015→2020
+canopy change data.
+
+> **Alternative pipeline:** [`public/`](public/) contains an
+> experimental parallel pipeline that reproduces the analysis from
+> publicly downloadable PASDA data. It is **not** used in production
+> (it yields a ~4.1% larger 2015 canopy estimate than the refined GDB).
+> See [`public/README.md`](public/README.md) for when you'd use it and
+> how to preview its output in the web app via `?source=public`.
+
 ## Setup
 
 **System dependency** (install once with sudo):

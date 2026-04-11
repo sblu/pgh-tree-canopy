@@ -1,0 +1,102 @@
+[
+  {
+    "lat": 40.4324,
+    "lng": -79.9099,
+    "pasda_acres": 473.9,
+    "pasda_change": 1,
+    "gdb_nearest_dist_ft": 8,
+    "gdb_nearest_acres": 403.976,
+    "gdb_nearest_change": 1,
+    "note": "Frick Park \u2014 detailed case study. GDB polygon is 70 acres smaller, excluding internal clearings."
+  },
+  {
+    "lat": 40.671075,
+    "lng": -80.101064,
+    "pasda_acres": 22.4,
+    "pasda_change": 1,
+    "gdb_nearest_dist_ft": 7.0,
+    "gdb_nearest_acres": 16.143,
+    "gdb_nearest_change": 1
+  },
+  {
+    "lat": 40.671362,
+    "lng": -79.930643,
+    "pasda_acres": 138.8,
+    "pasda_change": 1,
+    "gdb_nearest_dist_ft": 15.0,
+    "gdb_nearest_acres": 130.451,
+    "gdb_nearest_change": 1
+  },
+  {
+    "lat": 40.662618,
+    "lng": -80.0948,
+    "pasda_acres": 15.7,
+    "pasda_change": 1,
+    "gdb_nearest_dist_ft": 4.0,
+    "gdb_nearest_acres": 7.6,
+    "gdb_nearest_change": 1
+  },
+  {
+    "lat": 40.656817,
+    "lng": -80.088437,
+    "pasda_acres": 13.3,
+    "pasda_change": 1,
+    "gdb_nearest_dist_ft": 8.0,
+    "gdb_nearest_acres": 2.171,
+    "gdb_nearest_change": 1
+  },
+  {
+    "lat": 40.65731,
+    "lng": -80.009828,
+    "pasda_acres": 11.7,
+    "pasda_change": 1,
+    "gdb_nearest_dist_ft": 2.0,
+    "gdb_nearest_acres": 11.06,
+    "gdb_nearest_change": 1
+  },
+  {
+    "lat": 40.651643,
+    "lng": -80.053608,
+    "pasda_acres": 86.1,
+    "pasda_change": 1,
+    "gdb_nearest_dist_ft": 20.0,
+    "gdb_nearest_acres": 0.279,
+    "gdb_nearest_change": 1
+  },
+  {
+    "lat": 40.664453,
+    "lng": -79.779814,
+    "pasda_acres": 686.5,
+    "pasda_change": 1,
+    "gdb_nearest_dist_ft": 4.0,
+    "gdb_nearest_acres": 171.386,
+    "gdb_nearest_change": 1
+  },
+  {
+    "lat": 40.660807,
+    "lng": -79.936671,
+    "pasda_acres": 1836.1,
+    "pasda_change": 1,
+    "gdb_nearest_dist_ft": 27.0,
+    "gdb_nearest_acres": 705.613,
+    "gdb_nearest_change": 1
+  },
+  {
+    "lat": 40.667541,
+    "lng": -79.982649,
+    "pasda_acres": 1836.1,
+    "pasda_change": 1,
+    "gdb_nearest_dist_ft": 12.0,
+    "gdb_nearest_acres": 467.878,
+    "gdb_nearest_change": 1
+  },
+  {
+    "lat": 40.660608,
+    "lng": -79.799108,
+    "pasda_acres": 83.2,
+    "pasda_change": 1,
+    "gdb_nearest_dist_ft": 0.0,
+    "gdb_nearest_acres": 2.192,
+    "gdb_nearest_change": 1
+  }
+]

@@ -6,12 +6,19 @@
 
 # Source GIS data (too large for git)
 source-gis-data/
+public-gis-data/
 
 # Pipeline output (regenerated from source data)
 data-pipeline/output/
+data-pipeline/output_public/
 
-# Data symlink (created by user, points to pipeline output)
+# Data symlinks (created by user, points to pipeline output)
 web-app/public/data
+web-app/public/data-public
+
+# Python cache
+__pycache__/
+*.pyc
 
 # Node
 web-app/node_modules/

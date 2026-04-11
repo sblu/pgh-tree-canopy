@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<title>Boundary Stats Comparison: Precomputed vs Public</title>
+<style>
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 20px; background: #f5f5f5; }
+h1 { color: #333; }
+h2 { color: #555; margin-top: 30px; border-bottom: 2px solid #ddd; padding-bottom: 5px; }
+table { border-collapse: collapse; width: 100%; margin-bottom: 20px; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+th, td { padding: 8px 12px; text-align: right; border: 1px solid #ddd; font-size: 13px; }
+th { background: #f8f9fa; font-weight: 600; text-align: center; }
+td:first-child { text-align: left; font-weight: 500; }
+.green { background: #d4edda; }
+.yellow { background: #fff3cd; }
+.orange { background: #ffe0b2; }
+.red { background: #f8d7da; }
+.summary { background: #e3f2fd; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+.summary span { font-weight: bold; }
+</style>
+</head><body>
+<h1>Boundary Stats Comparison: Precomputed vs Public Pipeline</h1>
+<div class="summary">
+<p><span>66</span> metric comparisons across 6 layers</p><p>Within 1%: <span>14/66</span> (21%) | Within 5%: <span>29/66</span> (44%) | Within 10%: <span>32/66</span> (48%)</p></div>
+<h2>City Council Districts</h2>
+<table><thead><tr><th>Metric</th><th>Precomputed</th><th>Public</th><th>Difference</th><th>% Diff</th></tr></thead><tbody>
+<tr class="red"><td>net_change_acres</td><td>4.42</td><td>-503.12</td><td>-507.54</td><td>11479.47%</td></tr>
+<tr class="red"><td>net_pct_of_area</td><td>1.17</td><td>-10.31</td><td>-11.48</td><td>983.12%</td></tr>
+<tr class="red"><td>net_pct_of_2015_canopy</td><td>6.63</td><td>-22.76</td><td>-29.39</td><td>443.19%</td></tr>
+<tr class="red"><td>loss_acres</td><td>1,768.34</td><td>2,302.25</td><td>+533.90</td><td>30.19%</td></tr>
+<tr class="red"><td>loss_pct_of_area</td><td>45.70</td><td>58.04</td><td>+12.34</td><td>27.01%</td></tr>
+<tr class="red"><td>loss_pct_of_2015_canopy</td><td>126.30</td><td>153.89</td><td>+27.59</td><td>21.85%</td></tr>
+<tr class="yellow"><td>canopy_2015_acres</td><td>14,019.63</td><td>14,509.06</td><td>+489.43</td><td>3.49%</td></tr>
+<tr class="yellow"><td>gain_acres</td><td>1,772.77</td><td>1,799.13</td><td>+26.36</td><td>1.49%</td></tr>
+<tr class="green"><td>land_area_acres</td><td>35,482.94</td><td>35,353.08</td><td>-129.86</td><td>0.37%</td></tr>
+<tr class="green"><td>no_change_acres</td><td>12,251.29</td><td>12,206.81</td><td>-44.48</td><td>0.36%</td></tr>
+<tr class="green"><td>canopy_2020_acres</td><td>14,024.06</td><td>14,005.94</td><td>-18.11</td><td>0.13%</td></tr>
+</tbody></table>
+<h2>County Council Districts</h2>
+<table><thead><tr><th>Metric</th><th>Precomputed</th><th>Public</th><th>Difference</th><th>% Diff</th></tr></thead><tbody>
+<tr class="red"><td>net_pct_of_area</td><td>-9.55</td><td>-33.92</td><td>-24.37</td><td>255.08%</td></tr>
+<tr class="red"><td>net_pct_of_2015_canopy</td><td>-18.47</td><td>-65.53</td><td>-47.06</td><td>254.72%</td></tr>
+<tr class="red"><td>net_change_acres</td><td>-4,108.36</td><td>-14,113.30</td><td>-10,004.94</td><td>243.53%</td></tr>
+<tr class="red"><td>loss_acres</td><td>21,028.23</td><td>31,462.16</td><td>+10,433.93</td><td>49.62%</td></tr>
+<tr class="red"><td>loss_pct_of_area</td><td>63.21</td><td>88.77</td><td>+25.56</td><td>40.44%</td></tr>
+<tr class="red"><td>loss_pct_of_2015_canopy</td><td>136.30</td><td>181.68</td><td>+45.38</td><td>33.29%</td></tr>
+<tr class="yellow"><td>canopy_2015_acres</td><td>245,090.74</td><td>254,933.22</td><td>+9,842.48</td><td>4.02%</td></tr>
+<tr class="yellow"><td>gain_acres</td><td>16,919.86</td><td>17,348.85</td><td>+428.99</td><td>2.54%</td></tr>
+<tr class="green"><td>no_change_acres</td><td>224,062.51</td><td>223,471.07</td><td>-591.45</td><td>0.26%</td></tr>
+<tr class="green"><td>land_area_acres</td><td>466,084.03</td><td>465,692.82</td><td>-391.21</td><td>0.08%</td></tr>
+<tr class="green"><td>canopy_2020_acres</td><td>240,982.38</td><td>240,819.92</td><td>-162.46</td><td>0.07%</td></tr>
+</tbody></table>
+<h2>County Parks</h2>
+<table><thead><tr><th>Metric</th><th>Precomputed</th><th>Public</th><th>Difference</th><th>% Diff</th></tr></thead><tbody>
+<tr class="red"><td>net_pct_of_area</td><td>-1.05</td><td>-40.63</td><td>-39.57</td><td>3764.74%</td></tr>
+<tr class="red"><td>net_pct_of_2015_canopy</td><td>-1.57</td><td>-50.46</td><td>-48.89</td><td>3107.18%</td></tr>
+<tr class="red"><td>net_change_acres</td><td>-28.89</td><td>-454.43</td><td>-425.55</td><td>1473.19%</td></tr>
+<tr class="red"><td>loss_pct_of_area</td><td>16.06</td><td>57.14</td><td>+41.07</td><td>255.68%</td></tr>
+<tr class="red"><td>loss_pct_of_2015_canopy</td><td>21.63</td><td>71.49</td><td>+49.86</td><td>230.49%</td></tr>
+<tr class="red"><td>loss_acres</td><td>232.07</td><td>667.83</td><td>+435.75</td><td>187.77%</td></tr>
+<tr class="orange"><td>canopy_2015_acres</td><td>8,551.03</td><td>9,357.56</td><td>+806.52</td><td>9.43%</td></tr>
+<tr class="orange"><td>gain_acres</td><td>203.19</td><td>213.39</td><td>+10.20</td><td>5.02%</td></tr>
+<tr class="yellow"><td>land_area_acres</td><td>11,523.18</td><td>12,045.05</td><td>+521.87</td><td>4.53%</td></tr>
+<tr class="yellow"><td>canopy_2020_acres</td><td>8,522.15</td><td>8,903.12</td><td>+380.97</td><td>4.47%</td></tr>
+<tr class="yellow"><td>no_change_acres</td><td>8,318.96</td><td>8,689.73</td><td>+370.77</td><td>4.46%</td></tr>
+</tbody></table>
+<h2>Municipal Parks</h2>
+<table><thead><tr><th>Metric</th><th>Precomputed</th><th>Public</th><th>Difference</th><th>% Diff</th></tr></thead><tbody>
+<tr class="red"><td>net_change_acres</td><td>46.71</td><td>-20.42</td><td>-67.13</td><td>143.72%</td></tr>
+<tr class="red"><td>net_pct_of_2015_canopy</td><td>4,757.51</td><td>9,802.06</td><td>+5,044.56</td><td>106.03%</td></tr>
+<tr class="red"><td>loss_acres</td><td>78.98</td><td>152.05</td><td>+73.07</td><td>92.52%</td></tr>
+<tr class="red"><td>loss_pct_of_area</td><td>1,026.90</td><td>1,203.30</td><td>+176.40</td><td>17.18%</td></tr>
+<tr class="orange"><td>net_pct_of_area</td><td>554.75</td><td>582.89</td><td>+28.15</td><td>5.07%</td></tr>
+<tr class="yellow"><td>canopy_2015_acres</td><td>1,835.02</td><td>1,924.77</td><td>+89.74</td><td>4.89%</td></tr>
+<tr class="yellow"><td>gain_acres</td><td>125.69</td><td>131.63</td><td>+5.94</td><td>4.73%</td></tr>
+<tr class="yellow"><td>loss_pct_of_2015_canopy</td><td>3,868.90</td><td>3,936.61</td><td>+67.71</td><td>1.75%</td></tr>
+<tr class="yellow"><td>canopy_2020_acres</td><td>1,881.73</td><td>1,904.34</td><td>+22.62</td><td>1.20%</td></tr>
+<tr class="green"><td>no_change_acres</td><td>1,756.04</td><td>1,772.72</td><td>+16.67</td><td>0.95%</td></tr>
+<tr class="green"><td>land_area_acres</td><td>2,841.70</td><td>2,866.56</td><td>+24.85</td><td>0.87%</td></tr>
+</tbody></table>
+<h2>Municipalities</h2>
+<table><thead><tr><th>Metric</th><th>Precomputed</th><th>Public</th><th>Difference</th><th>% Diff</th></tr></thead><tbody>
+<tr class="red"><td>net_change_acres</td><td>-4,108.40</td><td>-14,114.09</td><td>-10,005.69</td><td>243.54%</td></tr>
+<tr class="red"><td>net_pct_of_2015_canopy</td><td>-307.42</td><td>-753.66</td><td>-446.24</td><td>145.16%</td></tr>
+<tr class="red"><td>net_pct_of_area</td><td>-155.51</td><td>-373.28</td><td>-217.77</td><td>140.04%</td></tr>
+<tr class="red"><td>loss_acres</td><td>21,028.20</td><td>31,463.67</td><td>+10,435.46</td><td>49.63%</td></tr>
+<tr class="red"><td>loss_pct_of_area</td><td>667.90</td><td>894.88</td><td>+226.98</td><td>33.98%</td></tr>
+<tr class="red"><td>loss_pct_of_2015_canopy</td><td>1,660.48</td><td>2,082.87</td><td>+422.39</td><td>25.44%</td></tr>
+<tr class="yellow"><td>canopy_2015_acres</td><td>245,083.38</td><td>254,945.47</td><td>+9,862.09</td><td>4.02%</td></tr>
+<tr class="yellow"><td>gain_acres</td><td>16,919.81</td><td>17,349.58</td><td>+429.78</td><td>2.54%</td></tr>
+<tr class="green"><td>no_change_acres</td><td>224,055.18</td><td>223,481.80</td><td>-573.38</td><td>0.26%</td></tr>
+<tr class="green"><td>land_area_acres</td><td>466,075.53</td><td>465,686.72</td><td>-388.81</td><td>0.08%</td></tr>
+<tr class="green"><td>canopy_2020_acres</td><td>240,974.98</td><td>240,831.38</td><td>-143.60</td><td>0.06%</td></tr>
+</tbody></table>
+<h2>Neighborhoods</h2>
+<table><thead><tr><th>Metric</th><th>Precomputed</th><th>Public</th><th>Difference</th><th>% Diff</th></tr></thead><tbody>
+<tr class="red"><td>net_change_acres</td><td>-4.05</td><td>-513.22</td><td>-509.16</td><td>12561.70%</td></tr>
+<tr class="red"><td>net_pct_of_area</td><td>22.19</td><td>-106.05</td><td>-128.23</td><td>578.00%</td></tr>
+<tr class="red"><td>net_pct_of_2015_canopy</td><td>312.41</td><td>28.62</td><td>-283.79</td><td>90.84%</td></tr>
+<tr class="red"><td>loss_pct_of_area</td><td>436.08</td><td>571.90</td><td>+135.82</td><td>31.15%</td></tr>
+<tr class="red"><td>loss_acres</td><td>1,763.70</td><td>2,296.96</td><td>+533.26</td><td>30.24%</td></tr>
+<tr class="red"><td>loss_pct_of_2015_canopy</td><td>1,375.40</td><td>1,672.48</td><td>+297.08</td><td>21.60%</td></tr>
+<tr class="yellow"><td>canopy_2015_acres</td><td>14,002.61</td><td>14,492.63</td><td>+490.02</td><td>3.50%</td></tr>
+<tr class="yellow"><td>gain_acres</td><td>1,759.65</td><td>1,783.74</td><td>+24.09</td><td>1.37%</td></tr>
+<tr class="green"><td>no_change_acres</td><td>12,238.91</td><td>12,195.67</td><td>-43.24</td><td>0.35%</td></tr>
+<tr class="green"><td>canopy_2020_acres</td><td>13,998.56</td><td>13,979.41</td><td>-19.14</td><td>0.14%</td></tr>
+<tr class="green"><td>land_area_acres</td><td>35,376.52</td><td>35,357.21</td><td>-19.31</td><td>0.05%</td></tr>
+</tbody></table>
+
+<p style="color: #888; font-size: 12px; margin-top: 30px;">
+Color key: <span style="background:#d4edda;padding:2px 8px;">≤1%</span>
+<span style="background:#fff3cd;padding:2px 8px;">1-5%</span>
+<span style="background:#ffe0b2;padding:2px 8px;">5-10%</span>
+<span style="background:#f8d7da;padding:2px 8px;">&gt;10%</span>
+&mdash; Sorted by largest % difference within each boundary layer.
+</p>
+</body></html>
