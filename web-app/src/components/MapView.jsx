@@ -305,7 +305,7 @@ export default function MapView({
       }}
       cursor={hoveredFeature || hoveredTree ? 'pointer' : 'grab'}
     >
-      <NavigationControl position="top-right" />
+      <NavigationControl position="bottom-left" showCompass={false} />
       <ScaleControl position="bottom-right" unit="imperial" />
 
       {/* ── Street buffer area (render below boundary so choropleth is on top) */}
