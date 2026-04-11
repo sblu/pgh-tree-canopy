@@ -29,8 +29,6 @@ export default function MobileSheet({
   // Leaderboard
   onHover,
   onHoverEnd,
-  // Legend
-  colorBreaks,
 }) {
   const wrapperRef = useRef(null)
   const searchRef  = useRef(null)

@@ -477,7 +477,6 @@ export default function App() {
             onShowCanopyChangeChange={setShowCanopyChange}
             onHover={setHoveredFeature}
             onHoverEnd={() => setHoveredFeature(null)}
-            colorBreaks={colorBreaks}
           />
         </>
       )}
