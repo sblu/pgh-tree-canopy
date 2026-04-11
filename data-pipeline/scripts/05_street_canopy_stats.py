@@ -43,6 +43,7 @@ Outputs written to:
 
 import geopandas as gpd
 import pandas as pd
+import shapely
 import sys
 import time
 from pathlib import Path
@@ -160,27 +161,26 @@ def add_loss_pct_columns(
 
 def compute_canopy_in_street_buffer(
     canopy_bbox: tuple,
+    seg_buffers: gpd.GeoDataFrame,
 ) -> gpd.GeoDataFrame:
     """
     Load canopy polygons within canopy_bbox, clip them to the street buffer
-    union, and return the clipped GeoDataFrame in EPSG:2272 with an
-    added 'area_acres' column.
-    """
-    # Load individual segment buffers
-    log("Loading street segment buffers …", 1)
-    seg_buffers = gpd.read_file(STREETS_DIR / "street_segments_buffered.gpkg")
-    log(f"{len(seg_buffers):,} segments loaded, CRS: {seg_buffers.crs}", 2)
+    area, and return the clipped GeoDataFrame in EPSG:2272 with an added
+    'area_acres' column.
 
-    # Dissolve all segments into a single union polygon, then simplify its
-    # geometry to reduce vertex count before intersection.
-    # At 5 ft tolerance the vertex count drops substantially with negligible
-    # impact on canopy area accuracy (5 ft ≈ 1.5 m).
-    SIMPLIFY_TOLERANCE_FT = 5
-    log("Dissolving street buffers to union …", 1)
+    Instead of dissolving all 82K segments into one county-wide MultiPolygon
+    (which is too complex to clip against efficiently), we use a spatial
+    index on the individual segment buffers.  For each chunk of canopy
+    polygons we find only the local segments within the chunk's bounding box,
+    dissolve just those (~hundreds of segments), and clip against that small
+    local union.  This keeps the clip mask simple and fast regardless of the
+    total county coverage.
+    """
+    # Build spatial index on the individual segment buffers (fast lookup)
+    log("Building spatial index on street segment buffers …", 1)
     t = time.time()
-    union_geom = seg_buffers.dissolve().geometry.iloc[0].simplify(SIMPLIFY_TOLERANCE_FT)
-    street_union = gpd.GeoDataFrame(geometry=[union_geom], crs=seg_buffers.crs)
-    log(f"Done ({elapsed(t)}) — union simplified to {SIMPLIFY_TOLERANCE_FT} ft tolerance", 2)
+    seg_tree = shapely.STRtree(seg_buffers.geometry.values)
+    log(f"Index built for {len(seg_buffers):,} segments ({elapsed(t)})", 2)
 
     # Load canopy change polygons using bbox pre-filter
     log("Loading canopy change polygons (bbox filter) …", 1)
@@ -193,38 +193,67 @@ def compute_canopy_in_street_buffer(
     canopy = canopy[["Change", "geometry"]].copy()
     log(f"{len(canopy):,} features loaded ({elapsed(t)})", 2)
 
-    # Clip canopy polygons to the street buffer union in chunks.
-    # gpd.clip is faster than gpd.overlay for this pattern (one complex mask
-    # polygon vs. many input polygons) because it uses a simpler code path.
-    # Chunking gives us progress reporting and bounds per-chunk memory use.
-    CHUNK_SIZE = 50_000  # → ~66 chunks for 3.3M county-wide features; ~1–2 min each
+    # Clip canopy to street buffers in chunks of 50K.
+    # For each chunk:
+    #   1. Expand the chunk's bounding box by BBOX_EXPAND_FT to capture
+    #      segments whose buffers extend just outside the chunk's edge.
+    #   2. Use the STRtree to find only those local segment buffers (fast).
+    #   3. Dissolve just those segments into a small local union.
+    #   4. Clip the chunk to the local union (fast — simple polygon).
+    CHUNK_SIZE = 50_000
+    BBOX_EXPAND_FT = 100   # must be ≥ BUFFER_FEET (50 ft) to catch edge streets
+
     n_total  = len(canopy)
     n_chunks = (n_total + CHUNK_SIZE - 1) // CHUNK_SIZE
 
-    log(f"Clipping canopy to street buffer ({n_chunks} chunks of {CHUNK_SIZE:,}) …", 1)
+    log(f"Clipping canopy to street buffers ({n_chunks} chunks of {CHUNK_SIZE:,}) …", 1)
 
     results = []
     chunk_start = time.time()
 
     for i in range(n_chunks):
         chunk = canopy.iloc[i * CHUNK_SIZE : (i + 1) * CHUNK_SIZE]
-        result = gpd.clip(chunk, street_union)
-        results.append(result)
 
-        done        = i + 1
-        pct         = done / n_chunks * 100
-        elapsed_so_far  = time.time() - chunk_start
-        secs_per_chunk  = elapsed_so_far / done
-        secs_remaining  = secs_per_chunk * (n_chunks - done)
+        # Expand chunk bbox to catch segments near the edge
+        minx, miny, maxx, maxy = chunk.total_bounds
+        tile_box = shapely.box(
+            minx - BBOX_EXPAND_FT, miny - BBOX_EXPAND_FT,
+            maxx + BBOX_EXPAND_FT, maxy + BBOX_EXPAND_FT,
+        )
 
-        # Format remaining time as Xm Ys for readability
+        # Find segment buffers within this tile (spatial index lookup)
+        local_idx = seg_tree.query(tile_box, predicate="intersects")
+
+        if len(local_idx) == 0:
+            continue
+
+        # Dissolve local segments into one union polygon (few hundred segments)
+        local_geoms = seg_buffers.geometry.values[local_idx]
+        local_union = shapely.union_all(local_geoms)
+        if not shapely.is_valid(local_union):
+            local_union = shapely.make_valid(local_union)
+
+        # Clip chunk to local union (Shapely geometry passed directly to
+        # gpd.clip avoids the internal union_all() call on a GeoDataFrame)
+        result = gpd.clip(chunk, local_union)
+
+        if len(result) > 0:
+            results.append(result)
+
+        done           = i + 1
+        pct            = done / n_chunks * 100
+        elapsed_so_far = time.time() - chunk_start
+        secs_per_chunk = elapsed_so_far / done
+        secs_remaining = secs_per_chunk * (n_chunks - done)
+
         mins, secs = divmod(int(secs_remaining), 60)
         eta_str = f"{mins}m {secs:02d}s remaining" if mins else f"{secs}s remaining"
 
         log(
             f"chunk {done}/{n_chunks}  ({pct:5.1f}%)  "
             f"elapsed {elapsed(chunk_start)}  ~{eta_str}  "
-            f"[{len(result):,} intersected]",
+            f"[{len(local_idx):,} local segs, "
+            f"{len(result):,} intersected]",
             2,
         )
 
@@ -427,20 +456,19 @@ def main() -> None:
     log("")
 
     # ------------------------------------------------------------------
-    # Derive bounding box from the street buffer network (county-wide).
-    # Used to pre-filter the 3.3M-polygon canopy dataset before the
-    # expensive spatial overlay.
+    # Load street segment buffers once — shared by steps 1 and 3.
     # ------------------------------------------------------------------
-    log("Reading county street buffer bounding box …")
-    seg_buffers_meta = gpd.read_file(STREETS_DIR / "street_segments_buffered.gpkg")
-    county_bounds = tuple(seg_buffers_meta.total_bounds)
-    log(f"  Bounds (EPSG:2272): {tuple(round(v) for v in county_bounds)}", 1)
+    log("Loading street segment buffers …")
+    seg_buffers = gpd.read_file(STREETS_DIR / "street_segments_buffered.gpkg")
+    county_bounds = tuple(seg_buffers.total_bounds)
+    log(f"  {len(seg_buffers):,} segments, bounds (EPSG:2272): "
+        f"{tuple(round(v) for v in county_bounds)}", 1)
 
     # ------------------------------------------------------------------
     # Core intersection: canopy clipped to street buffer union
     # ------------------------------------------------------------------
     log("\n--- Step 1: Canopy × street buffer intersection ---")
-    canopy_in_streets = compute_canopy_in_street_buffer(county_bounds)
+    canopy_in_streets = compute_canopy_in_street_buffer(county_bounds, seg_buffers)
 
     # Save for QGIS inspection (reproject to WGS84)
     log("\nSaving canopy_in_street_buffer.geojson for QGIS inspection …")
@@ -461,7 +489,6 @@ def main() -> None:
     # Option (b): per-street stats + centerline output
     # ------------------------------------------------------------------
     log("\n--- Step 3: Option (b) – per-street canopy stats ---")
-    seg_buffers = gpd.read_file(STREETS_DIR / "street_segments_buffered.gpkg")
     street_stats = compute_per_street_stats(canopy_in_streets, seg_buffers)
 
     # Join stats onto street centerlines (WGS84 geometry for web display)
