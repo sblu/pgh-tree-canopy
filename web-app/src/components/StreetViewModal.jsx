@@ -7,10 +7,11 @@ import { toPng } from 'html-to-image'
 import { QRCodeSVG } from 'qrcode.react'
 import { trackEvent } from '../utils/analytics'
 
-export default function StreetViewModal({ panoData, isGain, feature, onClose }) {
+export default function StreetViewModal({ panoData, isGain, feature, onClose, onShare }) {
   const [currentImgError, setCurrentImgError] = useState(false)
   const [historicalImgError, setHistoricalImgError] = useState(false)
   const [screenshotting, setScreenshotting] = useState(false)
+  const [shareCopied, setShareCopied] = useState(false)
   const captureRef = useRef(null)
 
   // Track street view open
@@ -74,25 +75,33 @@ export default function StreetViewModal({ panoData, isGain, feature, onClose }) 
           )}
 
           <div className="sv-modal-images">
-            {/* Today (current) — left / top */}
-            <div className="sv-modal-image-wrapper">
-              {currentImgError ? (
-                <div className="sv-modal-img-fallback">Image unavailable</div>
-              ) : (
-                <img
-                  src={panoData.currentImageUrl}
-                  alt={`Street view from ${panoData.currentDate}`}
-                  className="sv-modal-img"
-                  crossOrigin="anonymous"
-                  onError={() => setCurrentImgError(true)}
-                />
-              )}
-              <div className="sv-modal-date">
-                Today &mdash; {panoData.currentDate}
+            {/* After (current) — left / top */}
+            {panoData.currentImageUrl ? (
+              <div className="sv-modal-image-wrapper">
+                {currentImgError ? (
+                  <div className="sv-modal-img-fallback">Image unavailable</div>
+                ) : (
+                  <img
+                    src={panoData.currentImageUrl}
+                    alt={`Street view from ${panoData.currentDate}`}
+                    className="sv-modal-img"
+                    crossOrigin="anonymous"
+                    onError={() => setCurrentImgError(true)}
+                  />
+                )}
+                <div className="sv-modal-date">
+                  After {isGain ? 'Gain' : 'Loss'} &mdash; {panoData.currentDate}
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="sv-modal-image-wrapper">
+                <div className="sv-modal-img-fallback sv-modal-no-historical">
+                  No post-{isGain ? 'gain' : 'loss'} imagery available
+                </div>
+              </div>
+            )}
 
-            {/* Historical — right / bottom */}
+            {/* Before (historical) — right / bottom */}
             {panoData.historicalImageUrl ? (
               <div className="sv-modal-image-wrapper">
                 {historicalImgError ? (
@@ -107,13 +116,13 @@ export default function StreetViewModal({ panoData, isGain, feature, onClose }) 
                   />
                 )}
                 <div className="sv-modal-date">
-                  Historical &mdash; {panoData.historicalDate}
+                  Before {isGain ? 'Gain' : 'Loss'} &mdash; {panoData.historicalDate}
                 </div>
               </div>
             ) : (
               <div className="sv-modal-image-wrapper">
                 <div className="sv-modal-img-fallback sv-modal-no-historical">
-                  No 2015 or earlier imagery available
+                  No pre-{isGain ? 'gain' : 'loss'} imagery available
                 </div>
               </div>
             )}
@@ -142,6 +151,17 @@ export default function StreetViewModal({ panoData, isGain, feature, onClose }) 
           >
             {screenshotting ? 'Saving...' : 'Save Screenshot'}
           </button>
+          {onShare && (
+            <button
+              className="sv-modal-link sv-modal-screenshot-btn"
+              onClick={async () => {
+                const ok = await onShare()
+                if (ok) { setShareCopied(true); setTimeout(() => setShareCopied(false), 2000) }
+              }}
+            >
+              {shareCopied ? 'Link Copied!' : <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{verticalAlign: 'middle', marginRight: 4}}><path d="M4 12v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>Share This View</>}
+            </button>
+          )}
         </div>
       </div>
     </div>

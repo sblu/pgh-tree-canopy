@@ -44,6 +44,7 @@ export default function Sidebar({
   onMobileSearchFocus,
   streetPath,
   onStreetPathStart,
+  onShare,
 }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchFocused, setSearchFocused] = useState(false)
@@ -166,17 +167,30 @@ export default function Sidebar({
             <div className="sidebar-title">Pittsburgh Tree Canopy Explorer</div>
             <div className="sidebar-subtitle">Based on 2015 to 2020 canopy changes</div>
           </div>
-          {explorationStage !== 'landing' && (
-            <button className="reset-btn" onClick={onReset} title="Start over">↺</button>
-          )}
         </div>
         <div className="sidebar-header-tagline"><em>Brought to you by the Squirrel Hill Urban Coalition Tree Committee</em></div>
+        <div style={{ display: 'flex', gap: '6px', marginTop: '6px', justifyContent: 'center', marginLeft: 'auto', marginRight: 'auto' }}>
+          {onShare && (
+            <button className="reset-btn" onClick={async () => {
+              const ok = await onShare()
+              if (ok) {
+                const btn = document.querySelector('.share-toast')
+                if (btn) { btn.textContent = 'Copied!'; setTimeout(() => { btn.textContent = '' }, 2000) }
+              }
+            }} title="Copy shareable link">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{verticalAlign: 'middle'}}><path d="M4 12v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+              {' Share'}
+              <span className="share-toast" style={{ fontSize: '10px', marginLeft: '2px' }}></span>
+            </button>
+          )}
+          <button className="reset-btn" onClick={onReset} title="Start over">↺ Reset</button>
+        </div>
       </header>
 
       {/* ── Search ── */}
       <section className="sidebar-section">
         <div className="section-label">
-          {selectedFeatureName ? (activeLayer?.label || 'Selected') : (streetPath ? 'Find Your Street' : 'Find Your Neighborhood')}
+          {selectedFeatureName ? (activeLayer?.label || 'Selected') : `Find Your ${activeLayer?.singularLabel || 'Neighborhood'}`}
         </div>
         <div className="search-container">
           {selectedFeatureName ? (

@@ -37,7 +37,7 @@ try {
 // Light CartoDB Positron basemap — free, no API key required
 const BASE_STYLE = 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json'
 
-const PITTSBURGH_CENTER = { longitude: -79.9959, latitude: 40.4406, zoom: 11 }
+const DEFAULT_CENTER = { longitude: -79.9959, latitude: 40.4406, zoom: 11 }
 
 const TREE_LAYER_IDS = ['tree-losses-grove', 'tree-losses-tree', 'tree-gains-grove', 'tree-gains-tree']
 
@@ -68,13 +68,22 @@ export default function MapView({
   flyToLocation,
   onFlyToComplete,
   onZoom,
+  onMapMove,
   onStreetViewClose,
+  onActiveTreeChange,
+  onShare,
   isMobile,
   sheetState,
+  initialCenter,
+  initialZoom,
+  pendingTree,
+  onPendingTreeHandled,
 }) {
   const mapRef = useRef(null)
   const [mapLoaded, setMapLoaded] = useState(false)
   const [clickedTree, setClickedTree] = useState(null)
+  const [clickedBoundary, setClickedBoundary] = useState(null)
+  const [lastDismissedTree, setLastDismissedTree] = useState(null) // for yellow highlight after SV close
   const { loading: svLoading, panoData: svPanoData, disabled: svDisabled, disableReason: svDisableReason } = useStreetView(clickedTree, streetCenterlines)
 
   // Build pmtiles:// URLs relative to the page's base URL.
@@ -168,6 +177,49 @@ export default function MapView({
 
   const [hoveredTree, setHoveredTree] = useState(null)
 
+  // Clear boundary popup when active layer changes
+  useEffect(() => { setClickedBoundary(null) }, [activeLayerConfig])
+
+  // Notify App of active tree (for URL hash sharing)
+  useEffect(() => {
+    if (onActiveTreeChange) {
+      if (clickedTree) {
+        const p = clickedTree.feature.properties
+        onActiveTreeChange({
+          lat: p.centroid_lat ?? clickedTree.lngLat.lat,
+          lng: p.centroid_lon ?? clickedTree.lngLat.lng,
+          type: clickedTree.isGain ? 'gain' : 'loss',
+        })
+      } else {
+        onActiveTreeChange(null)
+      }
+    }
+  }, [clickedTree, onActiveTreeChange])
+
+  // Handle pending tree from URL hash — query the map for the tree feature at the given coords
+  useEffect(() => {
+    if (!pendingTree || !mapLoaded || !mapRef.current) return
+    const map = mapRef.current.getMap()
+    // Wait briefly for tiles to load at the target zoom
+    const timer = setTimeout(() => {
+      const pt = map.project([pendingTree.lng, pendingTree.lat])
+      const features = map.queryRenderedFeatures(
+        [[pt.x - 10, pt.y - 10], [pt.x + 10, pt.y + 10]],
+        { layers: TREE_LAYER_IDS }
+      )
+      if (features.length > 0) {
+        const f = features[0]
+        setClickedTree({
+          feature: f,
+          lngLat: { lng: pendingTree.lng, lat: pendingTree.lat },
+          isGain: pendingTree.type === 'gain',
+        })
+      }
+      if (onPendingTreeHandled) onPendingTreeHandled()
+    }, 1500)
+    return () => clearTimeout(timer)
+  }, [pendingTree, mapLoaded, onPendingTreeHandled])
+
   // When multiple interactive layers overlap, prefer tree polygons over boundary fill
   const pickTreeFeature = (features) =>
     features?.find(f => TREE_LAYER_IDS.includes(f.layer?.id))
@@ -194,16 +246,19 @@ export default function MapView({
   const handleMouseLeave = useCallback(() => onHoverEnd(), [onHoverEnd])
 
   const handleClick = useCallback(e => {
+    setLastDismissedTree(null) // clear highlight from previous SV dismissal
     const treeFeature = pickTreeFeature(e.features)
     const feature = treeFeature || e.features?.[0]
     if (!feature) {
       setClickedTree(null)
       setHoveredTree(null)
+      setClickedBoundary(null)
       return
     }
     if (treeFeature) {
       const isGain = treeFeature.layer.id.startsWith('tree-gains')
       setHoveredTree(null)
+      setClickedBoundary(null)
       setClickedTree({
         feature: treeFeature,
         lngLat: e.lngLat,
@@ -213,6 +268,7 @@ export default function MapView({
     } else {
       setClickedTree(null)
       setHoveredTree(null)
+      setClickedBoundary({ feature, lngLat: e.lngLat })
       onFeatureClick(feature.properties?.name)
       trackEvent('feature_select', { name: feature.properties?.name, source: 'map_click' })
     }
@@ -228,7 +284,11 @@ export default function MapView({
       ref={mapRef}
       mapLib={maplibregl}
       mapStyle={BASE_STYLE}
-      initialViewState={PITTSBURGH_CENTER}
+      initialViewState={{
+        longitude: initialCenter?.lng ?? DEFAULT_CENTER.longitude,
+        latitude: initialCenter?.lat ?? DEFAULT_CENTER.latitude,
+        zoom: initialZoom ?? DEFAULT_CENTER.zoom,
+      }}
       style={{ width: '100%', height: '100%' }}
       interactiveLayerIds={interactiveLayerIds}
       onMouseMove={handleMouseMove}
@@ -238,6 +298,10 @@ export default function MapView({
       onError={handleMapError}
       onMoveEnd={e => {
         if (onZoom) onZoom(e.target.getZoom())
+        if (onMapMove) {
+          const center = e.target.getCenter()
+          onMapMove({ lat: center.lat, lng: center.lng })
+        }
       }}
       cursor={hoveredFeature || hoveredTree ? 'pointer' : 'grab'}
     >
@@ -556,19 +620,35 @@ export default function MapView({
         </Marker>
       )}
 
-      {/* ── Hover popup (boundary zones) — close button visible on mobile only */}
-      {hoveredFeature && !clickedTree && !hoveredTree && (
+      {/* ── Yellow highlight ring on last-dismissed street view tree ──── */}
+      {lastDismissedTree && !clickedTree && (() => {
+        const p = lastDismissedTree.feature.properties
+        const lat = p.centroid_lat ?? lastDismissedTree.lngLat.lat
+        const lng = p.centroid_lon ?? lastDismissedTree.lngLat.lng
+        return (
+          <Marker longitude={lng} latitude={lat} anchor="center">
+            <div style={{
+              width: 28, height: 28, borderRadius: '50%',
+              border: '3px solid #facc15', background: 'rgba(250,204,21,0.25)',
+              pointerEvents: 'none',
+            }} />
+          </Marker>
+        )
+      })()}
+
+      {/* ── Click popup (boundary zones) — persistent until dismissed ────── */}
+      {clickedBoundary && !clickedTree && (
         <Popup
-          longitude={hoveredFeature.lngLat.lng}
-          latitude={hoveredFeature.lngLat.lat}
+          longitude={clickedBoundary.lngLat.lng}
+          latitude={clickedBoundary.lngLat.lat}
           closeButton={true}
           closeOnClick={false}
           anchor="bottom-left"
           maxWidth="300px"
-          className="popup-hover"
-          onClose={onHoverEnd}
+          className="popup-with-close"
+          onClose={() => setClickedBoundary(null)}
         >
-          <InfoPanel feature={hoveredFeature.feature} method={activeMethodId} />
+          <InfoPanel feature={clickedBoundary.feature} method={activeMethodId} />
         </Popup>
       )}
 
@@ -622,9 +702,18 @@ export default function MapView({
           isGain={clickedTree.isGain}
           feature={clickedTree.feature}
           onClose={() => {
+            setLastDismissedTree(clickedTree)
             setClickedTree(null)
             if (onStreetViewClose) onStreetViewClose()
           }}
+          onShare={onShare ? async () => {
+            const p = clickedTree.feature.properties
+            return onShare({
+              lat: p.centroid_lat ?? clickedTree.lngLat.lat,
+              lng: p.centroid_lon ?? clickedTree.lngLat.lng,
+              type: clickedTree.isGain ? 'gain' : 'loss',
+            })
+          } : null}
         />
       )}
     </>

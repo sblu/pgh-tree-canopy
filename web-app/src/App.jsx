@@ -1,6 +1,8 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { BOUNDARY_LAYERS, STREET_BUFFER_PATH, COLOR_METHODS, CHOROPLETH_COLORS, COVERAGE_COLORS, LOCAL_STORAGE_KEY } from './config/layers'
+import { DATA_PREFIX, SOURCE_LABEL, IS_PUBLIC_SOURCE } from './config/dataSource'
 import { useLayerData, computeQuantileBreaks } from './hooks/useLayerData'
+import { useUrlHash } from './hooks/useUrlHash'
 import Sidebar from './components/Sidebar'
 import MapView from './components/MapView'
 import './index.css'
@@ -24,14 +26,16 @@ function saveStorage(key, value) {
 }
 
 export default function App() {
-  const [activeBoundaryLayerId, setActiveBoundaryLayerId] = useState('neighborhoods')
-  const [activeMethodId, setActiveMethodId]               = useState('net_pct_of_2015_canopy')
-  const [showTreeLosses, setShowTreeLosses]               = useState(true)
-  const [showTreeGains, setShowTreeGains]                 = useState(false)
-  const [showStreetBuffer, setShowStreetBuffer]           = useState(true)
-  const [showCanopyChange, setShowCanopyChange]           = useState(false)
+  const { initialState: hashState, writeHash, getShareUrl } = useUrlHash()
+
+  const [activeBoundaryLayerId, setActiveBoundaryLayerId] = useState(hashState?.layer ?? 'neighborhoods')
+  const [activeMethodId, setActiveMethodId]               = useState(hashState?.method ?? 'net_pct_of_2015_canopy')
+  const [showTreeLosses, setShowTreeLosses]               = useState(hashState?.losses ?? true)
+  const [showTreeGains, setShowTreeGains]                 = useState(hashState?.gains ?? false)
+  const [showStreetBuffer, setShowStreetBuffer]           = useState(hashState?.buffer ?? true)
+  const [showCanopyChange, setShowCanopyChange]           = useState(hashState?.canopy ?? false)
   const [hoveredFeature, setHoveredFeature]               = useState(null)
-  const [selectedFeatureName, setSelectedFeatureName]     = useState(null)
+  const [selectedFeatureName, setSelectedFeatureName]     = useState(hashState?.selected ?? null)
   const [sidebarOpen, setSidebarOpen]                     = useState(true)
   const [showLocation, setShowLocation]                   = useState(false)
   const [userLocation, setUserLocation]                   = useState(null)
@@ -39,9 +43,18 @@ export default function App() {
   const [flyToLocation, setFlyToLocation]                 = useState(null)
   const watchIdRef                                        = useRef(null)
 
-  // Progressive disclosure state
-  const [explorationStage, setExplorationStage]   = useState('landing')
-  const [currentZoom, setCurrentZoom]             = useState(11)
+  // Map viewport — tracked for URL hash sharing
+  const [mapCenter, setMapCenter] = useState({
+    lat: hashState?.lat ?? 40.4406,
+    lng: hashState?.lng ?? -79.9959,
+  })
+
+  // Tree to open on load (from URL hash)
+  const [pendingTree, setPendingTree] = useState(hashState?.tree ?? null)
+
+  // Progressive disclosure state — skip landing if URL has state
+  const [explorationStage, setExplorationStage]   = useState(hashState ? 'exploring' : 'landing')
+  const [currentZoom, setCurrentZoom]             = useState(hashState?.z ?? 11)
   const [hasViewedStreetView, setHasViewedStreetView] = useState(false)
   const [advancedExpanded, setAdvancedExpanded]   = useState(() => loadStorage('advancedExpanded', false))
   const [ctaDismissed, setCtaDismissed]           = useState(() => loadStorage('ctaDismissed', false))
@@ -54,6 +67,50 @@ export default function App() {
   const sheetWrapperRef = useRef(null)
 
   const locationAvailable = navigator.geolocation && window.isSecureContext
+
+  // Active tree for URL sharing (set by MapView when street view is open)
+  const [activeTreeForShare, setActiveTreeForShare] = useState(null)
+
+  // Sync state → URL hash (debounced)
+  useEffect(() => {
+    writeHash({
+      lat: mapCenter.lat, lng: mapCenter.lng, z: currentZoom,
+      layer: activeBoundaryLayerId, method: activeMethodId,
+      losses: showTreeLosses, gains: showTreeGains,
+      buffer: showStreetBuffer, canopy: showCanopyChange,
+      selected: selectedFeatureName, tree: activeTreeForShare,
+    })
+  }, [mapCenter, currentZoom, activeBoundaryLayerId, activeMethodId,
+      showTreeLosses, showTreeGains, showStreetBuffer, showCanopyChange,
+      selectedFeatureName, activeTreeForShare, writeHash])
+
+  // Handle map viewport changes
+  const handleMapMove = useCallback((center) => {
+    setMapCenter(center)
+  }, [])
+
+  // Build current share state
+  const buildShareState = useCallback((treeOverride) => ({
+    lat: mapCenter.lat, lng: mapCenter.lng, z: currentZoom,
+    layer: activeBoundaryLayerId, method: activeMethodId,
+    losses: showTreeLosses, gains: showTreeGains,
+    buffer: showStreetBuffer, canopy: showCanopyChange,
+    selected: selectedFeatureName,
+    tree: treeOverride ?? activeTreeForShare,
+  }), [mapCenter, currentZoom, activeBoundaryLayerId, activeMethodId,
+       showTreeLosses, showTreeGains, showStreetBuffer, showCanopyChange,
+       selectedFeatureName, activeTreeForShare])
+
+  // Share: copy current URL to clipboard
+  const handleShare = useCallback(async (treeOverride) => {
+    const url = getShareUrl(buildShareState(treeOverride))
+    try {
+      await navigator.clipboard.writeText(url)
+      return true
+    } catch {
+      return false
+    }
+  }, [buildShareState, getShareUrl])
 
   // Start/stop watching geolocation when toggle changes
   useEffect(() => {
@@ -285,7 +342,7 @@ export default function App() {
 
   // Fetch street centerlines for Street View nearest-street calculation
   const { data: streetCenterlines } = useLayerData(
-    'street_centerlines', 'data/streets/street_centerlines.geojson'
+    'street_centerlines', `${DATA_PREFIX}/streets/street_centerlines.geojson`
   )
 
   // Enrich features with canopy_2020_pct (derived from existing fields)
@@ -310,10 +367,13 @@ export default function App() {
   const isCoverage = activeMethod?.group === 'coverage'
   const activeColors = isCoverage ? COVERAGE_COLORS : CHOROPLETH_COLORS
 
-  // Recompute colour breaks when layer data or active metric changes
+  // Recompute colour breaks when layer data or active metric changes.
+  // For net-change metrics, force 0 as the middle break so that
+  // warm colours (loss) are always < 0% and cool colours (gain) are always >= 0%.
+  const isDiverging = activeMethod?.group === 'net_change'
   const colorBreaks = useMemo(
-    () => computeQuantileBreaks(enrichedLayerData, activeMethodId),
-    [enrichedLayerData, activeMethodId]
+    () => computeQuantileBreaks(enrichedLayerData, activeMethodId, 5, isDiverging),
+    [enrichedLayerData, activeMethodId, isDiverging]
   )
 
   function handleBoundaryLayerChange(id) {
@@ -329,6 +389,16 @@ export default function App() {
 
   return (
     <div className="app-layout">
+      {IS_PUBLIC_SOURCE && (
+        <div style={{
+          position: 'fixed', top: 0, left: '50%', transform: 'translateX(-50%)',
+          zIndex: 9999, background: '#2563eb', color: 'white', padding: '4px 16px',
+          borderRadius: '0 0 8px 8px', fontSize: '12px', fontWeight: 600,
+          boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+        }}>
+          {SOURCE_LABEL} Data
+        </div>
+      )}
       <div
         className={`sidebar-wrapper${sidebarOpen ? '' : ' collapsed'}`}
         data-sheet={isMobile ? sheetState : undefined}
@@ -370,6 +440,7 @@ export default function App() {
         onMobileSearchFocus={handleMobileSearchFocus}
         streetPath={streetPath}
         onStreetPathStart={handleStreetPathStart}
+        onShare={handleShare}
       />
       </div>
 
@@ -405,9 +476,16 @@ export default function App() {
           flyToLocation={flyToLocation}
           onFlyToComplete={() => setFlyToLocation(null)}
           onZoom={handleZoom}
+          onMapMove={handleMapMove}
           onStreetViewClose={handleStreetViewClose}
+          onActiveTreeChange={setActiveTreeForShare}
+          onShare={handleShare}
           isMobile={isMobile}
           sheetState={sheetState}
+          initialCenter={mapCenter}
+          initialZoom={hashState?.z ?? 11}
+          pendingTree={pendingTree}
+          onPendingTreeHandled={() => setPendingTree(null)}
         />
       </main>
     </div>

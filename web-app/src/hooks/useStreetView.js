@@ -15,6 +15,13 @@ const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ''
 
 const HISTORICAL_CUTOFF = '2015-03'
 
+/** Months when trees have leaves — prefer these for before/after imagery */
+const LEAF_ON_MONTHS = new Set(['03', '04', '05', '06', '07', '08', '09'])
+function isLeafOn(dateStr) {
+  const month = dateStr?.split('-')[1]
+  return LEAF_ON_MONTHS.has(month)
+}
+
 /**
  * Extract { pano, date } pairs from the StreetViewPanoramaData.time array.
  * The date property name is minified by Google and varies between API versions,
@@ -153,14 +160,17 @@ export default function useStreetView(clickedTree, streetCenterlines) {
         const timeEntries = parseTimeEntries(data.time)
         timeEntries.sort((a, b) => b.date.localeCompare(a.date))
 
-        // Current: most recent panorama
-        const currentEntry = timeEntries[0] || {
-          pano: data.location.pano,
-          date: data.imageDate,
-        }
+        // Current (after loss): prefer leaf-on among post-cutoff panos,
+        // fall back to most recent post-cutoff. Null if no post-cutoff panos exist.
+        const postCutoff = timeEntries.filter(e => e.date > HISTORICAL_CUTOFF)
+        const currentLeafOn = postCutoff.find(e => isLeafOn(e.date))
+        const currentEntry = currentLeafOn || postCutoff[0] || null
 
-        // Historical: newest panorama from March 2015 or earlier
-        const historicalEntry = timeEntries.find(e => e.date <= HISTORICAL_CUTOFF) || null
+        // Historical (before loss): prefer leaf-on among pre-cutoff panos,
+        // fall back to any pano from that period. Null if none exist.
+        const historicalCandidates = timeEntries.filter(e => e.date <= HISTORICAL_CUTOFF)
+        const historicalLeafOn = historicalCandidates.find(e => isLeafOn(e.date))
+        const historicalEntry = historicalLeafOn || historicalCandidates[0] || null
 
         // Recalculate heading from actual pano location → centroid
         // (the pano may be offset from our computed camera position)
@@ -175,7 +185,9 @@ export default function useStreetView(clickedTree, streetCenterlines) {
           `https://www.google.com/maps/@${actualLat},${actualLng},3a,75y,` +
           `${headingToCentroid.toFixed(1)}h,90t/data=!3m1!1e1`
 
-        const currentImageUrl = buildStaticUrl(currentEntry.pano, headingToCentroid)
+        const currentImageUrl = currentEntry
+          ? buildStaticUrl(currentEntry.pano, headingToCentroid)
+          : null
         const historicalImageUrl = historicalEntry
           ? buildStaticUrl(historicalEntry.pano, headingToCentroid)
           : null
@@ -198,7 +210,7 @@ export default function useStreetView(clickedTree, streetCenterlines) {
         setPanoData({
           currentImageUrl,
           historicalImageUrl,
-          currentDate: formatDate(currentEntry.date),
+          currentDate: currentEntry ? formatDate(currentEntry.date) : null,
           historicalDate: historicalEntry ? formatDate(historicalEntry.date) : null,
           streetViewUrl,
           address,
