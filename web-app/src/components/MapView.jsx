@@ -24,6 +24,7 @@ import {
   CANOPY_CHANGE_COLORS,
 } from '../config/layers'
 import { buildColorExpression } from '../hooks/useLayerData'
+import { DATA_PREFIX } from '../config/dataSource'
 import InfoPanel from './InfoPanel'
 
 // Register the pmtiles:// protocol with MapLibre once at module load.
@@ -32,6 +33,16 @@ try {
   maplibregl.addProtocol('pmtiles', pmtilesProtocol.tile.bind(pmtilesProtocol))
 } catch (err) {
   console.error('Failed to register pmtiles protocol:', err)
+}
+
+function computeCentroid(geometry) {
+  let sumLng = 0, sumLat = 0, count = 0
+  const walk = coords => {
+    if (typeof coords[0] === 'number') { sumLng += coords[0]; sumLat += coords[1]; count++ }
+    else coords.forEach(walk)
+  }
+  walk(geometry.coordinates)
+  return count > 0 ? { lng: sumLng / count, lat: sumLat / count } : { lng: 0, lat: 0 }
 }
 
 // Light CartoDB Positron basemap — free, no API key required
@@ -56,10 +67,11 @@ export default function MapView({
   showTreeLosses,
   showTreeGains,
   showStreetBuffer,
-  streetBufferData,
+
   showCanopyChange,
   streetCenterlines,
   selectedFeatureName,
+  selectedFeatureRank,
   hoveredFeature,
   onHover,
   onHoverEnd,
@@ -84,6 +96,9 @@ export default function MapView({
   const [clickedTree, setClickedTree] = useState(null)
   const [clickedBoundary, setClickedBoundary] = useState(null)
   const [lastDismissedTree, setLastDismissedTree] = useState(null) // for yellow highlight after SV close
+  // Flag: true when the boundary popup was just set by a direct map click so the
+  // selectedFeatureName effect below doesn't immediately override it with a centroid.
+  const boundaryFromClickRef = useRef(false)
   const { loading: svLoading, panoData: svPanoData, disabled: svDisabled, disableReason: svDisableReason } = useStreetView(clickedTree, streetCenterlines)
 
   // Build pmtiles:// URLs relative to the page's base URL.
@@ -162,6 +177,21 @@ export default function MapView({
       duration: 800,
     })
   }, [selectedFeatureName, layerData, isMobile, sheetState])
+
+  // Show info popup when a feature is selected via search (not via map click).
+  // Map clicks set clickedBoundary directly and raise the boundaryFromClickRef flag
+  // so this effect skips them — it only fires for search-driven selections.
+  useEffect(() => {
+    if (!selectedFeatureName || !layerData) return
+    if (boundaryFromClickRef.current) {
+      boundaryFromClickRef.current = false
+      return
+    }
+    const feature = layerData.features?.find(f => f.properties?.name === selectedFeatureName)
+    if (!feature) return
+    const lngLat = computeCentroid(feature.geometry)
+    setClickedBoundary({ feature, lngLat })
+  }, [selectedFeatureName, layerData])
 
   // Fly to user's location when requested
   useEffect(() => {
@@ -268,6 +298,7 @@ export default function MapView({
     } else {
       setClickedTree(null)
       setHoveredTree(null)
+      boundaryFromClickRef.current = true
       setClickedBoundary({ feature, lngLat: e.lngLat })
       onFeatureClick(feature.properties?.name)
       trackEvent('feature_select', { name: feature.properties?.name, source: 'map_click' })
@@ -309,25 +340,23 @@ export default function MapView({
       <ScaleControl position="bottom-left" unit="imperial" />
 
       {/* ── Street buffer area (render below boundary so choropleth is on top) */}
-      {showStreetBuffer && streetBufferData && (
-        <Source id="street-buffer" type="geojson" data={streetBufferData}>
+      {showStreetBuffer && (
+        <Source
+          id="street-buffer"
+          type="geojson"
+          data={`${DATA_PREFIX}/streets/street_centerlines.geojson`}
+        >
           <Layer
             id="street-buffer-fill"
-            type="fill"
-            minzoom={TREE_LOSSES_MIN_ZOOM}
-            paint={{
-              'fill-color': STREET_BUFFER_COLOR,
-              'fill-opacity': 0.15,
-            }}
-          />
-          <Layer
-            id="street-buffer-outline"
             type="line"
             minzoom={TREE_LOSSES_MIN_ZOOM}
             paint={{
               'line-color': STREET_BUFFER_COLOR,
-              'line-width': 0.5,
-              'line-opacity': 0.4,
+              // 50 ft buffer each side = 100 ft = ~30.5 m total width.
+              // At Pittsburgh lat ~40.4°, meters/pixel ≈ 119030 / 2^z,
+              // so width doubles exactly with each zoom level (base-2 exponential).
+              'line-width': ['interpolate', ['exponential', 2], ['zoom'], 12, 1, 18, 67],
+              'line-opacity': 0.25,
             }}
           />
         </Source>
@@ -648,7 +677,7 @@ export default function MapView({
           className="popup-with-close"
           onClose={() => setClickedBoundary(null)}
         >
-          <InfoPanel feature={clickedBoundary.feature} method={activeMethodId} />
+          <InfoPanel feature={clickedBoundary.feature} method={activeMethodId} rank={selectedFeatureRank} />
         </Popup>
       )}
 

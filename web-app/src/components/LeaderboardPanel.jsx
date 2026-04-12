@@ -13,7 +13,7 @@ function computeCentroid(geometry) {
 
 function fmtAcres(v) {
   if (v == null) return '—'
-  return `${Math.abs(Number(v)).toLocaleString(undefined, { maximumFractionDigits: 1 })} ac`
+  return Math.abs(Number(v)).toLocaleString(undefined, { maximumFractionDigits: 1 })
 }
 
 function fmtPct(v, isCoverage) {
@@ -33,18 +33,28 @@ export default function LeaderboardPanel({
   onHover,          // ({ feature, lngLat }) => void
   onHoverEnd,       // () => void
 }) {
-  const [sortAsc, setSortAsc] = useState(false)
+  const [sortAsc, setSortAsc]     = useState(false)
+  const [showAll, setShowAll]     = useState(false)
+  const [loadingAll, setLoadingAll] = useState(false)
 
   const method    = COLOR_METHODS.find(m => m.id === activeMethodId)
   const isCoverage = method?.group === 'coverage'
 
+  const MAX_ROWS = 1000
+
   const ranked = useMemo(() => {
     if (!layerData?.features) return []
+    setShowAll(false)
+    setLoadingAll(false)
     return layerData.features
       .map(f => ({ name: f.properties?.name, value: f.properties?.[activeMethodId], feature: f }))
       .filter(r => r.name && r.value != null)
       .sort((a, b) => sortAsc ? a.value - b.value : b.value - a.value)
   }, [layerData, activeMethodId, sortAsc])
+
+  const totalCount = ranked.length
+  const isCapped = !showAll && totalCount > MAX_ROWS
+  const displayedRanked = isCapped ? ranked.slice(0, MAX_ROWS) : ranked
 
   const maxAbs = useMemo(() => Math.max(...ranked.map(r => Math.abs(r.value)), 0.001), [ranked])
 
@@ -52,6 +62,12 @@ export default function LeaderboardPanel({
     if (!selectedFeatureName || !layerData?.features) return null
     return layerData.features.find(f => f.properties?.name === selectedFeatureName) ?? null
   }, [selectedFeatureName, layerData])
+
+  const selectedRank = useMemo(() => {
+    if (!selectedFeatureName) return null
+    const idx = ranked.findIndex(r => r.name === selectedFeatureName)
+    return idx >= 0 ? idx + 1 : null
+  }, [ranked, selectedFeatureName])
 
   function handleRowEnter(row) {
     const lngLat = computeCentroid(row.feature.geometry)
@@ -81,6 +97,12 @@ export default function LeaderboardPanel({
             </div>
             <div className="lb-selected-sub">
               {p.land_area_acres != null ? `${p.land_area_acres.toFixed(0)} acres` : ''}
+              {selectedRank && (
+                <span style={{ marginLeft: p.land_area_acres != null ? '8px' : 0, color: 'var(--muted)' }}>
+                  · Rank {selectedRank.toLocaleString()} of {totalCount.toLocaleString()}
+                  {sortAsc ? ' (lowest first)' : ''}
+                </span>
+              )}
             </div>
             <div className="lb-stat-grid">
               <div className="lb-stat">
@@ -101,11 +123,11 @@ export default function LeaderboardPanel({
               </div>
               <div className="lb-stat">
                 <div className="lb-stat-val lb-stat-val--green">{fmtAcres(p.gain_acres)}</div>
-                <div className="lb-stat-lbl">Gained</div>
+                <div className="lb-stat-lbl">Acres Gained</div>
               </div>
               <div className="lb-stat">
                 <div className="lb-stat-val lb-stat-val--amber">{fmtAcres(p.loss_acres)}</div>
-                <div className="lb-stat-lbl">Lost</div>
+                <div className="lb-stat-lbl">Acres Lost</div>
               </div>
             </div>
           </div>
@@ -117,7 +139,7 @@ export default function LeaderboardPanel({
         )}
         {ranked.length > 0 && (
           <>
-            {ranked.map((row, i) => {
+            {displayedRanked.map((row, i) => {
               const barPct = (Math.abs(row.value) / maxAbs) * 100
               const isNeg  = !isCoverage && row.value < 0
               const isSel  = row.name === selectedFeatureName
@@ -142,6 +164,21 @@ export default function LeaderboardPanel({
                 </div>
               )
             })}
+            {isCapped && (
+              <div style={{ fontSize: '10px', color: 'var(--inactive)', padding: '8px 0 4px', textAlign: 'center' }}>
+                Showing {MAX_ROWS.toLocaleString()} of {totalCount.toLocaleString()} —{' '}
+                {loadingAll ? (
+                  <span style={{ color: 'var(--muted)' }}>loading…</span>
+                ) : (
+                  <button
+                    onClick={() => { setLoadingAll(true); setTimeout(() => setShowAll(true), 0) }}
+                    style={{ background: 'none', border: 'none', padding: 0, color: 'var(--primary)', fontSize: '10px', cursor: 'pointer', textDecoration: 'underline' }}
+                  >
+                    load all
+                  </button>
+                )}
+              </div>
+            )}
           </>
         )}
 

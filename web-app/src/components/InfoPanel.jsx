@@ -14,7 +14,7 @@ const fmt = {
   },
 }
 
-export default function InfoPanel({ feature, method }) {
+export default function InfoPanel({ feature, method, rank }) {
   if (!feature) return null
   const p = feature.properties
 
@@ -32,6 +32,11 @@ export default function InfoPanel({ feature, method }) {
   return (
     <div className="info-panel">
       <div className="info-panel-name">{p.name}</div>
+      {rank && (
+        <div style={{ fontSize: '11px', color: 'var(--muted)', marginBottom: '6px' }}>
+          Rank {rank.rank.toLocaleString()} of {rank.total.toLocaleString()}
+        </div>
+      )}
 
       <table className="info-table">
         <tbody>

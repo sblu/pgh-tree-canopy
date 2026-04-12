@@ -35,6 +35,8 @@ export default function LegendPanel({ colorBreaks, activeMethodId, isCoverage })
         Canopy data: <a href="https://www.treepittsburgh.org" target="_blank" rel="noopener noreferrer">Tree Pittsburgh</a>
         <br/>
         Visualization: <a href="https://github.com/sblu/pgh-tree-canopy" target="_blank" rel="noopener noreferrer">GitHub</a>
+        <br/>
+        Build: {__BUILD_TAG__}
       </div>
     </div>
   )

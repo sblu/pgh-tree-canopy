@@ -20,6 +20,7 @@ import sys
 from pathlib import Path
 
 import geopandas as gpd
+import shapely
 from shapely.prepared import prep
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -97,16 +98,17 @@ def build_pmtiles(dataset: dict) -> None:
 
 
 def main() -> None:
-    if not BUFFER_PATH.exists():
-        print(f"ERROR: Street buffer not found: {BUFFER_PATH}", file=sys.stderr)
+    seg_path = STREETS_DIR / "street_segments_buffered.gpkg"
+    if not seg_path.exists():
+        print(f"ERROR: Street segment buffers not found: {seg_path}", file=sys.stderr)
         sys.exit(1)
 
-    # Load the dissolved street buffer
-    print("Loading street buffer …")
-    buffer_gdf = gpd.read_file(BUFFER_PATH)
-    # Dissolve to a single geometry for intersection test
-    buffer_geom = buffer_gdf.union_all()
-    print(f"  Buffer loaded ({BUFFER_PATH.stat().st_size / 1e6:.1f} MB)")
+    # Load segment buffers from GeoPackage (avoids OGR GeoJSON size limit on the
+    # dissolved street_buffer_area.geojson which can exceed 50 MB)
+    print("Loading street segment buffers …")
+    seg_gdf = gpd.read_file(seg_path).to_crs("EPSG:4326")
+    buffer_geom = shapely.union_all(seg_gdf.geometry.values)
+    print(f"  {len(seg_gdf):,} segments unioned")
 
     # Tag each dataset
     for ds in DATASETS:

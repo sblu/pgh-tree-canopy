@@ -359,8 +359,8 @@ html, body, #root {
 .lb-stat-val--amber { color: var(--secondary); }
 .lb-stat-val--neutral { color: var(--text); }
 .lb-stat-lbl {
-  font-size: 8px;
-  color: var(--inactive);
+  font-size: 9.5px;
+  color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   margin-top: 3px;
@@ -390,7 +390,7 @@ html, body, #root {
 }
 .lb-list-row:hover { background: rgba(155,252,150,0.06); }
 .lb-list-row--selected { background: rgba(155,252,150,0.09); }
-.lb-rank { font-size: 9px; color: var(--inactive); width: 14px; text-align: right; flex-shrink: 0; }
+.lb-rank { font-size: 9px; color: var(--inactive); min-width: 30px; text-align: right; flex-shrink: 0; }
 .lb-name { font-size: 10px; color: var(--muted); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .lb-name--selected { color: var(--text); font-weight: 500; }
 .lb-bar-wrap { width: 40px; flex-shrink: 0; }
@@ -519,7 +519,7 @@ html, body, #root {
 }
 .cp-toggle-knob {
   position: absolute;
-  top: 2px; left: 2px;
+  top: 1px; left: 1px;
   width: 12px; height: 12px;
   border-radius: 50%;
   background: var(--inactive);
@@ -953,8 +953,8 @@ html, body, #root {
 .popup-with-close .maplibregl-popup-close-button {
   font-size: 16px !important; font-weight: 700 !important;
   width: 28px !important; height: 28px !important;
-  line-height: 28px !important; text-align: center !important;
-  padding: 0 !important; color: #1e293b !important;
+  display: flex !important; align-items: center !important; justify-content: center !important;
+  line-height: 1 !important; padding: 0 !important; color: #1e293b !important;
   background: #fff !important; border: 2px solid #cbd5e1 !important;
   border-radius: 50% !important; cursor: pointer !important;
   box-shadow: 0 1px 4px rgba(0,0,0,0.25) !important;

@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
-import { BOUNDARY_LAYERS, STREET_BUFFER_PATH, COLOR_METHODS, CHOROPLETH_COLORS, COVERAGE_COLORS } from './config/layers'
+import { BOUNDARY_LAYERS, COLOR_METHODS, CHOROPLETH_COLORS, COVERAGE_COLORS } from './config/layers'
 import { DATA_PREFIX, SOURCE_LABEL, IS_PUBLIC_SOURCE } from './config/dataSource'
 import { useLayerData, computeQuantileBreaks } from './hooks/useLayerData'
 import { useUrlHash } from './hooks/useUrlHash'
@@ -174,13 +174,19 @@ export default function App() {
     activeLayerConfig?.file
   )
 
-  // Fetch street buffer (cached after first load)
-  const { data: streetBufferData } = useLayerData('street_buffer', STREET_BUFFER_PATH)
-
-  // Fetch street centerlines for Street View nearest-street calculation
-  const { data: streetCenterlines } = useLayerData(
-    'street_centerlines', `${DATA_PREFIX}/streets/street_centerlines.geojson`
+  // Street centerlines (JS data for Street View offset calculation).
+  // The buffer zone rendering uses the URL directly as a MapLibre source so
+  // MapLibre parses it in its worker thread — no main-thread blocking.
+  // The JS copy is only needed when tree overlays are visible (prerequisite for
+  // clicking a tree to launch Street View), so we load it lazily then.
+  // When Streets layer is already active its boundary data has the same geometry.
+  const needsCenterlinesData = activeBoundaryLayerId !== 'streets'
+    && (showTreeLosses || showTreeGains || showStreetBuffer)
+  const { data: centerlinesFile, loading: centerlinesLoading } = useLayerData(
+    'street_centerlines',
+    needsCenterlinesData ? `${DATA_PREFIX}/streets/street_centerlines.geojson` : null
   )
+  const streetCenterlines = activeBoundaryLayerId === 'streets' ? layerData : centerlinesFile
 
   // Enrich features with canopy_2020_pct (derived from existing fields)
   const enrichedLayerData = useMemo(() => {
@@ -213,6 +219,17 @@ export default function App() {
     [enrichedLayerData, activeMethodId, isDiverging]
   )
 
+  // Rank of the selected feature (highest value = rank 1) for the map popup.
+  const selectedFeatureRank = useMemo(() => {
+    if (!selectedFeatureName || !enrichedLayerData?.features) return null
+    const items = enrichedLayerData.features
+      .map(f => ({ name: f.properties?.name, value: f.properties?.[activeMethodId] }))
+      .filter(r => r.name && r.value != null)
+      .sort((a, b) => b.value - a.value)
+    const idx = items.findIndex(r => r.name === selectedFeatureName)
+    return idx >= 0 ? { rank: idx + 1, total: items.length } : null
+  }, [selectedFeatureName, enrichedLayerData, activeMethodId])
+
   function handleBoundaryLayerChange(id) {
     setActiveBoundaryLayerId(id)
     setSelectedFeatureName(null)
@@ -225,7 +242,7 @@ export default function App() {
 
   return (
     <div className="app-root">
-      {loading && <div className="map-status">Loading layer data…</div>}
+      {(loading || (showStreetBuffer && centerlinesLoading)) && <div className="map-status">Loading layer data…</div>}
       {error   && <div className="map-status error">Error: {error}</div>}
       {IS_PUBLIC_SOURCE && (
         <div className="public-banner">{SOURCE_LABEL} Data</div>
@@ -242,10 +259,10 @@ export default function App() {
           showTreeLosses={showTreeLosses}
           showTreeGains={showTreeGains}
           showStreetBuffer={showStreetBuffer}
-          streetBufferData={streetBufferData}
           showCanopyChange={showCanopyChange}
           streetCenterlines={streetCenterlines}
           selectedFeatureName={selectedFeatureName}
+          selectedFeatureRank={selectedFeatureRank}
           hoveredFeature={hoveredFeature}
           onHover={setHoveredFeature}
           onHoverEnd={() => setHoveredFeature(null)}

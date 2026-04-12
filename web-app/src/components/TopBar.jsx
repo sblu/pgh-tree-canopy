@@ -124,17 +124,24 @@ export default function TopBar({
 
       {/* Actions */}
       <div className="top-bar-actions">
-        <button
-          className={`top-bar-icon-btn${shareToast ? ' active' : ''}`}
-          onClick={handleShare}
-          title={shareToast ? 'Copied!' : 'Copy share link'}
-        >
-          {shareToast ? (
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-          ) : (
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+        <div style={{ position: 'relative' }}>
+          <button
+            className={`top-bar-icon-btn${shareToast ? ' active' : ''}`}
+            onClick={handleShare}
+            title="Copy share link"
+          >
+            {shareToast ? (
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            ) : (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            )}
+          </button>
+          {shareToast && (
+            <div style={{ position: 'absolute', top: '36px', right: 0, background: 'var(--primary)', color: '#0d1a0d', fontSize: '11px', fontFamily: 'Inter, sans-serif', fontWeight: 600, padding: '3px 8px', borderRadius: '6px', whiteSpace: 'nowrap', pointerEvents: 'none' }}>
+              Link copied
+            </div>
           )}
-        </button>
+        </div>
         <button className="top-bar-icon-btn" onClick={onReset} title="Reset">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.5"/></svg>
         </button>
