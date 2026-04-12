@@ -913,6 +913,31 @@ html, body, #root {
 }
 .help-list li strong { color: var(--text); }
 .help-ctas { margin-top: 4px; }
+.help-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+.help-startup-check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted);
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+.help-startup-check input[type="checkbox"] {
+  cursor: pointer;
+  accent-color: var(--primary);
+  width: 14px;
+  height: 14px;
+}
+.help-footer .legend-attribution { margin-top: 0; }
 
 /* ─── MapLibre map fills container ─────────────────────────────────────── */
 .maplibregl-map { width: 100% !important; height: 100% !important; }

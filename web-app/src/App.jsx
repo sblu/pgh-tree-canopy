@@ -26,7 +26,7 @@ export default function App() {
   const [hoveredFeature, setHoveredFeature]               = useState(null)
   const [selectedFeatureName, setSelectedFeatureName]     = useState(hashState?.selected ?? null)
   const [leaderboardOpen, setLeaderboardOpen]              = useState(true)
-  const [showHelp, setShowHelp]                            = useState(false)
+  const [showHelp, setShowHelp]                            = useState(() => localStorage.getItem('hideHelpOnStartup') !== '1')
   const [showLocation, setShowLocation]                   = useState(false)
   const [userLocation, setUserLocation]                   = useState(null)
   const [locationError, setLocationError]                 = useState(null)

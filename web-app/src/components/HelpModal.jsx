@@ -1,14 +1,30 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { CTA_LINKS } from '../config/layers'
 import { trackEvent } from '../utils/analytics'
 
+const STORAGE_KEY = 'hideHelpOnStartup'
+
 export default function HelpModal({ onClose }) {
+  const [showAtStartup, setShowAtStartup] = useState(
+    () => localStorage.getItem(STORAGE_KEY) !== '1'
+  )
+
   useEffect(() => {
     const handleKey = e => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
   }, [onClose])
+
+  function handleStartupChange(e) {
+    const checked = e.target.checked
+    setShowAtStartup(checked)
+    if (checked) {
+      localStorage.removeItem(STORAGE_KEY)
+    } else {
+      localStorage.setItem(STORAGE_KEY, '1')
+    }
+  }
 
   return createPortal(
     <div className="help-backdrop" onClick={onClose}>
@@ -54,12 +70,22 @@ export default function HelpModal({ onClose }) {
             ))}
           </div>
 
-          <div className="legend-attribution" style={{ marginTop: '20px' }}>
-            Canopy data: <a href="https://www.treepittsburgh.org" target="_blank" rel="noopener noreferrer">Tree Pittsburgh</a>
-            &nbsp;·&nbsp;
-            Visualization: <a href="https://github.com/sblu/pgh-tree-canopy" target="_blank" rel="noopener noreferrer">GitHub</a>
-            <br/>
-            Build: {__BUILD_TAG__}
+          <div className="help-footer">
+            <label className="help-startup-check">
+              <input
+                type="checkbox"
+                checked={showAtStartup}
+                onChange={handleStartupChange}
+              />
+              Show at startup
+            </label>
+            <div className="legend-attribution">
+              Canopy data: <a href="https://www.treepittsburgh.org" target="_blank" rel="noopener noreferrer">Tree Pittsburgh</a>
+              &nbsp;·&nbsp;
+              Visualization: <a href="https://github.com/sblu/pgh-tree-canopy" target="_blank" rel="noopener noreferrer">GitHub</a>
+              <br/>
+              Build: {__BUILD_TAG__}
+            </div>
           </div>
         </div>
 
