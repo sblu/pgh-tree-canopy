@@ -9,7 +9,8 @@ import { fileURLToPath } from 'url'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const buildFile = resolve(__dirname, '..', 'build.json')
 
-const today = new Date().toISOString().slice(0, 10) // YYYY-MM-DD
+const now = new Date()
+const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}` // YYYY-MM-DD local time
 const prev = JSON.parse(readFileSync(buildFile, 'utf-8'))
 const seq = prev.date === today ? prev.seq + 1 : 1
 
