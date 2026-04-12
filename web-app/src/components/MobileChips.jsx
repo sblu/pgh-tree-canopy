@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { BOUNDARY_LAYERS, COLOR_METHODS } from '../config/layers'
+import { trackEvent } from '../utils/analytics'
 
 const CHIP_LABELS = {
   neighborhoods:   'Neighborhoods',
@@ -35,11 +36,13 @@ export default function MobileChips({
 
   function selectBoundary(id) {
     onBoundaryLayerChange(id)
+    trackEvent('boundary_layer_change', { layer: id })
     setOpenDropdown(null)
   }
 
   function selectMethod(id) {
     onMethodChange(id)
+    trackEvent('color_method_change', { method: id })
     setOpenDropdown(null)
   }
 
@@ -69,7 +72,7 @@ export default function MobileChips({
         {/* Losses toggle chip */}
         <button
           className={`mobile-chip${showTreeLosses ? ' mobile-chip--active-amber' : ''}`}
-          onClick={() => onShowTreeLossesChange(!showTreeLosses)}
+          onClick={() => { onShowTreeLossesChange(!showTreeLosses); trackEvent('layer_toggle', { layer: 'tree_losses', enabled: !showTreeLosses }) }}
         >
           {showTreeLosses ? '● ' : '○ '}Losses
         </button>
@@ -77,7 +80,7 @@ export default function MobileChips({
         {/* Gains toggle chip */}
         <button
           className={`mobile-chip${showTreeGains ? ' mobile-chip--active-green' : ''}`}
-          onClick={() => onShowTreeGainsChange(!showTreeGains)}
+          onClick={() => { onShowTreeGainsChange(!showTreeGains); trackEvent('layer_toggle', { layer: 'tree_gains', enabled: !showTreeGains }) }}
         >
           {showTreeGains ? '● ' : '○ '}Gains
         </button>

@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { CTA_LINKS } from '../config/layers'
+import { trackEvent } from '../utils/analytics'
 
 export default function HelpModal({ onClose }) {
   useEffect(() => {
@@ -43,7 +44,7 @@ export default function HelpModal({ onClose }) {
           <div className="help-section-heading">How to Help</div>
           <div className="help-ctas">
             {Object.values(CTA_LINKS).map(cta => (
-              <a key={cta.label} href={cta.url} target="_blank" rel="noopener noreferrer" className="cta-link">
+              <a key={cta.label} href={cta.url} target="_blank" rel="noopener noreferrer" className="cta-link" onClick={() => trackEvent('cta_click', { link: cta.label })}>
                 <span className="cta-emoji">{cta.emoji}</span>
                 <span className="cta-text">
                   <span className="cta-label">{cta.label}</span>

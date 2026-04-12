@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { COLOR_METHODS, CTA_LINKS } from '../config/layers'
+import { trackEvent } from '../utils/analytics'
 
 function computeCentroid(geometry) {
   let sumLng = 0, sumLat = 0, count = 0
@@ -186,7 +187,7 @@ export default function LeaderboardPanel({
         <div className="cta-section">
           <div className="cta-heading">How to Help</div>
           {Object.values(CTA_LINKS).map(cta => (
-            <a key={cta.label} href={cta.url} target="_blank" rel="noopener noreferrer" className="cta-link">
+            <a key={cta.label} href={cta.url} target="_blank" rel="noopener noreferrer" className="cta-link" onClick={() => trackEvent('cta_click', { link: cta.label })}>
               <span className="cta-emoji">{cta.emoji}</span>
               <span className="cta-text">
                 <span className="cta-label">{cta.label}</span>

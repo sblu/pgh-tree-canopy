@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useMemo } from 'react'
 import { BOUNDARY_LAYERS, COLOR_METHODS } from '../config/layers'
+import { trackEvent } from '../utils/analytics'
 import ControlsPanel from './ControlsPanel'
 import LeaderboardPanel from './LeaderboardPanel'
 
@@ -160,6 +161,7 @@ export default function MobileSheet({
 
   function handleSearchSelect(name) {
     onFeatureSelect(name)
+    trackEvent('feature_select', { name, boundary_layer: activeLayer?.id })
     setQuery('')
     setFocused(false)
     onSheetStateChange('peek')

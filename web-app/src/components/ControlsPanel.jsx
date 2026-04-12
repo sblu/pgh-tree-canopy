@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { BOUNDARY_LAYERS, COLOR_METHODS } from '../config/layers'
+import { trackEvent } from '../utils/analytics'
 
 // Short labels for the boundary layer chips
 const CHIP_LABELS = {
@@ -54,7 +55,7 @@ export default function ControlsPanel({
                 <button
                   key={l.id}
                   className={`cp-chip${activeBoundaryLayerId === l.id ? ' cp-chip--active' : ''}`}
-                  onClick={() => onBoundaryLayerChange(l.id)}
+                  onClick={() => { onBoundaryLayerChange(l.id); trackEvent('boundary_layer_change', { layer: l.id }) }}
                 >
                   {CHIP_LABELS[l.id] ?? l.label}
                 </button>
@@ -68,7 +69,7 @@ export default function ControlsPanel({
           <div className="cp-section">
             <div className="cp-label">Color By</div>
             {COLOR_METHODS.map(m => (
-              <label key={m.id} className="cp-radio" onClick={() => onMethodChange(m.id)}>
+              <label key={m.id} className="cp-radio" onClick={() => { onMethodChange(m.id); trackEvent('color_method_change', { method: m.id }) }}>
                 <div className={`cp-radio-dot${activeMethodId === m.id ? ' cp-radio-dot--active' : ''}`} />
                 <span className={`cp-radio-label${activeMethodId === m.id ? ' cp-radio-label--active' : ''}`}>
                   {m.label}
@@ -83,12 +84,12 @@ export default function ControlsPanel({
           <div className="cp-section">
             <div className="cp-label">Overlays</div>
             {[
-              { label: 'Tree Losses',        value: showTreeLosses,   onChange: onShowTreeLossesChange },
-              { label: 'Tree Gains',         value: showTreeGains,    onChange: onShowTreeGainsChange },
-              { label: 'Street Buffer Zone', value: showStreetBuffer, onChange: onShowStreetBufferChange },
-              { label: 'Full Canopy Layer',  value: showCanopyChange, onChange: onShowCanopyChangeChange },
-            ].map(({ label, value, onChange }) => (
-              <div key={label} className="cp-toggle-row" onClick={() => onChange(!value)}>
+              { id: 'tree_losses',   label: 'Tree Losses',        value: showTreeLosses,   onChange: onShowTreeLossesChange },
+              { id: 'tree_gains',    label: 'Tree Gains',         value: showTreeGains,    onChange: onShowTreeGainsChange },
+              { id: 'street_buffer', label: 'Street Buffer Zone', value: showStreetBuffer, onChange: onShowStreetBufferChange },
+              { id: 'canopy_change', label: 'Full Canopy Layer',  value: showCanopyChange, onChange: onShowCanopyChangeChange },
+            ].map(({ id, label, value, onChange }) => (
+              <div key={label} className="cp-toggle-row" onClick={() => { onChange(!value); trackEvent('layer_toggle', { layer: id, enabled: !value }) }}>
                 <span className={`cp-toggle-label${value ? ' cp-toggle-label--active' : ''}`}>{label}</span>
                 <div className={`cp-toggle${value ? ' cp-toggle--on' : ''}`}>
                   <div className="cp-toggle-knob" />

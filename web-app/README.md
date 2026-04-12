@@ -110,7 +110,6 @@ events appear in the same property.
 |---|---|---|
 | `cta_click` | Any "how to help" CTA link clicked | `link`: button label (e.g. `Request a Free Tree`) |
 | `cta_click` | SHUC logo clicked | `link: shuc_logo` |
-| `cta_click` | "Learn how you can take action" reshow link | `link: reshow_how_to_help` |
 | `feature_select` | Boundary selected via search dropdown | `name`: feature name, `boundary_layer`: active layer id |
 | `feature_select` | Boundary clicked on the map | `name`: feature name, `source: map_click` |
 | `boundary_layer_change` | Boundary layer dropdown changed | `layer`: layer id (e.g. `neighborhoods`) |
@@ -155,10 +154,14 @@ providers do this by default).
 | Directory | Purpose |
 |-----------|---------|
 | `src/App.jsx` | Top-level state management (active layer, method, toggles) |
-| `src/components/MapView.jsx` | MapLibre GL map, all map layers, hover popup |
-| `src/components/Sidebar.jsx` | Controls: layer switcher, search, toggles, legend |
-| `src/components/InfoPanel.jsx` | Hover popup content (zone statistics table) |
-| `src/components/Leaderboard.jsx` | Collapsible ranked list of zones by active metric |
+| `src/components/MapView.jsx` | MapLibre GL map, all map layers, click popup |
+| `src/components/TopBar.jsx` | Search bar, share button, SHUC logo |
+| `src/components/ControlsPanel.jsx` | View By / Color By / Overlays controls (desktop + mobile sheet) |
+| `src/components/LeaderboardPanel.jsx` | Ranked list of zones by active metric |
+| `src/components/LegendPanel.jsx` | Color legend and attribution |
+| `src/components/MobileChips.jsx` | Mobile boundary/metric/toggle chips |
+| `src/components/MobileSheet.jsx` | Mobile bottom sheet (search, controls, leaderboard) |
+| `src/components/InfoPanel.jsx` | Click popup content (zone statistics table) |
 | `src/components/TreePopup.jsx` | Click popup for gain/loss polygons with Street View link |
 | `src/utils/analytics.js` | GA4 event helper (no-op when gtag not loaded) |
 | `src/utils/streetView.js` | Nearest-street + heading calculation for Street View URLs |
