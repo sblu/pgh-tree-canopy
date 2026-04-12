@@ -317,17 +317,6 @@ export default function App() {
             </button>
             <div className="rail-divider" />
             <button
-              className={`rail-icon${showLocation ? ' rail-icon--active' : ''}`}
-              onClick={() => setShowLocation(o => !o)}
-              title={locationError || (showLocation ? 'Hide my location' : 'Show my location')}
-              disabled={!locationAvailable}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
-              </svg>
-            </button>
-            <div className="rail-divider" />
-            <button
               className={`rail-icon${showHelp ? ' rail-icon--active' : ''}`}
               onClick={() => setShowHelp(o => !o)}
               title="Help &amp; how to use"
@@ -362,6 +351,10 @@ export default function App() {
             onShowStreetBufferChange={setShowStreetBuffer}
             showCanopyChange={showCanopyChange}
             onShowCanopyChangeChange={setShowCanopyChange}
+            showLocation={showLocation}
+            onShowLocationChange={setShowLocation}
+            locationAvailable={locationAvailable}
+            locationError={locationError}
           />
 
           <LegendPanel
@@ -405,6 +398,10 @@ export default function App() {
             onShowStreetBufferChange={setShowStreetBuffer}
             showCanopyChange={showCanopyChange}
             onShowCanopyChangeChange={setShowCanopyChange}
+            showLocation={showLocation}
+            onShowLocationChange={setShowLocation}
+            locationAvailable={locationAvailable}
+            locationError={locationError}
             onHover={setHoveredFeature}
             onHoverEnd={() => setHoveredFeature(null)}
           />

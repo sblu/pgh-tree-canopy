@@ -502,6 +502,7 @@ html, body, #root {
   padding: 5px 0;
   cursor: pointer;
 }
+.cp-toggle-row--disabled { opacity: 0.35; cursor: not-allowed; }
 .cp-toggle-label { font-size: 10px; color: var(--muted); }
 .cp-toggle-label--active { color: var(--text); }
 .cp-toggle {

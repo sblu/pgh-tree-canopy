@@ -26,6 +26,10 @@ export default function ControlsPanel({
   onShowStreetBufferChange,
   showCanopyChange,
   onShowCanopyChangeChange,
+  showLocation,
+  onShowLocationChange,
+  locationAvailable,
+  locationError,
   inline = false,
 }) {
   const [collapsed, setCollapsed] = useState(false)
@@ -88,8 +92,14 @@ export default function ControlsPanel({
               { id: 'tree_gains',    label: 'Tree Gains',         value: showTreeGains,    onChange: onShowTreeGainsChange },
               { id: 'street_buffer', label: 'Street Buffer Zone', value: showStreetBuffer, onChange: onShowStreetBufferChange },
               { id: 'canopy_change', label: 'Full Canopy Layer',  value: showCanopyChange, onChange: onShowCanopyChangeChange },
-            ].map(({ id, label, value, onChange }) => (
-              <div key={label} className="cp-toggle-row" onClick={() => { onChange(!value); trackEvent('layer_toggle', { layer: id, enabled: !value }) }}>
+              { id: 'my_location',   label: 'My Location',        value: showLocation,     onChange: onShowLocationChange, disabled: !locationAvailable, title: locationError || undefined },
+            ].map(({ id, label, value, onChange, disabled, title }) => (
+              <div
+                key={label}
+                className={`cp-toggle-row${disabled ? ' cp-toggle-row--disabled' : ''}`}
+                title={title}
+                onClick={disabled ? undefined : () => { onChange(!value); trackEvent('layer_toggle', { layer: id, enabled: !value }) }}
+              >
                 <span className={`cp-toggle-label${value ? ' cp-toggle-label--active' : ''}`}>{label}</span>
                 <div className={`cp-toggle${value ? ' cp-toggle--on' : ''}`}>
                   <div className="cp-toggle-knob" />

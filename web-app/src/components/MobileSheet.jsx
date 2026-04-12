@@ -27,6 +27,10 @@ export default function MobileSheet({
   onShowStreetBufferChange,
   showCanopyChange,
   onShowCanopyChangeChange,
+  showLocation,
+  onShowLocationChange,
+  locationAvailable,
+  locationError,
   // Leaderboard
   onHover,
   onHoverEnd,
@@ -245,6 +249,10 @@ export default function MobileSheet({
             onShowStreetBufferChange={onShowStreetBufferChange}
             showCanopyChange={showCanopyChange}
             onShowCanopyChangeChange={onShowCanopyChangeChange}
+            showLocation={showLocation}
+            onShowLocationChange={onShowLocationChange}
+            locationAvailable={locationAvailable}
+            locationError={locationError}
           />
 
           {/* Leaderboard (reuse LeaderboardPanel in inline mode) */}
