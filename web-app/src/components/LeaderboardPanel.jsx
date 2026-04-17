@@ -1,4 +1,4 @@
-import { useMemo, useState, useRef, useCallback } from 'react'
+import { useMemo, useState, useRef, useCallback, useEffect } from 'react'
 import { COLOR_METHODS, CTA_LINKS } from '../config/layers'
 import { trackEvent } from '../utils/analytics'
 
@@ -42,6 +42,14 @@ export default function LeaderboardPanel({
 
   const [width, setWidth] = useState(DEFAULT_WIDTH)
   const widthRef = useRef(DEFAULT_WIDTH)
+  const listRef = useRef(null)
+
+  useEffect(() => {
+    if (!selectedFeatureName || !listRef.current) return
+    const escaped = CSS.escape(selectedFeatureName)
+    const el = listRef.current.querySelector(`[data-name="${escaped}"]`)
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }, [selectedFeatureName])
 
   const handleDragMouseDown = useCallback((e) => {
     e.preventDefault()
@@ -112,7 +120,7 @@ export default function LeaderboardPanel({
       {!inline && (
         <div className="lb-resize-handle" onMouseDown={handleDragMouseDown} />
       )}
-      <div className="lb-inner">
+      <div className="lb-inner" ref={listRef}>
         <div className="lb-panel-title">
           {method?.label ?? 'Leaderboard'}
           <button className="lb-sort-btn" onClick={() => setSortAsc(a => !a)}>
@@ -178,6 +186,7 @@ export default function LeaderboardPanel({
               return (
                 <div
                   key={row.name}
+                  data-name={row.name}
                   className={`lb-list-row${isSel ? ' lb-list-row--selected' : ''}`}
                   onMouseEnter={() => handleRowEnter(row)}
                   onMouseLeave={onHoverEnd}
