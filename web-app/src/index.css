@@ -23,7 +23,7 @@
   --top-bar-h:       48px;
   --top-bar-h-mobile: 44px;
   --rail-w:          44px;
-  --lb-w:            220px;
+  --lb-w:            260px;
   --controls-w:      240px;
   --legend-w:        175px;
 
@@ -143,14 +143,14 @@ html, body, #root {
   align-items: center;
   gap: 8px;
   height: 32px;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.11);
+  border: 1px solid rgba(155,252,150,0.22);
   border-radius: 999px;
   padding: 0 12px;
   transition: border-color 0.15s;
 }
 .top-bar-search-pill.focused { border-color: var(--border-active); }
-.top-bar-search-pill svg { flex-shrink: 0; opacity: 0.5; }
+.top-bar-search-pill svg { flex-shrink: 0; opacity: 0.7; }
 .top-bar-search-pill input {
   flex: 1;
   background: transparent;
@@ -160,7 +160,7 @@ html, body, #root {
   color: var(--text);
   font-family: Inter, sans-serif;
 }
-.top-bar-search-pill input::placeholder { color: var(--inactive); }
+.top-bar-search-pill input::placeholder { color: var(--muted); }
 .search-selected-chip {
   display: flex;
   align-items: center;
