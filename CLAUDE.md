@@ -38,8 +38,31 @@ not the source of truth. See `data-pipeline/public/README.md` for
 details and when you'd use it.
 
 ### Dev Setup
+
+`web-app/public/data/` and `web-app/public/data-public/` are not committed to git. They must be created locally with selective symlinks to the pipeline output — only the files the web app actually loads (QGIS-inspection GeoJSON and .gpkg files are excluded to keep `dist/` lean).
+
+Run once from repo root after cloning or after re-running the pipeline:
+
 ```bash
-cd web-app && ln -s ../../data-pipeline/output public/data
+# data/ — main (default) pipeline
+mkdir -p web-app/public/data/canopy_change web-app/public/data/streets
+ln -s ../../../data-pipeline/output/boundary_layers          web-app/public/data/boundary_layers
+ln -s ../../../../data-pipeline/output/canopy_change/canopy_change_all.pmtiles  web-app/public/data/canopy_change/canopy_change_all.pmtiles
+ln -s ../../../../data-pipeline/output/canopy_change/mature_tree_losses.pmtiles web-app/public/data/canopy_change/mature_tree_losses.pmtiles
+ln -s ../../../../data-pipeline/output/canopy_change/mature_tree_gains.pmtiles  web-app/public/data/canopy_change/mature_tree_gains.pmtiles
+ln -s ../../../../data-pipeline/output/streets/street_stats.geojson         web-app/public/data/streets/street_stats.geojson
+ln -s ../../../../data-pipeline/output/streets/street_buffer_area.geojson   web-app/public/data/streets/street_buffer_area.geojson
+ln -s ../../../../data-pipeline/output/streets/street_centerlines.geojson   web-app/public/data/streets/street_centerlines.geojson
+
+# data-public/ — experimental public pipeline (?source=public toggle)
+mkdir -p web-app/public/data-public/canopy_change web-app/public/data-public/streets
+ln -s ../../../data-pipeline/output_public/boundary_layers          web-app/public/data-public/boundary_layers
+ln -s ../../../../data-pipeline/output_public/canopy_change/canopy_change_all.pmtiles  web-app/public/data-public/canopy_change/canopy_change_all.pmtiles
+ln -s ../../../../data-pipeline/output_public/canopy_change/mature_tree_losses.pmtiles web-app/public/data-public/canopy_change/mature_tree_losses.pmtiles
+ln -s ../../../../data-pipeline/output_public/canopy_change/mature_tree_gains.pmtiles  web-app/public/data-public/canopy_change/mature_tree_gains.pmtiles
+ln -s ../../../../data-pipeline/output_public/streets/street_stats.geojson         web-app/public/data-public/streets/street_stats.geojson
+ln -s ../../../../data-pipeline/output_public/streets/street_buffer_area.geojson   web-app/public/data-public/streets/street_buffer_area.geojson
+ln -s ../../../../data-pipeline/output_public/streets/street_centerlines.geojson   web-app/public/data-public/streets/street_centerlines.geojson
 ```
 
 ## Architecture
