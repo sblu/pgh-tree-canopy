@@ -171,21 +171,6 @@ for build and deployment instructions, including
 
 ---
 
-## Milestones
-
-| # | Milestone | Status |
-|---|-----------|--------|
-| 1 | Data pipeline — boundary layers + mature tree losses | ✅ Complete |
-| 2 | Data pipeline — street buffer + per-street stats | ✅ Complete |
-| 3 | Web visualization — React + MapLibre map prototype | ✅ Complete |
-| 4 | Web visualization — street layer + search | ✅ Complete |
-| 5 | Publish to GitHub | ✅ Complete |
-| 6 | Street View links, leaderboard, coverage metric, street buffer filter | ✅ Complete |
-| 7 | Full 3.3M canopy polygon PMTiles layer | ✅ Complete |
-| 8 | County-wide municipal boundary layer | ✅ Complete |
-
----
-
 ## Technical Stack
 
 | Component | Technology |
