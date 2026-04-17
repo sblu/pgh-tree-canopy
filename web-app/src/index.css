@@ -293,6 +293,23 @@ html, body, #root {
   transform: none;
 }
 
+.lb-resize-handle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 4px;
+  cursor: col-resize;
+  background: rgba(155,252,150,0.10);
+  z-index: 10;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+.lb-resize-handle:hover,
+.lb-resize-handle:active {
+  background: rgba(155,252,150,0.28);
+}
+
 .lb-inner {
   flex: 1;
   overflow-y: auto;

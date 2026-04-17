@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useRef, useCallback } from 'react'
 import { COLOR_METHODS, CTA_LINKS } from '../config/layers'
 import { trackEvent } from '../utils/analytics'
 
@@ -37,6 +37,28 @@ export default function LeaderboardPanel({
   const [sortAsc, setSortAsc]     = useState(false)
   const [showAll, setShowAll]     = useState(false)
   const [loadingAll, setLoadingAll] = useState(false)
+
+  const DEFAULT_WIDTH = 260
+  const [width, setWidth] = useState(DEFAULT_WIDTH)
+
+  const handleDragMouseDown = useCallback((e) => {
+    e.preventDefault()
+    const startX = e.clientX
+    const startWidth = width
+
+    function onMouseMove(e) {
+      const newWidth = Math.max(180, Math.min(440, startWidth + (e.clientX - startX)))
+      setWidth(newWidth)
+    }
+
+    function onMouseUp() {
+      window.removeEventListener('mousemove', onMouseMove)
+      window.removeEventListener('mouseup', onMouseUp)
+    }
+
+    window.addEventListener('mousemove', onMouseMove)
+    window.addEventListener('mouseup', onMouseUp)
+  }, [width])
 
   const method    = COLOR_METHODS.find(m => m.id === activeMethodId)
   const isCoverage = method?.group === 'coverage'
@@ -80,7 +102,13 @@ export default function LeaderboardPanel({
   const isLoss = netVal != null && !isCoverage && netVal < 0
 
   return (
-    <div className={`leaderboard-panel${inline ? ' leaderboard-panel--inline' : (isOpen ? '' : ' leaderboard-panel--closed')}`}>
+    <div
+      className={`leaderboard-panel${inline ? ' leaderboard-panel--inline' : (isOpen ? '' : ' leaderboard-panel--closed')}`}
+      style={!inline ? { '--lb-w': `${width}px` } : undefined}
+    >
+      {!inline && (
+        <div className="lb-resize-handle" onMouseDown={handleDragMouseDown} />
+      )}
       <div className="lb-inner">
         <div className="lb-panel-title">
           {method?.label ?? 'Leaderboard'}
