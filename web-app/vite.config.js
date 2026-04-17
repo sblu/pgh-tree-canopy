@@ -1,6 +1,5 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import basicSsl from '@vitejs/plugin-basic-ssl'
 import { readFileSync } from 'fs'
 
 const build = JSON.parse(readFileSync('./build.json', 'utf-8'))
@@ -9,7 +8,7 @@ const buildTag = `${build.date}.${build.seq}`
 // https://vite.dev/config/
 export default defineConfig({
   base: './',
-  plugins: [react(), basicSsl()],
+  plugins: [react()],
   define: {
     __BUILD_TAG__: JSON.stringify(buildTag),
   },

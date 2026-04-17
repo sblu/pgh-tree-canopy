@@ -11,7 +11,7 @@ Pittsburgh tree canopy gain/loss visualization (2015–2020) for Squirrel Hill U
 ### Web App (run from `web-app/`)
 ```bash
 npm install
-npm run dev        # Vite dev server (HTTPS, localhost:5173)
+npm run dev        # Vite dev server (HTTP, localhost:5173, all interfaces)
 npm run build      # Production build → dist/
 npm run lint       # ESLint (flat config, React hooks)
 npm run preview    # Preview production build
