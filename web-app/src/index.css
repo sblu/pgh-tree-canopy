@@ -303,7 +303,6 @@ html, body, #root {
   background: rgba(155,252,150,0.10);
   z-index: 10;
   transition: background 0.15s;
-  flex-shrink: 0;
 }
 .lb-resize-handle:hover,
 .lb-resize-handle:active {

@@ -24,6 +24,8 @@ function fmtPct(v, isCoverage) {
   return `${n >= 0 ? '+' : ''}${n.toFixed(1)}%`
 }
 
+const DEFAULT_WIDTH = 260
+
 export default function LeaderboardPanel({
   isOpen,           // boolean — controlled by left-rail icon in App.jsx
   inline = false,   // true when rendered inside MobileSheet
@@ -38,16 +40,17 @@ export default function LeaderboardPanel({
   const [showAll, setShowAll]     = useState(false)
   const [loadingAll, setLoadingAll] = useState(false)
 
-  const DEFAULT_WIDTH = 260
   const [width, setWidth] = useState(DEFAULT_WIDTH)
+  const widthRef = useRef(DEFAULT_WIDTH)
 
   const handleDragMouseDown = useCallback((e) => {
     e.preventDefault()
     const startX = e.clientX
-    const startWidth = width
+    const startWidth = widthRef.current
 
     function onMouseMove(e) {
       const newWidth = Math.max(180, Math.min(440, startWidth + (e.clientX - startX)))
+      widthRef.current = newWidth
       setWidth(newWidth)
     }
 
@@ -58,7 +61,7 @@ export default function LeaderboardPanel({
 
     window.addEventListener('mousemove', onMouseMove)
     window.addEventListener('mouseup', onMouseUp)
-  }, [width])
+  }, [])
 
   const method    = COLOR_METHODS.find(m => m.id === activeMethodId)
   const isCoverage = method?.group === 'coverage'
