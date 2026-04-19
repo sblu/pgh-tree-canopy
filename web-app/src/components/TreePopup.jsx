@@ -26,7 +26,7 @@ export default function TreePopup({ feature, isGain, streetCenterlines, hoverMod
 
   const sizeCategory = isGain
     ? (p.size_category === 'grove' ? 'Large gain' : 'Medium gain')
-    : (p.size_category === 'grove' ? 'Grove' : 'Single tree')
+    : (p.size_category === 'grove' ? 'Large loss' : 'Medium loss')
   const rawAcres = isGain ? p.gain_acres : p.loss_acres
   const acres = rawAcres != null
     ? Number(rawAcres).toFixed(3)

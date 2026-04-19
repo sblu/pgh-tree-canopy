@@ -89,7 +89,7 @@ export default function InfoPanel({ feature, method, rank }) {
               </tr>
               <tr>
                 <td>Losses</td>
-                <td className="negative">{p.mature_areas_lost?.toLocaleString()} <span className="muted">({p.mature_trees_lost?.toLocaleString()} trees, {p.groves_lost?.toLocaleString()} groves)</span></td>
+                <td className="negative">{p.mature_areas_lost?.toLocaleString()} <span className="muted">({p.mature_trees_lost?.toLocaleString()} medium, {p.groves_lost?.toLocaleString()} large)</span></td>
               </tr>
             </>
           )}
