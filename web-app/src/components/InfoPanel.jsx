@@ -4,7 +4,11 @@
  */
 
 const fmt = {
-  acres: v => (v == null ? '—' : `${Math.abs(Number(v)).toLocaleString(undefined, { maximumFractionDigits: 1 })} acres`),
+  // 2 decimals so independently-rounded rows still add up:
+  // canopy_2020 − canopy_2015 = net_change_acres at the displayed precision.
+  acres: v => (v == null
+    ? '—'
+    : `${Math.abs(Number(v)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} acres`),
   pct:   v => (v == null ? '—' : `${Number(v).toFixed(1)}%`),
   signedPct: v => {
     if (v == null) return '—'

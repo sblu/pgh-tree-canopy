@@ -240,6 +240,22 @@ export default function App() {
     setSelectedFeatureName(name)
   }
 
+  // Dedupe hover updates so React/MapLibre don't thrash when the cursor
+  // stays on the same feature (esp. the street layer with ~thousands of
+  // line features — filter re-evaluation per mousemove was lagging).
+  const handleHover = useCallback((val) => {
+    setHoveredFeature(prev => {
+      const prevName = prev?.feature?.properties?.name
+      const nextName = val?.feature?.properties?.name
+      if (prev != null && val != null && prevName === nextName) return prev
+      return val
+    })
+  }, [])
+
+  const handleHoverEnd = useCallback(() => {
+    setHoveredFeature(prev => (prev === null ? prev : null))
+  }, [])
+
   return (
     <div className="app-root">
       {(loading || (showStreetBuffer && centerlinesLoading)) && <div className="map-status">Loading layer data…</div>}
@@ -264,8 +280,8 @@ export default function App() {
           selectedFeatureName={selectedFeatureName}
           selectedFeatureRank={selectedFeatureRank}
           hoveredFeature={hoveredFeature}
-          onHover={setHoveredFeature}
-          onHoverEnd={() => setHoveredFeature(null)}
+          onHover={handleHover}
+          onHoverEnd={handleHoverEnd}
           onFeatureClick={handleFeatureSelect}
           userLocation={userLocation}
           flyToLocation={flyToLocation}
@@ -334,8 +350,8 @@ export default function App() {
             activeMethodId={activeMethodId}
             selectedFeatureName={selectedFeatureName}
             onFeatureSelect={handleFeatureSelect}
-            onHover={setHoveredFeature}
-            onHoverEnd={() => setHoveredFeature(null)}
+            onHover={handleHover}
+            onHoverEnd={handleHoverEnd}
           />
 
           <ControlsPanel
@@ -402,8 +418,8 @@ export default function App() {
             onShowLocationChange={setShowLocation}
             locationAvailable={locationAvailable}
             locationError={locationError}
-            onHover={setHoveredFeature}
-            onHoverEnd={() => setHoveredFeature(null)}
+            onHover={handleHover}
+            onHoverEnd={handleHoverEnd}
           />
         </>
       )}

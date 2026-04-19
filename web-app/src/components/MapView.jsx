@@ -483,8 +483,8 @@ export default function MapView({
               'line-width': [
                 'case',
                 ['==', ['get', 'name'], selectedFeatureName ?? ''],
-                6,
-                3,
+                8,
+                5,
               ],
               'line-opacity': 0.85,
             }}
@@ -511,7 +511,7 @@ export default function MapView({
             filter={['==', ['get', 'name'], hoveredName]}
             paint={{
               'line-color': '#facc15',
-              'line-width': 6,
+              'line-width': 8,
               'line-opacity': 0.9,
             }}
           />
@@ -521,7 +521,7 @@ export default function MapView({
             filter={['==', ['get', 'name'], selectedFeatureName ?? '']}
             paint={{
               'line-color': '#facc15',
-              'line-width': 8,
+              'line-width': 10,
               'line-opacity': 0.9,
             }}
           />
