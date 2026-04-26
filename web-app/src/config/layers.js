@@ -75,6 +75,15 @@ export const BOUNDARY_LAYERS = [
     geometryType: 'polygon',
   },
   {
+    id: 'census_tracts',
+    label: 'Census Tracts (County-wide)',
+    singularLabel: 'Census Tract',
+    file: `${DATA_PREFIX}/boundary_layers/census_tracts.geojson`,
+    nameField: 'name',
+    searchPlaceholder: 'Search census tracts…',
+    geometryType: 'polygon',
+  },
+  {
     id: 'streets',
     label: 'Streets',
     singularLabel: 'Street',

@@ -1,11 +1,13 @@
 import { useState, useMemo, useRef } from 'react'
 import { trackEvent } from '../utils/analytics'
+import { geocodeAddress } from '../services/geocode'
 
 export default function TopBar({
   activeLayer,    // { id, label, singularLabel, nameField, searchPlaceholder }
   layerData,      // GeoJSON FeatureCollection | null
   selectedFeatureName, // string | null
   onFeatureSelect,     // (name: string | null) => void
+  onAddressFound,      // ({ lat, lng, displayName }) => void
   onShare,             // () => Promise<boolean>
   onReset,             // () => void
   isMobile,            // boolean
@@ -15,6 +17,7 @@ export default function TopBar({
   const [query, setQuery]           = useState('')
   const [focused, setFocused]       = useState(false)
   const [shareToast, setShareToast] = useState(false)
+  const [addressLookup, setAddressLookup] = useState({ status: 'idle', error: null }) // 'idle' | 'pending' | 'notfound' | 'error'
   const inputRef = useRef(null)
 
   const featureNames = useMemo(() => {
@@ -35,13 +38,46 @@ export default function TopBar({
     onFeatureSelect(name)
     setQuery('')
     setFocused(false)
+    setAddressLookup({ status: 'idle', error: null })
     trackEvent('feature_select', { name, boundary_layer: activeLayer?.id })
   }
 
   function handleClear() {
     onFeatureSelect(null)
     setQuery('')
+    setAddressLookup({ status: 'idle', error: null })
     setTimeout(() => inputRef.current?.focus(), 0)
+  }
+
+  async function handleAddressLookup() {
+    const q = query.trim()
+    if (!q || addressLookup.status === 'pending') return
+    setAddressLookup({ status: 'pending', error: null })
+    try {
+      const hit = await geocodeAddress(q)
+      if (!hit) {
+        setAddressLookup({ status: 'notfound', error: null })
+        trackEvent('address_search', { query: q, found: false })
+        return
+      }
+      onAddressFound?.(hit)
+      setQuery('')
+      setFocused(false)
+      setAddressLookup({ status: 'idle', error: null })
+      trackEvent('address_search', { query: q, found: true })
+    } catch (err) {
+      setAddressLookup({ status: 'error', error: err.message })
+    }
+  }
+
+  function handleKeyDown(e) {
+    if (e.key !== 'Enter') return
+    // Prefer an exact-match boundary feature; otherwise fall through to address lookup
+    const q = query.trim().toLowerCase()
+    const exact = featureNames.find(n => n.toLowerCase() === q)
+    if (exact) { handleSelect(exact); return }
+    if (filtered.length === 1) { handleSelect(filtered[0]); return }
+    handleAddressLookup()
   }
 
   async function handleShare() {
@@ -52,7 +88,9 @@ export default function TopBar({
     }
   }
 
-  const showDropdown = focused && filtered.length > 0 && !selectedFeatureName
+  const trimmedQuery = query.trim()
+  const showAddressRow = focused && trimmedQuery.length >= 3 && !selectedFeatureName
+  const showDropdown = focused && !selectedFeatureName && (filtered.length > 0 || showAddressRow)
 
   return (
     <header className="top-bar">
@@ -84,23 +122,55 @@ export default function TopBar({
                 <span style={{ fontSize: '11px', opacity: 0.6 }}>✕</span>
               </button>
             ) : (
-              <input
-                ref={inputRef}
-                value={query}
-                onChange={e => setQuery(e.target.value)}
-                onFocus={() => setFocused(true)}
-                onBlur={() => setTimeout(() => setFocused(false), 150)}
-                placeholder={activeLayer?.searchPlaceholder || `Find your ${activeLayer?.singularLabel || 'neighborhood'}…`}
-              />
+              <>
+                <input
+                  ref={inputRef}
+                  value={query}
+                  onChange={e => { setQuery(e.target.value); if (addressLookup.status !== 'idle') setAddressLookup({ status: 'idle', error: null }) }}
+                  onFocus={() => setFocused(true)}
+                  onBlur={() => setTimeout(() => setFocused(false), 150)}
+                  onKeyDown={handleKeyDown}
+                  placeholder={activeLayer?.searchPlaceholder || `Find your ${activeLayer?.singularLabel || 'neighborhood'}…`}
+                />
+                {query.length > 0 && (
+                  <button
+                    type="button"
+                    className="search-clear-btn"
+                    aria-label="Clear search"
+                    onMouseDown={e => {
+                      e.preventDefault()
+                      setQuery('')
+                      setAddressLookup({ status: 'idle', error: null })
+                      inputRef.current?.focus()
+                    }}
+                  >
+                    ✕
+                  </button>
+                )}
+              </>
             )}
           </div>
           {showDropdown && (
             <div className="top-bar-search-dropdown">
-              {filtered.map(name => (
+              {filtered.slice(0, 8).map(name => (
                 <div key={name} className="search-result" onMouseDown={() => handleSelect(name)}>
                   {name}
                 </div>
               ))}
+              {showAddressRow && (
+                <div
+                  className="search-result search-result--address"
+                  onMouseDown={e => { e.preventDefault(); handleAddressLookup() }}
+                >
+                  <span className="search-result-pin" aria-hidden="true">📍</span>
+                  <span className="search-result-label">
+                    {addressLookup.status === 'pending'  ? `Searching for “${trimmedQuery}”…`
+                     : addressLookup.status === 'notfound' ? `No address found for “${trimmedQuery}” in Allegheny County`
+                     : addressLookup.status === 'error'    ? `Address search unavailable`
+                     : <>Search address: <strong>{trimmedQuery}</strong></>}
+                  </span>
+                </div>
+              )}
             </div>
           )}
         </div>

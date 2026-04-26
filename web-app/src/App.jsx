@@ -31,6 +31,7 @@ export default function App() {
   const [userLocation, setUserLocation]                   = useState(null)
   const [locationError, setLocationError]                 = useState(null)
   const [flyToLocation, setFlyToLocation]                 = useState(null)
+  const [addressMarker, setAddressMarker]                 = useState(null)
   const watchIdRef                                        = useRef(null)
 
   // Map viewport — tracked for URL hash sharing
@@ -163,7 +164,15 @@ export default function App() {
     setShowStreetBuffer(true)
     setShowCanopyChange(false)
     setShowLocation(false)
+    setAddressMarker(null)
     setFlyToLocation({ longitude: -79.9959, latitude: 40.4406, zoom: 11, bearing: 0, pitch: 0 })
+  }, [])
+
+  // Address search lands on a street-level zoom and drops a pin
+  const handleAddressFound = useCallback(({ lat, lng, displayName }) => {
+    setSelectedFeatureName(null)
+    setAddressMarker({ lat, lng, label: displayName })
+    setFlyToLocation({ longitude: lng, latitude: lat, zoom: 17, bearing: 0, pitch: 0 })
   }, [])
 
   const activeLayerConfig = BOUNDARY_LAYERS.find(l => l.id === activeBoundaryLayerId)
@@ -284,6 +293,8 @@ export default function App() {
           onHoverEnd={handleHoverEnd}
           onFeatureClick={handleFeatureSelect}
           userLocation={userLocation}
+          addressMarker={addressMarker}
+          onAddressMarkerDismiss={() => setAddressMarker(null)}
           flyToLocation={flyToLocation}
           onFlyToComplete={() => setFlyToLocation(null)}
           onZoom={handleZoom}
@@ -305,6 +316,7 @@ export default function App() {
         layerData={enrichedLayerData}
         selectedFeatureName={selectedFeatureName}
         onFeatureSelect={handleFeatureSelect}
+        onAddressFound={handleAddressFound}
         onShare={handleShare}
         onReset={resetExploration}
         isMobile={isMobile}
@@ -403,6 +415,7 @@ export default function App() {
             isCoverage={isCoverage}
             activeLayer={activeLayerConfig}
             onFeatureSelect={handleFeatureSelect}
+            onAddressFound={handleAddressFound}
             activeBoundaryLayerId={activeBoundaryLayerId}
             onBoundaryLayerChange={handleBoundaryLayerChange}
             onMethodChange={setActiveMethodId}

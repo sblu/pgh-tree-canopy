@@ -82,6 +82,8 @@ export default function HelpModal({ onClose }) {
             <div className="legend-attribution">
               Canopy data: <a href="https://www.treepittsburgh.org" target="_blank" rel="noopener noreferrer">Tree Pittsburgh</a>
               &nbsp;·&nbsp;
+              Address search: <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a>
+              &nbsp;·&nbsp;
               Visualization: <a href="https://github.com/sblu/pgh-tree-canopy" target="_blank" rel="noopener noreferrer">GitHub</a>
               <br/>
               Build: {__BUILD_TAG__}

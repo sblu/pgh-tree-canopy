@@ -18,7 +18,8 @@ grown or shrunk between 2015 and 2020. Key features:
 
 - **Boundary-level choropleth** — view canopy change by neighborhood,
   city/county council district, municipal/county park, municipality
-  (county-wide), or street, colored by selected metric
+  (county-wide), census tract (county-wide), or street, colored by
+  selected metric
 - **Three color metrics** — total 2020 canopy coverage, net change as % of
   land area, or net change as % of 2015 canopy baseline
 - **Leaderboard** — collapsible ranked list of all zones by the active
@@ -31,7 +32,9 @@ grown or shrunk between 2015 and 2020. Key features:
   comparison of Google Street View imagery from before and after the canopy change
 - **Street tree filter** — filter gain/loss overlays to only show polygons
   within the 50 ft street buffer zone
-- **Search** — search for any boundary zone by name and fly to it on the map
+- **Search** — search for any boundary zone by name, or look up a
+  street address in Allegheny County (via OpenStreetMap Nominatim) and
+  fly to it on the map
 - **Zone labels** — boundary names displayed directly on the map
 - **Hover details** — mouse over any zone to see a popup with full canopy
   statistics including gains/losses breakdown
@@ -180,6 +183,7 @@ for build and deployment instructions, including
 | Web map | React 19, Vite 5, MapLibre GL JS 5, react-map-gl 8 |
 | Vector tiles | pmtiles 4 (browser protocol handler) |
 | Street View | Google Maps JavaScript API (optional, requires API key) |
+| Address search | OpenStreetMap Nominatim (free, no API key, restricted to Allegheny County bbox) |
 | Basemap | CartoDB Positron (free, no API key) |
 | Hosting | Static files (any web server) |
 | Source GIS data | ESRI File Geodatabase (.gdb), EPSG:2272 |

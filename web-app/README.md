@@ -78,6 +78,31 @@ If the API key is missing or misconfigured, the app gracefully degrades:
 The rest of the map (canopy layers, boundaries, search) works fully
 without the Google Maps API.
 
+## Address Search (Nominatim)
+
+The search box geocodes free-form addresses (e.g. *"1512 Beechwood Blvd"*)
+via the public **OpenStreetMap Nominatim** service. No API key, no
+backend, and no `npm` package required — `src/services/geocode.js`
+issues a single `fetch` to `https://nominatim.openstreetmap.org/search`
+on user submit, restricted to an Allegheny County viewbox so results
+cannot resolve to same-named streets in other counties / states.
+
+Per Nominatim's
+[usage policy](https://operations.osmfoundation.org/policies/nominatim/):
+
+- Lookups fire **on user submit only** — no live typeahead — keeping
+  request rate well below the 1 req/s ceiling.
+- Browser-issued `Referer` header satisfies the identification
+  requirement.
+- Results are attributed to OpenStreetMap in the legend / footer.
+
+Future swap target: when the project's Google Maps Platform demo /
+community relationship is in place, swap this for the
+`PlaceAutocompleteElement` web component to get live typeahead. The
+existing `services/geocode.js` interface (`geocodeAddress(query) →
+{lat, lng, displayName}`) is structured so the call sites in
+`TopBar.jsx` and `MobileSheet.jsx` won't need to change.
+
 ## Google Analytics
 
 The app includes lightweight GA4 event tracking that is inactive unless the
@@ -112,6 +137,7 @@ events appear in the same property.
 | `cta_click` | SHUC logo clicked | `link: shuc_logo` |
 | `feature_select` | Boundary selected via search dropdown | `name`: feature name, `boundary_layer`: active layer id |
 | `feature_select` | Boundary clicked on the map | `name`: feature name, `source: map_click` |
+| `address_search` | Address looked up via search box (Nominatim) | `query`: search string, `found`: `true`/`false` |
 | `boundary_layer_change` | Boundary layer dropdown changed | `layer`: layer id (e.g. `neighborhoods`) |
 | `color_method_change` | Color-by radio button changed | `method`: method id |
 | `layer_toggle` | Viewing option checkbox toggled | `layer`: layer id, `enabled`: `true`/`false` |
@@ -165,6 +191,8 @@ providers do this by default).
 | `src/components/TreePopup.jsx` | Click popup for gain/loss polygons with Street View link |
 | `src/utils/analytics.js` | GA4 event helper (no-op when gtag not loaded) |
 | `src/utils/streetView.js` | Nearest-street + heading calculation for Street View URLs |
+| `src/services/googleMaps.js` | Google Maps SDK bootstrap and `importLibrary()` wrapper |
+| `src/services/geocode.js` | Address geocoding via OpenStreetMap Nominatim |
 | `src/config/layers.js` | Layer definitions, color scales, PMTiles paths |
 | `src/hooks/useLayerData.js` | GeoJSON fetching, quantile breaks, color expressions |
 
@@ -194,7 +222,8 @@ data/
 │   ├── county_council_districts.geojson
 │   ├── parks_municipal.geojson
 │   ├── parks_county.geojson
-│   └── municipalities.geojson
+│   ├── municipalities.geojson
+│   └── census_tracts.geojson
 ├── canopy_change/
 │   ├── mature_tree_losses.pmtiles
 │   ├── mature_tree_gains.pmtiles

@@ -77,6 +77,8 @@ export default function MapView({
   onHoverEnd,
   onFeatureClick,
   userLocation,
+  addressMarker,
+  onAddressMarkerDismiss,
   flyToLocation,
   onFlyToComplete,
   onZoom,
@@ -649,6 +651,31 @@ export default function MapView({
         >
           <div className="user-location-dot" />
         </Marker>
+      )}
+
+      {/* ── Address search marker (red pin + label popup) ─────────── */}
+      {addressMarker && (
+        <>
+          <Marker
+            longitude={addressMarker.lng}
+            latitude={addressMarker.lat}
+            anchor="bottom"
+          >
+            <div className="address-marker-pin" title={addressMarker.label} />
+          </Marker>
+          <Popup
+            longitude={addressMarker.lng}
+            latitude={addressMarker.lat}
+            anchor="top"
+            offset={6}
+            closeButton
+            closeOnClick={false}
+            onClose={() => onAddressMarkerDismiss?.()}
+            className="address-marker-popup"
+          >
+            <div className="address-marker-popup-text">{addressMarker.label}</div>
+          </Popup>
+        </>
       )}
 
       {/* ── Yellow highlight ring on last-dismissed street view tree ──── */}

@@ -26,6 +26,7 @@ Outputs written to: output/boundary_layers/
   city_council_districts.geojson
   county_council_districts.geojson
   municipalities.geojson
+  census_tracts.geojson
 """
 
 import geopandas as gpd
@@ -289,6 +290,71 @@ def process_municipalities() -> None:
     export_geojson(out, OUTPUT_DIR / "municipalities.geojson", "Municipalities")
 
 
+def _format_tract_name(tractce: str) -> str:
+    """
+    Format a 6-digit Census TRACTCE into the conventional display form.
+    The last 2 digits are an implied decimal suffix used to denote
+    later splits of an original tract:
+      "010301" → "Tract 103.01"
+      "020100" → "Tract 201"
+      "981200" → "Tract 9812"
+    """
+    tractce = str(tractce).zfill(6)
+    integer_part = int(tractce[:4])
+    decimal_part = int(tractce[4:])
+    if decimal_part == 0:
+        return f"Tract {integer_part}"
+    return f"Tract {integer_part}.{decimal_part:02d}"
+
+
+def process_census_tracts() -> None:
+    """
+    Census tracts (~394 features in Allegheny County).
+
+    The GDB does not contain a tract layer, but Census_BlockGroups2020
+    has all the canopy stats plus STATEFP/COUNTYFP/TRACTCE. Each tract
+    is the union of its block groups, so we dissolve the block groups
+    by (STATEFP, COUNTYFP, TRACTCE) and sum the additive statistics.
+    """
+    print("Processing Census Tracts (dissolved from Census_BlockGroups2020) …")
+    bg = gpd.read_file(SOURCE_GDB, layer="Census_BlockGroups2020")
+
+    sum_cols = [
+        "Land_Acres",
+        "No_Change_Acres",
+        "Gain_Acres",
+        "Loss_Acres",
+        "TreeCanopy_2015_Acres",
+        "TreeCanopy_2020_Acres",
+    ]
+
+    # Dissolve geometries while summing the additive stats
+    out = bg.dissolve(
+        by=["STATEFP", "COUNTYFP", "TRACTCE"],
+        aggfunc={c: "sum" for c in sum_cols},
+    ).reset_index()
+
+    # Build a tract GEOID (11 digits) and a human-readable name
+    out["tract_geoid"] = out["STATEFP"] + out["COUNTYFP"] + out["TRACTCE"]
+    out["name"] = out["TRACTCE"].apply(_format_tract_name)
+
+    out = out.rename(columns={
+        "Land_Acres":            "land_area_acres",
+        "No_Change_Acres":       "no_change_acres",
+        "Gain_Acres":            "gain_acres",
+        "Loss_Acres":            "loss_acres",
+        "TreeCanopy_2015_Acres": "canopy_2015_acres",
+        "TreeCanopy_2020_Acres": "canopy_2020_acres",
+    })
+
+    out = out[["name", "tract_geoid",
+               "land_area_acres", "no_change_acres", "gain_acres", "loss_acres",
+               "canopy_2015_acres", "canopy_2020_acres", "geometry"]]
+
+    out = compute_canopy_metrics(out)
+    export_geojson(out, OUTPUT_DIR / "census_tracts.geojson", "Census Tracts")
+
+
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
@@ -309,6 +375,7 @@ def main() -> None:
     process_city_council()
     process_county_council()
     process_municipalities()
+    process_census_tracts()
 
     print("\nDone. All boundary GeoJSON files written to output/boundary_layers/")
     print("Open in QGIS: Layer > Add Layer > Add Vector Layer, then select any .geojson file.")

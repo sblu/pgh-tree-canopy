@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useMemo } from 'react'
 import { BOUNDARY_LAYERS, COLOR_METHODS } from '../config/layers'
 import { trackEvent } from '../utils/analytics'
+import { geocodeAddress } from '../services/geocode'
 import ControlsPanel from './ControlsPanel'
 import LeaderboardPanel from './LeaderboardPanel'
 
@@ -15,6 +16,7 @@ export default function MobileSheet({
   // Search
   activeLayer,
   onFeatureSelect,
+  onAddressFound,
   // ControlsPanel props
   activeBoundaryLayerId,
   onBoundaryLayerChange,
@@ -45,6 +47,7 @@ export default function MobileSheet({
 
   const [query,   setQuery]   = useState('')
   const [focused, setFocused] = useState(false)
+  const [addressLookup, setAddressLookup] = useState({ status: 'idle', error: null })
 
 
   // Drag/snap using Pointer Events (avoids iOS passive-listener / touchcancel issues)
@@ -168,10 +171,44 @@ export default function MobileSheet({
     trackEvent('feature_select', { name, boundary_layer: activeLayer?.id })
     setQuery('')
     setFocused(false)
+    setAddressLookup({ status: 'idle', error: null })
     onSheetStateChange('peek')
   }
 
-  const showResults = focused && query.trim().length > 0 && filtered.length > 0 && !selectedFeatureName
+  async function handleAddressLookup() {
+    const q = query.trim()
+    if (!q || addressLookup.status === 'pending') return
+    setAddressLookup({ status: 'pending', error: null })
+    try {
+      const hit = await geocodeAddress(q)
+      if (!hit) {
+        setAddressLookup({ status: 'notfound', error: null })
+        trackEvent('address_search', { query: q, found: false })
+        return
+      }
+      onAddressFound?.(hit)
+      setQuery('')
+      setFocused(false)
+      setAddressLookup({ status: 'idle', error: null })
+      onSheetStateChange('peek')
+      trackEvent('address_search', { query: q, found: true })
+    } catch (err) {
+      setAddressLookup({ status: 'error', error: err.message })
+    }
+  }
+
+  function handleKeyDown(e) {
+    if (e.key !== 'Enter') return
+    const q = query.trim().toLowerCase()
+    const exact = featureNames.find(n => n.toLowerCase() === q)
+    if (exact) { handleSearchSelect(exact); return }
+    if (filtered.length === 1) { handleSearchSelect(filtered[0]); return }
+    handleAddressLookup()
+  }
+
+  const trimmedQuery = query.trim()
+  const showAddressRow = focused && trimmedQuery.length >= 3 && !selectedFeatureName
+  const showResults = focused && trimmedQuery.length > 0 && !selectedFeatureName && (filtered.length > 0 || showAddressRow)
 
   return (
     <div className="mobile-sheet" data-state={sheetState} ref={wrapperRef}>
@@ -213,23 +250,55 @@ export default function MobileSheet({
                   {selectedFeatureName} <span style={{ opacity: 0.6 }}>✕</span>
                 </button>
               ) : (
-                <input
-                  ref={searchRef}
-                  value={query}
-                  onChange={e => setQuery(e.target.value)}
-                  onFocus={() => setFocused(true)}
-                  onBlur={() => setTimeout(() => setFocused(false), 150)}
-                  placeholder={activeLayer?.searchPlaceholder || 'Search…'}
-                />
+                <>
+                  <input
+                    ref={searchRef}
+                    value={query}
+                    onChange={e => { setQuery(e.target.value); if (addressLookup.status !== 'idle') setAddressLookup({ status: 'idle', error: null }) }}
+                    onFocus={() => setFocused(true)}
+                    onBlur={() => setTimeout(() => setFocused(false), 150)}
+                    onKeyDown={handleKeyDown}
+                    placeholder={activeLayer?.searchPlaceholder || 'Search…'}
+                  />
+                  {query.length > 0 && (
+                    <button
+                      type="button"
+                      className="search-clear-btn"
+                      aria-label="Clear search"
+                      onMouseDown={e => {
+                        e.preventDefault()
+                        setQuery('')
+                        setAddressLookup({ status: 'idle', error: null })
+                        searchRef.current?.focus()
+                      }}
+                    >
+                      ✕
+                    </button>
+                  )}
+                </>
               )}
             </div>
             {showResults && (
               <div className="sheet-search-results">
-                {filtered.map(name => (
+                {filtered.slice(0, 8).map(name => (
                   <div key={name} className="search-result" onMouseDown={() => handleSearchSelect(name)}>
                     {name}
                   </div>
                 ))}
+                {showAddressRow && (
+                  <div
+                    className="search-result search-result--address"
+                    onMouseDown={e => { e.preventDefault(); handleAddressLookup() }}
+                  >
+                    <span className="search-result-pin" aria-hidden="true">📍</span>
+                    <span className="search-result-label">
+                      {addressLookup.status === 'pending'  ? `Searching for “${trimmedQuery}”…`
+                       : addressLookup.status === 'notfound' ? `No address found for “${trimmedQuery}” in Allegheny County`
+                       : addressLookup.status === 'error'    ? `Address search unavailable`
+                       : <>Search address: <strong>{trimmedQuery}</strong></>}
+                    </span>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -270,6 +339,8 @@ export default function MobileSheet({
 
           <div className="legend-attribution" style={{ marginTop: '18px' }}>
             Canopy data: <a href="https://www.treepittsburgh.org" target="_blank" rel="noopener noreferrer">Tree Pittsburgh</a>
+            &nbsp;·&nbsp;
+            Address search: <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a>
             &nbsp;·&nbsp;
             Visualization: <a href="https://github.com/sblu/pgh-tree-canopy" target="_blank" rel="noopener noreferrer">GitHub</a>
           </div>
