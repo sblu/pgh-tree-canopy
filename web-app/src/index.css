@@ -470,7 +470,7 @@ html, body, #root {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 14px 0;
+  padding: 10px 14px;
 }
 .controls-title {
   font-family: Manrope, sans-serif;
@@ -490,7 +490,7 @@ html, body, #root {
   line-height: 1;
 }
 .controls-chevron--open { transform: rotate(180deg); }
-.controls-body { padding: 10px 14px 14px; }
+.controls-body { padding: 0 14px 14px; }
 
 .cp-section { margin-bottom: 12px; }
 .cp-section:last-child { margin-bottom: 0; }
@@ -1011,9 +1011,9 @@ html, body, #root {
   cursor: pointer;
 }
 .address-marker-popup .maplibregl-popup-content {
-  font-family: Inter, sans-serif;
-  font-size: 11px;
-  padding: 6px 22px 6px 10px;
+  font-family: Inter, sans-serif !important;
+  font-size: 11px !important;
+  padding: 10px 44px 10px 12px !important;
   max-width: 240px;
   line-height: 1.35;
 }
@@ -1040,23 +1040,27 @@ html, body, #root {
 .tree-popup-no-coords { margin-top: 8px; color: var(--inactive); font-style: italic; font-size: 11px; }
 .tree-popup-disable-reason { margin-top: 4px; color: var(--inactive); font-size: 10px; text-align: center; }
 
-/* ─── Popup close button (white circle, touch-friendly) ─────────────────── */
+/* ─── Popup close button (inside border, subtle on dark popup, large tap target) ─── */
 .popup-hover .maplibregl-popup-close-button,
-.popup-with-close .maplibregl-popup-close-button {
-  font-size: 16px !important; font-weight: 700 !important;
+.popup-with-close .maplibregl-popup-close-button,
+.address-marker-popup .maplibregl-popup-close-button {
+  font-size: 18px !important; font-weight: 700 !important;
   width: 28px !important; height: 28px !important;
   display: flex !important; align-items: center !important; justify-content: center !important;
-  line-height: 1 !important; padding: 0 !important; color: #1e293b !important;
-  background: #fff !important; border: 2px solid #cbd5e1 !important;
+  line-height: 1 !important; padding: 0 !important; color: var(--text) !important;
+  background: rgba(255,255,255,0.14) !important;
+  border: 1px solid rgba(255,255,255,0.30) !important;
   border-radius: 50% !important; cursor: pointer !important;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.25) !important;
-  top: -12px !important; right: -12px !important; z-index: 1 !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.35) !important;
+  top: 6px !important; right: 6px !important; z-index: 1 !important;
 }
 @media (hover: hover) {
   .popup-hover .maplibregl-popup-close-button { display: none !important; }
 }
-.popup-with-close .maplibregl-popup-close-button:hover {
-  color: #000 !important; background: #f1f5f9 !important; border-color: #94a3b8 !important;
+.popup-with-close .maplibregl-popup-close-button:hover,
+.address-marker-popup .maplibregl-popup-close-button:hover {
+  background: rgba(255,255,255,0.24) !important;
+  border-color: rgba(255,255,255,0.55) !important;
 }
 
 /* ─── Street View modal ─────────────────────────────────────────────────── */
@@ -1073,8 +1077,13 @@ html, body, #root {
 .sv-modal-title { font-weight: 700; font-size: 14px; }
 .sv-modal-title.loss { color: #dc2626; }
 .sv-modal-title.gain { color: #16a34a; }
-.sv-modal-close { background: none; border: none; font-size: 24px; color: #64748b; cursor: pointer; padding: 0 4px; line-height: 1; }
-.sv-modal-close:hover { color: #1e293b; }
+.sv-modal-close {
+  background: #e2e8f0; border: 1px solid #94a3b8; border-radius: 50%;
+  width: 28px; height: 28px; font-size: 18px; font-weight: 700; color: #0f172a;
+  cursor: pointer; padding: 0; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+}
+.sv-modal-close:hover { background: #cbd5e1; border-color: #475569; }
 .sv-modal-images { display: flex; gap: 12px; padding: 16px; flex-wrap: wrap; }
 .sv-modal-image-wrapper { flex: 1; min-width: 200px; }
 .sv-modal-img { width: 100%; height: auto; border-radius: 6px; display: block; }
