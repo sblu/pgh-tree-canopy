@@ -76,7 +76,7 @@ export const BOUNDARY_LAYERS = [
   },
   {
     id: 'census_tracts',
-    label: 'Census Tracts (County-wide)',
+    label: 'Census Tracts',
     singularLabel: 'Census Tract',
     file: `${DATA_PREFIX}/boundary_layers/census_tracts.geojson`,
     nameField: 'name',

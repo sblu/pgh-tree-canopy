@@ -76,33 +76,7 @@ export default function StreetViewModal({ panoData, isGain, feature, onClose, on
           )}
 
           <div className="sv-modal-images">
-            {/* After (current) — left / top */}
-            {panoData.currentImageUrl ? (
-              <div className="sv-modal-image-wrapper">
-                {currentImgError ? (
-                  <div className="sv-modal-img-fallback">Image unavailable</div>
-                ) : (
-                  <img
-                    src={panoData.currentImageUrl}
-                    alt={`Street view from ${panoData.currentDate}`}
-                    className="sv-modal-img"
-                    crossOrigin="anonymous"
-                    onError={() => setCurrentImgError(true)}
-                  />
-                )}
-                <div className="sv-modal-date">
-                  After {isGain ? 'Gain' : 'Loss'} &mdash; {panoData.currentDate}
-                </div>
-              </div>
-            ) : (
-              <div className="sv-modal-image-wrapper">
-                <div className="sv-modal-img-fallback sv-modal-no-historical">
-                  No post-{isGain ? 'gain' : 'loss'} imagery available
-                </div>
-              </div>
-            )}
-
-            {/* Before (historical) — right / bottom */}
+            {/* Before (historical) — left / top */}
             {panoData.historicalImageUrl ? (
               <div className="sv-modal-image-wrapper">
                 {historicalImgError ? (
@@ -124,6 +98,32 @@ export default function StreetViewModal({ panoData, isGain, feature, onClose, on
               <div className="sv-modal-image-wrapper">
                 <div className="sv-modal-img-fallback sv-modal-no-historical">
                   No pre-{isGain ? 'gain' : 'loss'} imagery available
+                </div>
+              </div>
+            )}
+
+            {/* After (current) — right / bottom */}
+            {panoData.currentImageUrl ? (
+              <div className="sv-modal-image-wrapper">
+                {currentImgError ? (
+                  <div className="sv-modal-img-fallback">Image unavailable</div>
+                ) : (
+                  <img
+                    src={panoData.currentImageUrl}
+                    alt={`Street view from ${panoData.currentDate}`}
+                    className="sv-modal-img"
+                    crossOrigin="anonymous"
+                    onError={() => setCurrentImgError(true)}
+                  />
+                )}
+                <div className="sv-modal-date">
+                  After {isGain ? 'Gain' : 'Loss'} &mdash; {panoData.currentDate}
+                </div>
+              </div>
+            ) : (
+              <div className="sv-modal-image-wrapper">
+                <div className="sv-modal-img-fallback sv-modal-no-historical">
+                  No post-{isGain ? 'gain' : 'loss'} imagery available
                 </div>
               </div>
             )}
