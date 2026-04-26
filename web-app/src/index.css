@@ -891,7 +891,7 @@ html, body, #root {
   border-radius: 18px;
   width: 100%;
   max-width: 480px;
-  max-height: 85vh;
+  max-height: 92vh;
   overflow-y: auto;
   box-shadow: 0 24px 60px rgba(0,0,0,0.5);
 }
@@ -926,12 +926,12 @@ html, body, #root {
   transition: color 0.15s;
 }
 .help-close:hover { color: var(--text); }
-.help-body { padding: 18px 20px 22px; }
+.help-body { padding: 14px 20px 18px; }
 .help-intro {
   font-size: 13px;
   color: var(--muted);
-  line-height: 1.6;
-  margin: 0 0 18px;
+  line-height: 1.55;
+  margin: 0 0 14px;
 }
 .help-intro strong { color: var(--text); }
 .help-intro a { color: var(--primary-dim); text-decoration: none; }
@@ -942,7 +942,7 @@ html, body, #root {
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  margin: 18px 0 8px;
+  margin: 14px 0 6px;
   padding-left: 8px;
   border-left: 2px solid rgba(155, 252, 150, 0.45);
 }
@@ -965,7 +965,7 @@ html, body, #root {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-top: 20px;
+  margin-top: 14px;
   flex-wrap: wrap;
 }
 .help-startup-check {
