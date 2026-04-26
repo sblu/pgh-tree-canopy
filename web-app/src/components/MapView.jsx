@@ -200,6 +200,8 @@ export default function MapView({
     map.flyTo({
       center: [flyToLocation.longitude, flyToLocation.latitude],
       zoom: flyToLocation.zoom ?? 15,
+      ...(flyToLocation.bearing != null && { bearing: flyToLocation.bearing }),
+      ...(flyToLocation.pitch != null && { pitch: flyToLocation.pitch }),
       duration: 1200,
     })
     onFlyToComplete()

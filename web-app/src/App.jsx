@@ -163,7 +163,7 @@ export default function App() {
     setShowStreetBuffer(true)
     setShowCanopyChange(false)
     setShowLocation(false)
-    setFlyToLocation({ longitude: -79.9959, latitude: 40.4406, zoom: 11 })
+    setFlyToLocation({ longitude: -79.9959, latitude: 40.4406, zoom: 11, bearing: 0, pitch: 0 })
   }, [])
 
   const activeLayerConfig = BOUNDARY_LAYERS.find(l => l.id === activeBoundaryLayerId)
