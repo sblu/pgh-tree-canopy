@@ -80,7 +80,7 @@ without the Google Maps API.
 
 ## Address Search (Nominatim)
 
-The search box geocodes free-form addresses (e.g. *"1512 Beechwood Blvd"*)
+The search box geocodes free-form addresses
 via the public **OpenStreetMap Nominatim** service. No API key, no
 backend, and no `npm` package required — `src/services/geocode.js`
 issues a single `fetch` to `https://nominatim.openstreetmap.org/search`
