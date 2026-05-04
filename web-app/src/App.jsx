@@ -413,6 +413,7 @@ export default function App() {
             layerData={enrichedLayerData}
             activeMethodId={activeMethodId}
             isCoverage={isCoverage}
+            colorBreaks={colorBreaks}
             activeLayer={activeLayerConfig}
             onFeatureSelect={handleFeatureSelect}
             onAddressFound={handleAddressFound}

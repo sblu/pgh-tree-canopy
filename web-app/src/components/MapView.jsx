@@ -706,7 +706,41 @@ export default function MapView({
           className="popup-with-close"
           onClose={() => setClickedBoundary(null)}
         >
-          <InfoPanel feature={clickedBoundary.feature} method={activeMethodId} rank={selectedFeatureRank} />
+          <InfoPanel
+            feature={clickedBoundary.feature}
+            method={activeMethodId}
+            rank={selectedFeatureRank}
+            onExemplarClick={(exemplar) => {
+              const synthetic = {
+                feature: {
+                  properties: {
+                    centroid_lat: exemplar.lat,
+                    centroid_lon: exemplar.lon,
+                    loss_acres: exemplar.acres,
+                    size_category: exemplar.sizeCategory,
+                    in_street_buffer: 1,
+                  },
+                },
+                lngLat: { lng: exemplar.lon, lat: exemplar.lat },
+                isGain: false,
+              }
+              setClickedBoundary(null)
+              setHoveredTree(null)
+              setLastDismissedTree(null)
+              setClickedTree(synthetic)
+              if (mapRef.current) {
+                mapRef.current.getMap().flyTo({
+                  center: [exemplar.lon, exemplar.lat],
+                  zoom: 17,
+                  duration: 1200,
+                })
+              }
+              trackEvent('exemplar_cta_click', {
+                boundary_layer: activeLayerConfig?.id,
+                boundary_name: exemplar.name,
+              })
+            }}
+          />
         </Popup>
       )}
 

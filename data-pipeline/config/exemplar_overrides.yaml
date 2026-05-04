@@ -1,0 +1,57 @@
+# exemplar_overrides.yaml
+#
+# Read by data-pipeline/scripts/08_compute_boundary_exemplar_losses.py
+# (and its public-pipeline mirror).
+#
+# Two override mechanisms are supported. Both sections are optional;
+# remove or leave commented-out sections you don't need.
+#
+# pin:
+#   For a given boundary, force the pipeline to pick a specific mature
+#   loss as that boundary's exemplar (instead of the auto-selected
+#   2nd-largest in-buffer loss). Coordinates are snapped to the nearest
+#   real mature loss within ~22 m (≈0.0002°). If the snap fails (typo,
+#   data refresh removed the loss, etc.) the script logs a warning and
+#   falls back to auto-selection — pinning never blocks the pipeline.
+#
+# blocklist:
+#   Exclude specific mature losses from being picked as anyone's
+#   exemplar. Useful when Street View imagery is missing or unhelpful
+#   for a known location. Same ~22 m snap tolerance.
+#
+# Tip: to grab a centroid, click the loss in the running web app and
+# use the Share button — the resulting URL hash includes
+# `tree=<lat>,<lng>,loss`. Or open the GeoJSON in QGIS and click the
+# polygon to read its centroid.
+#
+# Both pipelines (default GDB-based and the experimental public
+# pipeline) read this same file, so overrides apply uniformly.
+
+# ─── pinned exemplars ──────────────────────────────────────────────
+# Keys are <boundary_layer_id> → <boundary_name>.
+# Boundary layer IDs match the GeoJSON filenames (without `.geojson`):
+#   neighborhoods, city_council_districts, county_council_districts,
+#   parks_municipal, parks_county, municipalities, census_tracts,
+#   streets
+
+# pin:
+#   neighborhoods:
+#     "Squirrel Hill North":
+#       centroid_lat: 40.4406
+#       centroid_lon: -79.9251
+#   city_council_districts:
+#     "8":
+#       centroid_lat: 40.4380
+#       centroid_lon: -79.9290
+
+# ─── blocklisted losses ────────────────────────────────────────────
+# A flat list of {centroid_lat, centroid_lon} entries. The optional
+# `note` field is for human reference and is ignored by the pipeline.
+
+# blocklist:
+#   - centroid_lat: 40.4400
+#     centroid_lon: -79.9300
+#     note: "no Street View coverage pre-2018 — picks empty pano"
+#   - centroid_lat: 40.4500
+#     centroid_lon: -79.9100
+#     note: "loss on highway median, not a residential context"

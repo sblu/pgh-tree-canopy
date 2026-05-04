@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { CTA_LINKS } from '../config/layers'
 import { trackEvent } from '../utils/analytics'
+import StreetViewPictogram from './StreetViewPictogram'
 
 const STORAGE_KEY = 'hideHelpOnStartup'
 
@@ -52,6 +53,7 @@ export default function HelpModal({ onClose }) {
           </ul>
 
           <div className="help-section-heading">Google Street View</div>
+          <StreetViewPictogram />
           <ul className="help-list">
             <li>Zoom into the map and <strong>click a red or green polygon</strong> (individual tree loss or gain) to open a before-and-after Street View.</li>
             <li>Street View shows the location from the nearest street, in both the current view and historical imagery.</li>

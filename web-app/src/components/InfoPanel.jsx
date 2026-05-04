@@ -2,6 +2,7 @@
  * InfoPanel — shown in a MapLibre Popup on hover.
  * Displays canopy statistics for the hovered boundary zone.
  */
+import { TREE_LOSS_COLORS } from '../config/layers'
 
 const fmt = {
   // 2 decimals so independently-rounded rows still add up:
@@ -18,9 +19,10 @@ const fmt = {
   },
 }
 
-export default function InfoPanel({ feature, method, rank }) {
+export default function InfoPanel({ feature, method, rank, onExemplarClick }) {
   if (!feature) return null
   const p = feature.properties
+  const hasExemplar = !!p.exemplar_loss_svg_path
 
   const canopy2015Pct = p.land_area_acres > 0
     ? (p.canopy_2015_acres / p.land_area_acres * 100).toFixed(1)
@@ -99,6 +101,66 @@ export default function InfoPanel({ feature, method, rank }) {
           )}
         </tbody>
       </table>
+
+      {hasExemplar && onExemplarClick && (
+        <div className="info-cta">
+          <div className="info-cta-text">
+            See what was lost, click below for a before/after street view.
+          </div>
+          <button
+            type="button"
+            className="info-cta-shape"
+            onClick={() => onExemplarClick({
+              name: p.name,
+              lon: Number(p.exemplar_loss_centroid_lon),
+              lat: Number(p.exemplar_loss_centroid_lat),
+              acres: Number(p.exemplar_loss_acres),
+              sizeCategory: p.exemplar_loss_size_category,
+            })}
+            aria-label={`Open before/after street view for a ${Number(p.exemplar_loss_acres).toFixed(2)}-acre tree loss in ${p.name}`}
+          >
+            <div className="info-cta-tile">
+              {/* Map-tile-like backdrop */}
+              <svg className="info-cta-tile-map" viewBox="0 0 100 60" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+                <rect width="100" height="60" fill="#e8dfd0" />
+                {/* Two streets — casing then white inner stroke */}
+                <g fill="none" strokeLinecap="round" strokeLinejoin="round">
+                  <g stroke="#cdc4b0" strokeWidth="7">
+                    <path d="M -5 18 Q 30 14 60 22 T 110 18" />
+                    <path d="M 70 -5 C 60 22 55 40 75 65" />
+                  </g>
+                  <g stroke="#ffffff" strokeWidth="4">
+                    <path d="M -5 18 Q 30 14 60 22 T 110 18" />
+                    <path d="M 70 -5 C 60 22 55 40 75 65" />
+                  </g>
+                </g>
+                {/* House silhouettes */}
+                <g fill="#c2b59a" stroke="#a89a7e" strokeWidth="0.4">
+                  <path d="M 6 38 L 11 33 L 16 38 L 16 47 L 6 47 Z" />
+                  <path d="M 86 41 L 90 36 L 94 41 L 94 49 L 86 49 Z" />
+                </g>
+              </svg>
+
+              {/* Loss shape on top — colors match the actual map polygon */}
+              <svg className="info-cta-tile-shape" viewBox="0 0 100 60" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+                <path
+                  d={p.exemplar_loss_svg_path}
+                  fill={p.exemplar_loss_size_category === 'grove' ? TREE_LOSS_COLORS.grove : TREE_LOSS_COLORS.tree}
+                  fillOpacity="0.85"
+                  stroke="#5b0909"
+                  strokeWidth="1.2"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
+            <div className="info-cta-shape-meta">
+              {p.exemplar_loss_nearest_street
+                ? `Example loss on ${p.exemplar_loss_nearest_street} (${Number(p.exemplar_loss_acres).toFixed(2)} acres)`
+                : `Example tree loss (${Number(p.exemplar_loss_acres).toFixed(2)} acres)`}
+            </div>
+          </button>
+        </div>
+      )}
     </div>
   )
 }

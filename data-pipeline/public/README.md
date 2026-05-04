@@ -101,6 +101,7 @@ write into `data-pipeline/output_public/`. Run in numerical order.
 | 07 | `07_street_canopy_stats.py` | Per-street and per-boundary street canopy stats |
 | 08 | `08_tag_street_buffer.py` | Tag trees with `in_street_buffer`; regenerate PMTiles |
 | 09 | `09_full_canopy_change.py` | All canopy → PMTiles (~1.1 GB) |
+| 10 | `10_compute_boundary_exemplar_losses.py` | Bake an exemplar loss silhouette + centroid into each boundary feature (drives the popup CTA in the web app). Reads `data-pipeline/config/exemplar_overrides.yaml` — see [`../README.md`](../README.md#08_compute_boundary_exemplar_lossespy) for full schema docs. |
 
 ## Data Model Differences
 

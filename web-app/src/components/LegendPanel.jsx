@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { CHOROPLETH_COLORS, COVERAGE_COLORS, COLOR_METHODS } from '../config/layers'
 
-export default function LegendPanel({ colorBreaks, activeMethodId, isCoverage }) {
+export default function LegendPanel({ colorBreaks, activeMethodId, isCoverage, inline = false }) {
   const method = COLOR_METHODS.find(m => m.id === activeMethodId)
 
   const steps = useMemo(() => {
@@ -23,7 +23,7 @@ export default function LegendPanel({ colorBreaks, activeMethodId, isCoverage })
   if (!steps.length) return null
 
   return (
-    <div className="legend-panel">
+    <div className={`legend-panel${inline ? ' legend-panel--inline' : ''}`}>
       <div className="legend-title">{method?.label ?? 'Legend'}</div>
       {steps.map((s, i) => (
         <div key={i} className="legend-row">

@@ -29,7 +29,10 @@ grown or shrunk between 2015 and 2020. Key features:
 - **Significant gains and losses** — zoom in to see individual gain/loss
   polygons ≥ 0.04 acres, with click-to-Street-View links
 - **Street View before/after** — click any loss polygon to see a side-by-side
-  comparison of Google Street View imagery from before and after the canopy change
+  comparison of Google Street View imagery from before and after the canopy change.
+  Boundary popups also include a clickable preview of an "exemplar" loss inside
+  the zone, surfacing the feature for users who didn't realize loss polygons
+  were clickable.
 - **Street tree filter** — filter gain/loss overlays to only show polygons
   within the 50 ft street buffer zone
 - **Search** — search for any boundary zone by name, or look up a
@@ -53,7 +56,10 @@ pgh-tree-canopy/
 │   │   ├── 04_street_buffer.py
 │   │   ├── 05_street_canopy_stats.py
 │   │   ├── 06_tag_street_buffer.py
-│   │   └── 07_full_canopy_change.py
+│   │   ├── 07_full_canopy_change.py
+│   │   └── 08_compute_boundary_exemplar_losses.py
+│   ├── config/             # Pipeline config (exemplar pins / blocklist)
+│   │   └── exemplar_overrides.yaml
 │   ├── public/             # Experimental pipeline — reads only public PASDA data
 │   │   ├── 00_download.py … 09_full_canopy_change.py
 │   │   ├── discrepancy-report/  # Comparison vs default pipeline
@@ -117,9 +123,10 @@ python3 data-pipeline/scripts/01_extract_boundary_layers.py
 python3 data-pipeline/scripts/02_extract_mature_tree_losses.py
 python3 data-pipeline/scripts/03_generate_pmtiles.py
 python3 data-pipeline/scripts/04_street_buffer.py
-python3 data-pipeline/scripts/05_street_canopy_stats.py   # ~10–30 min
+python3 data-pipeline/scripts/05_street_canopy_stats.py             # ~10–30 min
 python3 data-pipeline/scripts/06_tag_street_buffer.py
-python3 data-pipeline/scripts/07_full_canopy_change.py    # ~15–30 min
+python3 data-pipeline/scripts/07_full_canopy_change.py              # ~15–30 min
+python3 data-pipeline/scripts/08_compute_boundary_exemplar_losses.py  # ~1–3 min
 ```
 
 Each script writes intermediate GeoJSON files to `data-pipeline/output/`

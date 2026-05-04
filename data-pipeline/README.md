@@ -35,6 +35,7 @@ pip install -r requirements.txt
 | pyogrio | 0.11.1 | Fast GDAL-backed I/O for reading `.gdb` files |
 | shapely | 2.0.7 | Geometry operations (buffering, intersection) |
 | pyproj | 3.6.1 | Coordinate reference system transformations |
+| PyYAML | 6.0.2 | Reads `config/exemplar_overrides.yaml` (script 08) |
 
 **System tools used:**
 | Tool | Version | Purpose |
@@ -263,6 +264,93 @@ Each polygon has a `change_class` property: `no_change`, `gain`, or `loss`.
 
 > **Note:** The intermediate GeoJSON (~2.6 GB) is automatically deleted
 > after PMTiles generation to save disk space.
+
+---
+
+### `08_compute_boundary_exemplar_losses.py`
+
+For each boundary feature in every layer in `output/boundary_layers/`,
+finds an "exemplar" mature loss inside the 50 ft street buffer and bakes
+its silhouette + centroid into the boundary's properties. The web app
+uses this to show a clickable shape preview at the bottom of every
+boundary popup — a discoverability hint that surfaces the before/after
+Street View feature.
+
+Selection rule: of the mature losses (≥ 0.04 acres) inside the
+boundary's street buffer, pick the **2nd-largest by acreage**, or the
+only one if there is just one. Boundaries with no qualifying loss get
+`null` for all exemplar fields and the popup hides the CTA. Pinned and
+blocklisted exemplars in `config/exemplar_overrides.yaml` (see below)
+override the auto-selection.
+
+```bash
+python3 scripts/08_compute_boundary_exemplar_losses.py     # ~1–3 min
+```
+
+**Inputs:**
+- `output/canopy_change/mature_tree_losses.geojson` (from script 02)
+- `output/streets/street_segments_buffered.gpkg` (from script 04)
+- `output/boundary_layers/*.geojson` (from scripts 01 and 05)
+- `data-pipeline/config/exemplar_overrides.yaml` (optional pins/blocklist)
+
+**Output:** updates each `output/boundary_layers/*.geojson` in place with
+five new properties per feature:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `exemplar_loss_acres` | float \| null | Acreage of the chosen exemplar loss (`null` if none) |
+| `exemplar_loss_size_category` | string \| null | `"tree"` or `"grove"` |
+| `exemplar_loss_centroid_lon` | float \| null | WGS84 longitude — drives Street View navigation |
+| `exemplar_loss_centroid_lat` | float \| null | WGS84 latitude |
+| `exemplar_loss_svg_path` | string \| null | Outer-ring polygon normalized to a `100×60` SVG viewBox, ready for inline `<path d="…">` rendering. Aspect-preserving scale, 6 px padding, Y-flipped for SVG. |
+| `exemplar_loss_nearest_street` | string \| null | Title-cased name of the nearest centerline within ~200 ft (e.g. `"E Woodland Rd"`). Read from `name`, `FULLNAME`, or `FULL_NAME` — whichever the centerlines file has. |
+
+For MultiPolygon losses, the script keeps only the largest sub-polygon's
+outer ring (no holes). The web app renders the path with default
+`fill-rule: nonzero`.
+
+#### Exemplar override config
+
+`data-pipeline/config/exemplar_overrides.yaml` is a small, version-
+controlled YAML file that lets you (a) blocklist specific losses that
+have poor Street View coverage so the pipeline picks the next-largest
+candidate instead, or (b) pin a specific loss for a specific boundary.
+It is empty by default — the file ships with commented-out examples,
+so the pipeline runs cleanly with no overrides until you add some.
+
+```yaml
+# Pin a specific exemplar — overrides auto-selection for that boundary.
+# Coordinates are snapped to the nearest mature loss within ~22 m;
+# typo or stale pin → script logs a warning, falls back to auto-select.
+pin:
+  neighborhoods:
+    "Squirrel Hill North":
+      centroid_lat: 40.4406
+      centroid_lon: -79.9251
+
+# Blocklist — exclude these losses everywhere. Pipeline will pick the
+# next-largest qualifying loss for any boundary that would have
+# selected one of these. Useful when Google Street View imagery is
+# missing or unhelpful for a given location.
+blocklist:
+  - centroid_lat: 40.4400
+    centroid_lon: -79.9300
+    note: "no Street View coverage pre-2018"
+```
+
+Workflow when you discover a poor exemplar in production:
+
+1. Open the map, click the boundary, click the CTA shape — confirm the
+   Street View is missing/unhelpful.
+2. Grab the loss centroid from the URL share button (the `tree=` param
+   in the hash carries `lat,lng`) or from QGIS by clicking the polygon.
+3. Add it to `blocklist:` (or use `pin:` if you already know the better
+   exemplar's coordinates).
+4. Re-run script 08 (1–3 min). Redeploy.
+
+The same `exemplar_overrides.yaml` file is read by both this default
+pipeline and the experimental public pipeline so overrides apply
+uniformly across both data sources.
 
 ---
 

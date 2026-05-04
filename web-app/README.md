@@ -142,6 +142,7 @@ events appear in the same property.
 | `color_method_change` | Color-by radio button changed | `method`: method id |
 | `layer_toggle` | Viewing option checkbox toggled | `layer`: layer id, `enabled`: `true`/`false` |
 | `tree_polygon_click` | Tree loss/gain polygon clicked on map | `type`: `gain` or `loss` |
+| `exemplar_cta_click` | Boundary-popup exemplar loss preview clicked (opens Street View) | `boundary_layer`, `boundary_name` |
 | `street_view_open` | Street View modal opens | `type`: `gain` or `loss` |
 | `street_view_external` | "Open in Google Street View" link clicked | `type`: `gain` or `loss` |
 
@@ -187,8 +188,9 @@ providers do this by default).
 | `src/components/LegendPanel.jsx` | Color legend and attribution |
 | `src/components/MobileChips.jsx` | Mobile boundary/metric/toggle chips |
 | `src/components/MobileSheet.jsx` | Mobile bottom sheet (search, controls, leaderboard) |
-| `src/components/InfoPanel.jsx` | Click popup content (zone statistics table) |
+| `src/components/InfoPanel.jsx` | Click popup content (zone statistics table + exemplar-loss CTA) |
 | `src/components/TreePopup.jsx` | Click popup for gain/loss polygons with Street View link |
+| `src/components/StreetViewPictogram.jsx` | Animated SVG/CSS pictogram in the help modal showing the click → before/after flow |
 | `src/utils/analytics.js` | GA4 event helper (no-op when gtag not loaded) |
 | `src/utils/streetView.js` | Nearest-street + heading calculation for Street View URLs |
 | `src/services/googleMaps.js` | Google Maps SDK bootstrap and `importLibrary()` wrapper |

@@ -121,13 +121,6 @@ export default function LeaderboardPanel({
         <div className="lb-resize-handle" onMouseDown={handleDragMouseDown} />
       )}
       <div className="lb-inner" ref={listRef}>
-        <div className="lb-panel-title">
-          {method?.label ?? 'Leaderboard'}
-          <button className="lb-sort-btn" onClick={() => setSortAsc(a => !a)}>
-            {sortAsc ? '↑ Lowest' : '↓ Highest'}
-          </button>
-        </div>
-
         {/* Selected boundary card */}
         {selectedFeature && p && (
           <div className="lb-selected-card">
@@ -172,6 +165,14 @@ export default function LeaderboardPanel({
             </div>
           </div>
         )}
+
+        {/* Metric heading + sort indicator — sits directly above the list */}
+        <div className="lb-panel-title">
+          {method?.label ?? 'Leaderboard'}
+          <button className="lb-sort-btn" onClick={() => setSortAsc(a => !a)}>
+            {sortAsc ? '↑ Lowest' : '↓ Highest'}
+          </button>
+        </div>
 
         {/* Ranked list */}
         {ranked.length === 0 && (

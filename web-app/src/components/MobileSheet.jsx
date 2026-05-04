@@ -4,6 +4,7 @@ import { trackEvent } from '../utils/analytics'
 import { geocodeAddress } from '../services/geocode'
 import ControlsPanel from './ControlsPanel'
 import LeaderboardPanel from './LeaderboardPanel'
+import LegendPanel from './LegendPanel'
 
 export default function MobileSheet({
   sheetState,
@@ -13,6 +14,7 @@ export default function MobileSheet({
   layerData,
   activeMethodId,
   isCoverage,
+  colorBreaks,
   // Search
   activeLayer,
   onFeatureSelect,
@@ -337,12 +339,14 @@ export default function MobileSheet({
             onHoverEnd={onHoverEnd}
           />
 
-          <div className="legend-attribution" style={{ marginTop: '18px' }}>
-            Canopy data: <a href="https://www.treepittsburgh.org" target="_blank" rel="noopener noreferrer">Tree Pittsburgh</a>
-            &nbsp;·&nbsp;
-            Address search: <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a>
-            &nbsp;·&nbsp;
-            Visualization: <a href="https://github.com/sblu/pgh-tree-canopy" target="_blank" rel="noopener noreferrer">GitHub</a>
+          {/* Color legend + attribution + build tag (matches desktop) */}
+          <div style={{ marginTop: '18px' }}>
+            <LegendPanel
+              inline
+              colorBreaks={colorBreaks}
+              activeMethodId={activeMethodId}
+              isCoverage={isCoverage}
+            />
           </div>
         </div>
       )}
