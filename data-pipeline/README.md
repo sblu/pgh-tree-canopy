@@ -277,11 +277,13 @@ boundary popup — a discoverability hint that surfaces the before/after
 Street View feature.
 
 Selection rule: of the mature losses (≥ 0.04 acres) inside the
-boundary's street buffer, pick the **2nd-largest by acreage**, or the
-only one if there is just one. Boundaries with no qualifying loss get
-`null` for all exemplar fields and the popup hides the CTA. Pinned and
-blocklisted exemplars in `config/exemplar_overrides.yaml` (see below)
-override the auto-selection.
+boundary's street buffer, pick the **median by acreage** — a typical
+example. The largest losses are often outliers (bulldozed lots, forest
+patches) that don't reflect the residential street-tree losses we want
+to feature. If only one loss qualifies, use it. Boundaries with no
+qualifying loss get `null` for all exemplar fields and the popup hides
+the CTA. Pinned and blocklisted exemplars in
+`config/exemplar_overrides.yaml` (see below) override the auto-selection.
 
 ```bash
 python3 scripts/08_compute_boundary_exemplar_losses.py     # ~1–3 min

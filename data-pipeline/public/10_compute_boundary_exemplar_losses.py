@@ -8,8 +8,10 @@ the GDB pipeline so manual overrides apply uniformly.
 
 Selection rule (per boundary):
   Of the mature losses (>= 0.04 acres) inside the boundary's street
-  buffer, pick the 2nd-largest by acreage. If only one qualifies, use
-  it. If none qualify, leave all exemplar fields null.
+  buffer, pick the **median** by acreage (a typical example; the
+  largest tend to be outliers, not residential street-tree losses).
+  If only one qualifies, use it. If none qualify, leave all exemplar
+  fields null.
 
 Output: each output_public/boundary_layers/*.geojson and
   output_public/streets/street_stats.geojson get five new properties
@@ -230,12 +232,10 @@ def compute_exemplars_for_layer(
 
         if chosen_idx is None:
             candidates = sjoin[sjoin["index_right"] == b_pos]
-            if len(candidates) > 0:
-                ordered = candidates.sort_values("loss_acres", ascending=False)
-                if len(ordered) >= 2:
-                    chosen_idx = ordered.index[1]
-                else:
-                    chosen_idx = ordered.index[0]
+            n_candidates = len(candidates)
+            if n_candidates > 0:
+                ordered = candidates.sort_values("loss_acres", ascending=True)
+                chosen_idx = ordered.index[n_candidates // 2]
 
         if chosen_idx is None:
             continue

@@ -9,8 +9,11 @@ boundary popup, surfacing the before/after Street View feature.
 
 Selection rule (per boundary):
   Of the mature losses (>= 0.04 acres) that intersect the boundary's
-  street-buffer area, pick the 2nd-largest by acreage. If only one
-  qualifies, use it. If none qualify, leave all exemplar fields null.
+  street-buffer area, pick the **median** by acreage (a typical example;
+  the largest tend to be outliers — bulldozed lots, forest patches —
+  not the residential street-tree losses we want to feature). If only
+  one qualifies, use it. If none qualify, leave all exemplar fields
+  null.
 
 Overrides (data-pipeline/config/exemplar_overrides.yaml):
   - blocklist:  exclude specific losses (matched by lat/lng within ~22 m)
@@ -266,15 +269,16 @@ def compute_exemplars_for_layer(
                     )
                     n_pin_failed += 1
 
-        # 2) Auto-select: 2nd-largest in-buffer mature loss (or only one)
+        # 2) Auto-select: median in-buffer mature loss (or only one).
+        #    Sorted ascending, picking index n//2 lands on the middle item
+        #    for odd n and the upper middle for even n — a typical, non-
+        #    outlier example.
         if chosen_idx is None:
             candidates = sjoin[sjoin["index_right"] == b_pos]
-            if len(candidates) > 0:
-                ordered = candidates.sort_values("loss_acres", ascending=False)
-                if len(ordered) >= 2:
-                    chosen_idx = ordered.index[1]   # 2nd-largest
-                else:
-                    chosen_idx = ordered.index[0]   # only one
+            n_candidates = len(candidates)
+            if n_candidates > 0:
+                ordered = candidates.sort_values("loss_acres", ascending=True)
+                chosen_idx = ordered.index[n_candidates // 2]
 
         if chosen_idx is None:
             continue

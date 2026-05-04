@@ -84,12 +84,31 @@ export default function App() {
        showTreeLosses, showTreeGains, showStreetBuffer, showCanopyChange,
        selectedFeatureName, activeTreeForShare])
 
-  // Share: copy current URL to clipboard
+  // Share: copy current URL to clipboard. The async Clipboard API is only
+  // available in secure contexts (HTTPS + localhost), so when the dev server
+  // is reached over the LAN IP we fall back to the legacy textarea +
+  // execCommand approach.
   const handleShare = useCallback(async (treeOverride) => {
     const url = getShareUrl(buildShareState(treeOverride))
+    if (navigator.clipboard?.writeText) {
+      try {
+        await navigator.clipboard.writeText(url)
+        return true
+      } catch {
+        // fall through to legacy fallback
+      }
+    }
     try {
-      await navigator.clipboard.writeText(url)
-      return true
+      const ta = document.createElement('textarea')
+      ta.value = url
+      ta.setAttribute('readonly', '')
+      ta.style.position = 'fixed'
+      ta.style.opacity = '0'
+      document.body.appendChild(ta)
+      ta.select()
+      const ok = document.execCommand('copy')
+      document.body.removeChild(ta)
+      return !!ok
     } catch {
       return false
     }

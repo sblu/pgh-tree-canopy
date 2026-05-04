@@ -9,10 +9,11 @@
 # pin:
 #   For a given boundary, force the pipeline to pick a specific mature
 #   loss as that boundary's exemplar (instead of the auto-selected
-#   2nd-largest in-buffer loss). Coordinates are snapped to the nearest
-#   real mature loss within ~22 m (≈0.0002°). If the snap fails (typo,
-#   data refresh removed the loss, etc.) the script logs a warning and
-#   falls back to auto-selection — pinning never blocks the pipeline.
+#   median-by-acreage in-buffer loss). Coordinates are snapped to the
+#   nearest real mature loss within ~22 m (≈0.0002°). If the snap fails
+#   (typo, data refresh removed the loss, etc.) the script logs a
+#   warning and falls back to auto-selection — pinning never blocks the
+#   pipeline.
 #
 # blocklist:
 #   Exclude specific mature losses from being picked as anyone's
@@ -43,6 +44,33 @@
 #     "8":
 #       centroid_lat: 40.4380
 #       centroid_lon: -79.9290
+
+pin:
+  neighborhoods:
+    "Squirrel Hill North":
+      centroid_lat: 40.4410
+      centroid_lon: -79.9165
+    "Squirrel Hill South":
+      centroid_lat: 40.4376
+      centroid_lon: -79.9150
+    "Shadyside":
+      centroid_lat: 40.4525
+      centroid_lon: -79.9297
+    "Point Breeze":
+      centroid_lat: 40.4462
+      centroid_lon: -79.9075
+    "Regent Square":
+      centroid_lat: 40.4384
+      centroid_lon: -79.8958
+    "Point Breeze North":
+      centroid_lat: 40.4522
+      centroid_lon: -79.9042
+    "Larimer":
+      centroid_lat: 40.4618
+      centroid_lon: -79.9120
+    "Swisshelm Park":
+      centroid_lat: 40.4239
+      centroid_lon: -79.9025
 
 # ─── blocklisted losses ────────────────────────────────────────────
 # A flat list of {centroid_lat, centroid_lon} entries. The optional
