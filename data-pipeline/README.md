@@ -356,6 +356,40 @@ uniformly across both data sources.
 
 ---
 
+## Ad-hoc analyses
+
+Some questions don't fit the numbered pipeline — for example, "what are the
+canopy stats for *these* streets within *these* neighborhoods only?" — but
+recur often enough to be worth keeping a recipe for. These live alongside
+the numbered scripts and are run on demand against existing pipeline output.
+
+### `ad_hoc_street_stats_by_neighborhood.py`
+
+Per-street canopy gain/loss/net-change stats restricted to the union of one
+or more boundary polygons (e.g. Squirrel Hill North + South). Needed when
+a street's named segments span multiple neighborhoods and you only want the
+portion inside a specific region — `street_stats.geojson` reports the
+county-wide figure for the whole street.
+
+Edit the `TARGETS`, `BOUNDARY_LAYER`, and `BOUNDARY_NAMES` constants at the
+top of the script, then:
+
+```bash
+python3 scripts/ad_hoc_street_stats_by_neighborhood.py
+```
+
+Prints a table with `buffer_area_acres`, 2015/2020 canopy, gain, loss, net
+change, and both `loss_pct_of_2015_canopy` (gross) and
+`net_pct_of_2015_canopy` (net — matches the web map's InfoPanel).
+
+Prerequisites: scripts 01, 04, and 05 must have been run. Methodology is
+documented in the script's module docstring. Always include a control
+street that lies entirely within the chosen region — its result should
+match `street_stats.geojson` exactly, confirming the clip step is
+behaving as expected.
+
+---
+
 ## Coordinate Reference Systems
 
 | Stage | CRS | Why |
